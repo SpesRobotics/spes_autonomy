@@ -6,6 +6,9 @@ from odrive.enums import *
 def main():
     odrv0 = odrive.find_any()
     print('Setting a sample speed...')
+    odrv0.axis1.controller.config.vel_gain = 0.05
+    odrv0.axis1.controller.config.vel_integrator_gain = 0.1
+
     odrv0.axis1.requested_state = AXIS_STATE_ENCODER_INDEX_SEARCH
     odrv0.axis1.requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL
     odrv0.axis1.controller.config.input_mode = INPUT_MODE_PASSTHROUGH
