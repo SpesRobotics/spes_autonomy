@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <ros2_control name="Motion" type="system">
+        <hardware>
+            <plugin>odrive_hardware_interface/ODriveHardwareInterface</plugin>
+        </hardware>
+
+        <sensor name="odrv0">
+            <param name="serial_number">000000000000</param>
+        </sensor>
+
+        <joint name="left_motor">
+            <param name="serial_number">000000000000</param>
+            <param name="axis">0</param>
+            <param name="enable_watchdog">1</param>
+            <param name="watchdog_timeout">0.1</param>
+        </joint>
+
+        <joint name="right_motor">
+            <param name="serial_number">000000000000</param>
+            <param name="axis">1</param>
+            <param name="enable_watchdog">1</param>
+            <param name="watchdog_timeout">0.1</param>
+        </joint>
+    </ros2_control>
+</robot>
