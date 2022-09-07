@@ -56,8 +56,8 @@ def main(axis='axis1'):
     getattr(odrv0, axis).encoder.config.use_index = True
 
     getattr(odrv0, axis).controller.config.pos_gain = 1.0
-    getattr(odrv0, axis).controller.config.vel_gain = 0.02
-    getattr(odrv0, axis).controller.config.vel_integrator_gain = 0.1
+    getattr(odrv0, axis).controller.config.vel_gain = 0.11
+    getattr(odrv0, axis).controller.config.vel_integrator_gain = 1.6
     getattr(odrv0, axis).controller.config.vel_limit = 10
     getattr(odrv0, axis).controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
     odrv0 = save_configuration(odrv0)
