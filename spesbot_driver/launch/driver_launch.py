@@ -29,7 +29,7 @@ def generate_launch_description():
 
     diffdrive_controller_spawner = Node(
         package='controller_manager',
-        executable='spawner.py',
+        executable='spawner',
         output='screen',
         arguments=['diffdrive_controller', '--controller-manager-timeout', '50'],
     )
