@@ -1,3 +1,9 @@
+# Install:
+#
+#     pip3 install odrive==0.5.4 fibre
+#     echo "export PATH=\${PATH}:/home/ubuntu/.local/bin" >> ~/.bashrc
+#     sudo -E $HOME/.local/bin/odrivetool udev-setup
+#
 # Reference: https://github.com/odriverobotics/ODrive/blob/fw-v0.5.1/docs/hoverboard.md
 
 import time
