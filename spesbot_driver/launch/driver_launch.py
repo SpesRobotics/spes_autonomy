@@ -21,7 +21,7 @@ def generate_launch_description():
         ],
         remappings=[
             ('/diffdrive_controller/cmd_vel_unstamped', 'cmd_vel'),
-            ('/odom', 'odom'),
+            ('/diffdrive_controller/odom', 'odom'),
             ('/tf', 'tf')
         ],
         output='screen'
@@ -45,6 +45,17 @@ def generate_launch_description():
         ],
     )
 
+    tf_base_link_base_footprint = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        output='screen',
+        arguments=[
+            '--x', '0.0',
+            '--frame-id', 'base_link',
+            '--child-frame-id', 'base_footprint'
+        ],
+    )
+
     lidar = Node(
         package='hls_lfcd_lds_driver',
         executable='hlds_laser_publisher',
@@ -58,5 +69,6 @@ def generate_launch_description():
         diffdrive_controller_spawner,
         tf_base_link_laser,
         controller_manager_node,
-        lidar
+        lidar,
+        tf_base_link_base_footprint
     ])
