@@ -34,19 +34,29 @@ def generate_launch_description():
         arguments=['diffdrive_controller', '--controller-manager-timeout', '50'],
     )
 
-    tf_map_odom = Node(
+    tf_base_link_laser = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         output='screen',
         arguments=[
             '--x', '0.0',
-            '--frame-id', 'map',
-            '--child-frame-id', 'odom'
+            '--frame-id', 'base_link',
+            '--child-frame-id', 'laser'
         ],
+    )
+
+    lidar = Node(
+        package='hls_lfcd_lds_driver',
+        executable='hlds_laser_publisher',
+        output='screen',
+        parameters=[
+            {'port': '/dev/ttyUSB0', 'frame_id': 'laser'}
+        ]
     )
 
     return LaunchDescription([
         diffdrive_controller_spawner,
-        tf_map_odom,
-        controller_manager_node
+        tf_base_link_laser,
+        controller_manager_node,
+        lidar
     ])

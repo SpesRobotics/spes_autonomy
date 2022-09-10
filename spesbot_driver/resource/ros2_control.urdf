@@ -11,7 +11,7 @@
 
         <joint name="left_motor">
             <param name="serial_number">000000000000</param>
-            <param name="axis">0</param>
+            <param name="axis">1</param>
             <param name="enable_watchdog">1</param>
 	    <param name="watchdog_timeout">0.1</param>
 	    <param name="direction">-1</param>
@@ -19,9 +19,10 @@
 
         <joint name="right_motor">
             <param name="serial_number">000000000000</param>
-            <param name="axis">1</param>
+            <param name="axis">0</param>
             <param name="enable_watchdog">1</param>
-            <param name="watchdog_timeout">0.1</param>
-        </joint>
+	    <param name="watchdog_timeout">0.1</param>
+	    <param name="direction">1</param>
+         </joint>
     </ros2_control>
 </robot>

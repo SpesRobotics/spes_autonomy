@@ -7,6 +7,10 @@
   <maintainer email="ubuntu@todo.todo">ubuntu</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>ros2_control</depend>
+  <depend>hls_lfcd_lds_driver</depend>
+  <depend>odrive_ros2_control</depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
