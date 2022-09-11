@@ -1,0 +1,24 @@
+FROM ros:humble
+
+ARG UID=1000
+
+RUN useradd -d /spesbot -m \
+            -u $UID -U \
+            -s /usr/bin/bash \
+            -c "SpesBot (Spes Robotics)" spesbot && \
+    echo 'spesbot ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+RUN apt-get update && apt-get install -y \
+    ros-humble-navigation2 \
+    ros-humble-nav2-bringup \
+    ros-humble-rmw-cyclonedds-cpp \
+    ros-humble-rviz2
+
+COPY cyclonedds.xml /etc/cyclonedds.xml
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
+
+RUN echo 'source /opt/ros/humble/local_setup.bash' >> /spesbot/.bashrc
+
+USER spesbot
+WORKDIR /spesbot
