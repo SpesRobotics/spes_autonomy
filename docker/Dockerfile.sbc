@@ -1,6 +1,7 @@
 FROM ros:humble
 
 ARG UID=1000
+ARG ROOT_DIR=
 
 RUN useradd -d /spesbot -m \
             -u $UID -U \
@@ -18,7 +19,7 @@ RUN apt-get update && apt-get install -y \
     ros-humble-hls-lfcd-lds-driver \
     ros-humble-xacro
 
-COPY cyclonedds.xml /etc/cyclonedds.xml
+COPY ${ROOT_DIR}/cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
 
