@@ -21,4 +21,4 @@ ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
 RUN echo 'source /opt/ros/humble/local_setup.bash' >> /spesbot/.bashrc
 
 USER spesbot
-WORKDIR /spesbot
+WORKDIR /spesbot/ros2_ws

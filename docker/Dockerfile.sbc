@@ -10,7 +10,13 @@ RUN useradd -d /spesbot -m \
     usermod -a -G video spesbot
 
 RUN apt-get update && apt-get install -y \
-    ros-humble-rmw-cyclonedds-cpp
+    libusb-1.0-0-dev \
+    v4l-utils \
+    ros-humble-rmw-cyclonedds-cpp \
+    ros-humble-ros2-controllers \
+    ros-humble-ros2-control \
+    ros-humble-hls-lfcd-lds-driver \
+    ros-humble-xacro
 
 COPY cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -19,4 +25,4 @@ ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
 RUN echo 'source /opt/ros/humble/local_setup.bash' >> /spesbot/.bashrc
 
 USER spesbot
-WORKDIR /spesbot
+WORKDIR /spesbot/ros2_ws
