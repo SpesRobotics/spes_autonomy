@@ -20,7 +20,7 @@ run:
 		-d -it spesbot-image
 
 build-pc:
-	docker build . -f Dockerfile.pc -t spesbot-image --build-arg UID=${UID}
+	docker build . -f ${ROOT_DIR}/Dockerfile.pc -t spesbot-image --build-arg UID=${UID}
 
 build-sbc:
-	docker build . -f Dockerfile.sbc -t spesbot-image --build-arg UID=${UID}
+	docker build . -f ${ROOT_DIR}/Dockerfile.sbc -t spesbot-image --build-arg UID=${UID}
