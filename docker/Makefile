@@ -17,5 +17,8 @@ run:
 		-v ${PWD}/assets:/spesbot/assets \
 		-d -it spesbot-image
 
-build:
-	docker build . -t spesbot-image --build-arg UID=${UID}
+build-pc:
+	docker build . -f Dockerfile.pc -t spesbot-image --build-arg UID=${UID}
+
+build-sbc:
+	docker build . -f Dockerfile.sbc -t spesbot-image --build-arg UID=${UID}
