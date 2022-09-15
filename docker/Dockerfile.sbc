@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     ros-humble-ros2-controllers \
     ros-humble-ros2-control \
     ros-humble-hls-lfcd-lds-driver \
+    ros-humble-v4l2-camera \
     ros-humble-xacro
 
 COPY cyclonedds.xml /etc/cyclonedds.xml
