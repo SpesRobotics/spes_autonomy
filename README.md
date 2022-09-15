@@ -4,7 +4,20 @@ Spes Robotics reference platform.
 
 ## Quick Start
 
-TODO
+```bash
+mkdir -p $HOME/spesbot_ws/src
+git clone git@github.com:SpesRobotics/spesbot.git $HOME/spesbot_ws/src/spesbot
+
+# Build the Docker image
+make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile build
+make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile run
+make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile exec-<pc or sbc>
+
+# Build packages
+vcs import src < src/spesbot/spesbot.repos
+colcon build
+source install/local_setup.bash
+```
 
 ## Parts
 

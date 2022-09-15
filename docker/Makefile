@@ -1,4 +1,5 @@
 UID:=$(shell id -u)
+ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST)))
 
 exec:
 	docker exec -it spesbot-container bash
@@ -14,8 +15,8 @@ run:
 		--runtime nvidia \
 		-e DISPLAY=${DISPLAY} \
 		-v /tmp/.X11-unix/:/tmp/.X11-unix \
-		-v ${PWD}/assets:/spesbot/assets \
-		-v ${PWD}/../../..:/spesbot/ros2_ws \
+		-v ${ROOT_DIR}/assets:/spesbot/assets \
+		-v ${ROOT_DIR}/../../..:/spesbot/ros2_ws \
 		-d -it spesbot-image
 
 build-pc:
