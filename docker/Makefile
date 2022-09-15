@@ -15,6 +15,7 @@ run:
 		-e DISPLAY=${DISPLAY} \
 		-v /tmp/.X11-unix/:/tmp/.X11-unix \
 		-v ${PWD}/assets:/spesbot/assets \
+		-v ${PWD}/../../..:/spesbot/ros2_ws \
 		-d -it spesbot-image
 
 build-pc:

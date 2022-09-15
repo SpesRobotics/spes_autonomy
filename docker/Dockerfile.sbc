@@ -6,7 +6,8 @@ RUN useradd -d /spesbot -m \
             -u $UID -U \
             -s /usr/bin/bash \
             -c "SpesBot (Spes Robotics)" spesbot && \
-    echo 'spesbot ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+    echo 'spesbot ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers && \
+    usermod -a -G video spesbot
 
 RUN apt-get update && apt-get install -y \
     ros-humble-rmw-cyclonedds-cpp
