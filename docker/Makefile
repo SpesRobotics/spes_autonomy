@@ -1,5 +1,5 @@
 UID:=$(shell id -u)
-ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST)))
+ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 exec:
 	docker exec -it spesbot-container bash
