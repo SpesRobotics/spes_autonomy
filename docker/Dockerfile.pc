@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y \
     ros-humble-navigation2 \
     ros-humble-nav2-bringup \
     ros-humble-rmw-cyclonedds-cpp \
-    ros-humble-rviz2
+    ros-humble-rviz2 \
+    ros-humble-rqt-common-plugins \
+    ros-humble-teleop-twist-keyboard
 
 COPY cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp

@@ -34,6 +34,15 @@ def generate_launch_description():
         arguments=['diffdrive_controller', '--controller-manager-timeout', '50'],
     )
 
+    v4l2 = Node(
+        package='v4l2_camera',
+        executable='v4l2_camera_node',
+        output='screen',
+        parameters=[
+            {'video_device': '/dev/video2'},
+        ],
+    )
+
     tf_base_link_laser = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -70,5 +79,6 @@ def generate_launch_description():
         tf_base_link_laser,
         controller_manager_node,
         lidar,
-        tf_base_link_base_footprint
+        tf_base_link_base_footprint,
+        v4l2
     ])

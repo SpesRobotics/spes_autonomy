@@ -12,6 +12,8 @@ RUN useradd -d /spesbot -m \
 RUN apt-get update && apt-get install -y \
     libusb-1.0-0-dev \
     v4l-utils \
+    vim \
+    net-tools \
     ros-humble-rmw-cyclonedds-cpp \
     ros-humble-ros2-controllers \
     ros-humble-ros2-control \
