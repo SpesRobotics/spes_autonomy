@@ -36,32 +36,35 @@ def save_configuration(odrv0, erase=False):
 
 def main(axes=['axis0', 'axis1']):
     do_anticogging = ('--anticogging' in sys.argv)
+    pid_only = ('--pid-only' in sys.argv)
 
     odrv0 = odrive.find_any()
 
     print('Voltage:', odrv0.vbus_voltage)
-    odrv0 = save_configuration(odrv0, erase=True)
+    odrv0 = save_configuration(odrv0, erase=not pid_only)
 
     for axis in axes:
-        getattr(odrv0, axis).motor.config.pole_pairs = 15
+        getattr(odrv0, axis).controller.config.pos_gain = 1.0
+        getattr(odrv0, axis).controller.config.vel_gain = 0.12
+        getattr(odrv0, axis).controller.config.vel_integrator_gain = 2.0
+        getattr(odrv0, axis).controller.config.vel_limit = 10
+        getattr(odrv0, axis).motor.config.current_lim = 4.0
+        getattr(odrv0, axis).motor.config.current_control_bandwidth = 50
+        getattr(odrv0, axis).encoder.config.bandwidth = 50
+        if pid_only:
+            continue
 
+        getattr(odrv0, axis).motor.config.pole_pairs = 15
         getattr(odrv0, axis).motor.config.resistance_calib_max_voltage = 4
         getattr(odrv0, axis).motor.config.requested_current_range = 25
-        getattr(odrv0, axis).motor.config.current_control_bandwidth = 100
-        getattr(odrv0, axis).motor.config.current_lim = 4.0
         getattr(odrv0, axis).motor.config.calibration_current = 4.0
-
         getattr(odrv0, axis).encoder.config.mode = ENCODER_MODE_HALL
         getattr(odrv0, axis).encoder.config.cpr = 90
-        getattr(odrv0, axis).encoder.config.bandwidth = 100
         getattr(odrv0, axis).encoder.config.use_index = True
-
-        getattr(odrv0, axis).controller.config.pos_gain = 1.0
-        getattr(odrv0, axis).controller.config.vel_gain = 0.11
-        getattr(odrv0, axis).controller.config.vel_integrator_gain = 0.4
-        getattr(odrv0, axis).controller.config.vel_limit = 10
         getattr(odrv0, axis).controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
     odrv0 = save_configuration(odrv0)
+    if pid_only:
+        return
 
     print('Calibrating motor...')
     for axis in axes:
