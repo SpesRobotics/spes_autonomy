@@ -11,7 +11,7 @@ run:
 		--cap-add SYS_ADMIN \
 		--name spesbot-container \
 		--privileged \
-		--rm \
+		--restart unless-stopped \
 		--runtime nvidia \
 		-e DISPLAY=${DISPLAY} \
 		-v /tmp/.X11-unix/:/tmp/.X11-unix \
