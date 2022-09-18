@@ -17,6 +17,7 @@ run:
 		-v /tmp/.X11-unix/:/tmp/.X11-unix \
 		-v ${ROOT_DIR}/assets:/spesbot/assets \
 		-v ${ROOT_DIR}/../../..:/spesbot/ros2_ws \
+		-v /dev/bus/usb:/dev/bus/usb \
 		-d -it spesbot-image
 
 build-pc:

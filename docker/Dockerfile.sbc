@@ -10,6 +10,7 @@ RUN useradd -d /spesbot -m \
     usermod -a -G video spesbot
 
 RUN apt-get update && apt-get install -y \
+    python3-pip \
     libusb-1.0-0-dev \
     v4l-utils \
     vim \
@@ -26,6 +27,9 @@ ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
 
 RUN echo 'source /opt/ros/humble/local_setup.bash' >> /spesbot/.bashrc
+RUN echo 'export PATH=\${PATH}:/spesbot/.local/bin' >> /spesbot/.bashrc
 
 USER spesbot
+RUN pip3 install odrive==0.5.4 fibre
+
 WORKDIR /spesbot/ros2_ws
