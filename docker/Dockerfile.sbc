@@ -31,6 +31,6 @@ RUN pip3 install odrive==0.5.4 fibre
 
 RUN echo 'source /opt/ros/humble/local_setup.bash' >> /spesbot/.bashrc
 RUN echo 'source /spesbot/ros2_ws/install/local_setup.bash' >> /spesbot/.bashrc
-RUN echo 'export PATH=\${PATH}:/spesbot/.local/bin' >> /spesbot/.bashrc
+ENV PATH="${PATH}:/spesbot/.local/bin"
 
 WORKDIR /spesbot/ros2_ws
