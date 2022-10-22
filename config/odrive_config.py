@@ -46,11 +46,11 @@ def main(axes=['axis1', 'axis0']):
 
     for axis in axes:
         getattr(odrv0, axis).controller.config.pos_gain = 1.0
-        getattr(odrv0, axis).controller.config.vel_gain = 1.3
-        getattr(odrv0, axis).controller.config.vel_integrator_gain = 15
+        getattr(odrv0, axis).controller.config.vel_gain = 4
+        getattr(odrv0, axis).controller.config.vel_integrator_gain = 30
         getattr(odrv0, axis).controller.config.vel_limit = 10
         getattr(odrv0, axis).motor.config.current_lim = 4.0
-        getattr(odrv0, axis).motor.config.current_control_bandwidth = 100
+        getattr(odrv0, axis).motor.config.current_control_bandwidth = 200
         getattr(odrv0, axis).motor.config.torque_constant = 8.27/16
         if pid_only:
             continue
@@ -89,10 +89,18 @@ def main(axes=['axis1', 'axis0']):
             getattr(odrv0, axis).requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL
             getattr(odrv0, axis).controller.config.anticogging.calib_pos_threshold = 1.0
             getattr(odrv0, axis).controller.config.anticogging.calib_vel_threshold = 1.0
+
+            prev_pos_gain = getattr(odrv0, axis).controller.config.pos_gain
+            prev_vel_integrator_gain = getattr(odrv0, axis).controller.config.vel_integrator_gain
+            getattr(odrv0, axis).controller.config.pos_gain = 200.0
+            getattr(odrv0, axis).controller.config.vel_integrator_gain = 20.0
             getattr(odrv0, axis).controller.start_anticogging_calibration()
             while getattr(odrv0, axis).controller.config.anticogging.calib_anticogging:
                 time.sleep(1)
             print('Anti-cogging calibration complete')
+            getattr(odrv0, axis).controller.config.pos_gain = prev_pos_gain
+            getattr(odrv0, axis).controller.config.vel_integrator_gain = prev_vel_integrator_gain
+
             getattr(odrv0, axis).controller.config.anticogging.pre_calibrated = True
         odrv0 = save_configuration(odrv0)
 
