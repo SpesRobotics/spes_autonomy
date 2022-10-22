@@ -10,6 +10,7 @@ import time
 import sys
 import odrive
 from odrive.enums import *
+from odrive.utils import *
 
 
 def save_configuration(odrv0, erase=False):
@@ -34,7 +35,7 @@ def save_configuration(odrv0, erase=False):
     return odrv_instance
 
 
-def main(axes=['axis0', 'axis1']):
+def main(axes=['axis1', 'axis0']):
     do_anticogging = ('--anticogging' in sys.argv)
     pid_only = ('--pid-only' in sys.argv)
 
@@ -45,22 +46,22 @@ def main(axes=['axis0', 'axis1']):
 
     for axis in axes:
         getattr(odrv0, axis).controller.config.pos_gain = 1.0
-        getattr(odrv0, axis).controller.config.vel_gain = 0.11
-        getattr(odrv0, axis).controller.config.vel_integrator_gain = 0.6
+        getattr(odrv0, axis).controller.config.vel_gain = 1.3
+        getattr(odrv0, axis).controller.config.vel_integrator_gain = 15
         getattr(odrv0, axis).controller.config.vel_limit = 10
         getattr(odrv0, axis).motor.config.current_lim = 4.0
-        getattr(odrv0, axis).motor.config.current_control_bandwidth = 50
-        getattr(odrv0, axis).encoder.config.bandwidth = 50
+        getattr(odrv0, axis).motor.config.current_control_bandwidth = 100
+        getattr(odrv0, axis).motor.config.torque_constant = 8.27/16
         if pid_only:
             continue
 
         getattr(odrv0, axis).motor.config.pole_pairs = 15
-        getattr(odrv0, axis).motor.config.resistance_calib_max_voltage = 4
+        getattr(odrv0, axis).motor.config.motor_type = MOTOR_TYPE_HIGH_CURRENT
+        getattr(odrv0, axis).motor.config.resistance_calib_max_voltage = 10
         getattr(odrv0, axis).motor.config.requested_current_range = 25
         getattr(odrv0, axis).motor.config.calibration_current = 4.0
-        getattr(odrv0, axis).encoder.config.mode = ENCODER_MODE_HALL
-        getattr(odrv0, axis).encoder.config.cpr = 90
-        getattr(odrv0, axis).encoder.config.use_index = True
+        getattr(odrv0, axis).encoder.config.mode = ENCODER_MODE_INCREMENTAL
+        getattr(odrv0, axis).encoder.config.cpr = 3200
         getattr(odrv0, axis).controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
     odrv0 = save_configuration(odrv0)
     if pid_only:
@@ -71,15 +72,18 @@ def main(axes=['axis0', 'axis1']):
         getattr(odrv0, axis).requested_state = AXIS_STATE_FULL_CALIBRATION_SEQUENCE
         while getattr(odrv0, axis).requested_state != AXIS_STATE_UNDEFINED or getattr(odrv0, axis).current_state != AXIS_STATE_IDLE:
             time.sleep(1)
-        print('Motor calibration complete', getattr(odrv0, axis).error)
+        time.sleep(5)
+        error = getattr(odrv0, axis).error
+        print('Motor calibration complete', error)
+        if error:
+            dump_errors(odrv0, True)
+            exit(1)
         getattr(odrv0, axis).motor.config.pre_calibrated = True
         getattr(odrv0, axis).encoder.config.pre_calibrated = True
-    odrv0 = save_configuration(odrv0)
 
     if do_anticogging:
         print('Calibrating anti-cogging...')
         for axis in axes:
-            getattr(odrv0, axis).encoder.config.use_index = True
             getattr(odrv0, axis).controller.config.control_mode = CONTROL_MODE_POSITION_CONTROL
             getattr(odrv0, axis).controller.config.input_mode = INPUT_MODE_PASSTHROUGH
             getattr(odrv0, axis).requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL
@@ -94,7 +98,6 @@ def main(axes=['axis0', 'axis1']):
 
     print('Setting a sample speed...')
     for axis in axes:
-        getattr(odrv0, axis).requested_state = AXIS_STATE_ENCODER_INDEX_SEARCH
         getattr(odrv0, axis).requested_state = AXIS_STATE_CLOSED_LOOP_CONTROL
         getattr(odrv0, axis).controller.config.input_mode = INPUT_MODE_PASSTHROUGH
         getattr(odrv0, axis).controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL
