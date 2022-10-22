@@ -45,8 +45,8 @@ def main(axes=['axis0', 'axis1']):
 
     for axis in axes:
         getattr(odrv0, axis).controller.config.pos_gain = 1.0
-        getattr(odrv0, axis).controller.config.vel_gain = 0.12
-        getattr(odrv0, axis).controller.config.vel_integrator_gain = 2.0
+        getattr(odrv0, axis).controller.config.vel_gain = 0.11
+        getattr(odrv0, axis).controller.config.vel_integrator_gain = 0.6
         getattr(odrv0, axis).controller.config.vel_limit = 10
         getattr(odrv0, axis).motor.config.current_lim = 4.0
         getattr(odrv0, axis).motor.config.current_control_bandwidth = 50

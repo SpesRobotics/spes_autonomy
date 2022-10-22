@@ -22,7 +22,6 @@ def generate_launch_description():
         remappings=[
             ('/diffdrive_controller/cmd_vel_unstamped', 'cmd_vel'),
             ('/diffdrive_controller/odom', 'odom'),
-            ('/tf', 'tf')
         ],
         output='screen'
     )
@@ -39,7 +38,13 @@ def generate_launch_description():
         executable='v4l2_camera_node',
         output='screen',
         parameters=[
-            {'video_device': '/dev/video2'},
+            {
+                'video_device': '/dev/video4',
+                'brightness': 0,
+                'contrast': 62,
+                'saturation': 74,
+                'sharpness': 100,
+            }
         ],
     )
 
