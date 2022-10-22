@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     libusb-1.0-0-dev \
     v4l-utils \
     vim \
+    usbutils \
     net-tools \
     ros-humble-rmw-cyclonedds-cpp \
     ros-humble-ros2-controllers \

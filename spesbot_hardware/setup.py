@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'spesbot_driver'
+package_name = 'spesbot_hardware'
 
 setup(
     name=package_name,

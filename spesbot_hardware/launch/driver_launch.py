@@ -8,7 +8,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    package_dir = get_package_share_directory('spesbot_driver')
+    package_dir = get_package_share_directory('spesbot_hardware')
     robot_description = pathlib.Path(os.path.join(package_dir, 'resource', 'ros2_control.urdf')).read_text()
     controller_params_file = os.path.join(package_dir, 'resource', 'ros2_control.yaml')
 
