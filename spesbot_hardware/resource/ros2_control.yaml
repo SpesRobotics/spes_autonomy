@@ -19,3 +19,17 @@ diffdrive_controller:
 
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.1, 0.1, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+
+    linear.x.has_velocity_limits: true
+    linear.x.min_velocity: -0.5
+    linear.x.max_velocity: 0.5
+    linear.x.has_acceleration_limits: true
+    linear.x.min_acceleration: -0.6
+    linear.x.max_acceleration: 0.6
+
+    angular.z.has_velocity_limits: true
+    angular.z.min_velocity: -5.0
+    angular.z.max_velocity: 5.0
+    angular.z.has_acceleration_limits: true
+    angular.z.min_acceleration: -5.0
+    angular.z.max_acceleration: 5.0
