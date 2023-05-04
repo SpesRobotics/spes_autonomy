@@ -4,6 +4,9 @@ NVIDIA_GPU:=$(shell docker info | grep Runtimes | grep nvidia 1> /dev/null && ec
 
 exec:
 	docker exec -it spesbot-container bash
+	
+rebuild:
+	DOCKER_ARGS="--no-cache --pull" $(MAKE) build
 
 run:
 	@docker container rm -f spesbot-container
@@ -22,7 +25,7 @@ run:
 		-d -it spesbot-image
 
 build-pc:
-	docker build ${ROOT_DIR} -f ${ROOT_DIR}/Dockerfile.pc -t spesbot-image --build-arg UID=${UID}
+	docker build ${ROOT_DIR} -f ${ROOT_DIR}/Dockerfile.pc -t spesbot-image ${DOCKER_ARGS} --build-arg UID=${UID}
 
 build-sbc:
-	docker build ${ROOT_DIR} -f ${ROOT_DIR}/Dockerfile.sbc -t spesbot-image --build-arg UID=${UID}
+	docker build ${ROOT_DIR} -f ${ROOT_DIR}/Dockerfile.sbc -t spesbot-image ${DOCKER_ARGS} --build-arg UID=${UID}
