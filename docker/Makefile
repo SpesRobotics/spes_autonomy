@@ -5,8 +5,11 @@ NVIDIA_GPU:=$(shell docker info | grep Runtimes | grep nvidia 1> /dev/null && ec
 exec:
 	docker exec -it spesbot-container bash
 	
-rebuild:
-	DOCKER_ARGS="--no-cache --pull" $(MAKE) build
+rebuild-pc:
+	DOCKER_ARGS="--no-cache --pull" $(MAKE) build-pc
+	
+rebuild-sbc:
+	DOCKER_ARGS="--no-cache --pull" $(MAKE) build-sbc
 
 run:
 	@docker container rm -f spesbot-container
