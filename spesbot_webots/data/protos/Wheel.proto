@@ -1,0 +1,62 @@
+#VRML_SIM R2023a utf8
+# template language: javascript
+PROTO Wheel [
+  field SFBool hasEncoder FALSE
+  field SFBool hasMotor TRUE
+  field SFString name "wheel"
+  field SFRotation rotation -1 0 0 1.570796
+  field SFVec3f translation 0 0 0
+  field SFFloat maxTorque 100
+  field SFFloat maxVelocity 100
+  field SFFloat radius 0.036
+  field SFFloat width 0.035
+  field SFFloat mass 0.05
+  field SFColor color 0.933333 0.933333 0.92549
+  field SFString contactMaterial "wheel"
+]
+{
+  HingeJoint {
+    jointParameters HingeJointParameters {
+      axis 0 1 0
+    }
+    device [
+      %< if (fields.hasEncoder.value) { >%
+        PositionSensor {
+          name %<= `"${fields.name.value}_encoder"` >%
+        }
+      %< } >%
+      %< if (fields.hasMotor.value) { >%
+        RotationalMotor {
+          name %<= `"${fields.name.value}_motor"` >%
+          maxVelocity IS maxVelocity
+          maxTorque IS maxTorque
+        }
+      %< } >%
+    ]
+    endPoint Solid {
+      rotation IS rotation
+      children [
+        DEF WHEEL_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColor IS color
+            roughness 1
+            roughnessMap ImageTexture {url ["https://raw.githubusercontent.com/cyberbotics/webots/R2022a/projects/appearances/protos/textures/plastic/plastic_rough_roughness.jpg"]}
+            metalness 0
+            normalMap ImageTexture {url ["https://raw.githubusercontent.com/cyberbotics/webots/R2022a/projects/appearances/protos/textures/plastic/plastic_rough_normal.jpg"]}
+          }
+          geometry Cylinder {
+            height IS width
+            radius IS radius
+          }
+        }
+      ]
+      name %<= `"${fields.name.value}_${fields.hasEncoder.value}_${fields.hasMotor.value}"` >%
+      contactMaterial IS contactMaterial
+      boundingObject USE WHEEL_SHAPE
+      physics Physics {
+        density -1
+        mass IS mass
+      }
+    }
+  }
+}
