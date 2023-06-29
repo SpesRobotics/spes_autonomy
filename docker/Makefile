@@ -18,14 +18,16 @@ run:
 	@docker container rm -f ${BASENAME}-container
 	docker run \
 		--net=host \
+		--ipc=host \
 		--cap-add SYS_ADMIN \
 		--name ${BASENAME}-container \
 		--privileged \
 		--restart unless-stopped \
 		-e NVIDIA_DRIVER_CAPABILITIES=all ${NVIDIA_GPU} \
 		-e DISPLAY=${DISPLAY} \
-		-v ~/.Xauthority:/${DOCKERUSER}/.host/.Xauthority:ro \
-		-v /tmp/.X11-unix/:/tmp/.X11-unix \
+		-v ~/.Xauthority:/${DOCKERUSER}/.Xauthority:ro \
+		-v /tmp/.X11-unix/:/tmp/.X11-unix:rw \
+		-v /dev/dri:/dev/dri:ro \
 		-v ${ROOT_DIR}/..:/${DOCKERUSER}/ros2_ws/src/${BASENAME} \
 		-v ${ROOT_DIR}/assets:/${DOCKERUSER}/assets \
 		-v /dev:/dev:rw \

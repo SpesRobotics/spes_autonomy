@@ -1,13 +1,19 @@
 FROM ros:humble
 
-ARG UID=1000
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN useradd -d /spesbot -m \
-            -u $UID -U \
+ARG UID=1000
+ARG DOCKERUSER=
+ARG DOCKERUSERCOMMENT=
+
+
+RUN useradd -d /${DOCKERUSER} -m \
+            -u ${UID} -U \
             -s /usr/bin/bash \
-            -c "SpesBot (Spes Robotics)" spesbot && \
-    echo 'spesbot ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers && \
-    usermod -a -G video spesbot
+            -c "${DOCKERUSERCOMMENT}" ${DOCKERUSER} && \
+    echo "${DOCKERUSER} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    usermod -a -G video ${DOCKERUSER} && \
+    usermod -a -G dialout ${DOCKERUSER}
 
 RUN apt-get update && apt-get install -y \
     python3-pip \
@@ -26,12 +32,14 @@ RUN apt-get update && apt-get install -y \
 COPY cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
+ENV DOCKERUSER=${DOCKERUSER}
 
-USER spesbot
+USER ${DOCKERUSER}
 RUN pip3 install odrive==0.5.4 fibre
 
-RUN echo 'source /opt/ros/humble/local_setup.bash' >> /spesbot/.bashrc
-RUN echo 'source /spesbot/ros2_ws/install/local_setup.bash' >> /spesbot/.bashrc
-ENV PATH="${PATH}:/spesbot/.local/bin"
 
-WORKDIR /spesbot/ros2_ws
+COPY bashrc /tmp/bashrc
+RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
+ENV PATH="${PATH}:/${DOCKERUSER}/.local/bin"
+
+WORKDIR /${DOCKERUSER}/ros2_ws
