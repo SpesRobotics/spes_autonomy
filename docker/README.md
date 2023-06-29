@@ -1,3 +1,12 @@
+Install dependencies:
+```bash
+sudo apt install git make curl
+curl -sSL https://get.docker.com | sh && sudo usermod -aG docker $USER
+
+# Reboot PC to apply the docker group changes
+sudo reboot 
+```
+
 Build a container:
 ```bash
 # Build & run Docker (only the first time)
