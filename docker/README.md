@@ -1,12 +1,9 @@
 Build a container:
 ```bash
-# Build the Docker image
-make build
+# Build & run Docker (only the first time)
+make build-pc run
 
-# Create a Docker container out of image
-make run
-
-# Start the Docker container
+# Attach the shell to the container
 make exec
 ```
 
