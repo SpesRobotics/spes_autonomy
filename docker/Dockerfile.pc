@@ -1,5 +1,6 @@
-FROM ros:humble
+FROM osrf/ros:humble-desktop
 
+ARG DEBIAN_FRONTEND=noninteractive
 ARG UID=1000
 
 RUN useradd -d /spesbot -m \
@@ -8,13 +9,54 @@ RUN useradd -d /spesbot -m \
             -c "SpesBot (Spes Robotics)" spesbot && \
     echo 'spesbot ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
     ros-humble-navigation2 \
     ros-humble-nav2-bringup \
     ros-humble-rmw-cyclonedds-cpp \
     ros-humble-rviz2 \
     ros-humble-rqt-common-plugins \
-    ros-humble-teleop-twist-keyboard
+    ros-humble-teleop-twist-keyboard \
+    ros-humble-webots-ros2 \
+    nano \
+    alsa \
+    libxshmfence1 \
+    libgtk-3-dev \ 
+    libopencv-dev 
+
+
+# Webots
+RUN curl -L -o /tmp/webots.deb \
+        'https://github.com/cyberbotics/webots/releases/download/R2023a/webots_2023a_amd64.deb' && \
+    apt-get install -y /tmp/webots.deb && \
+    rm -f /tmp/webots.deb && \
+    mkdir -p /spesbot/.config/Cyberbotics
+
+RUN curl -L -o /tmp/turbovnc.deb \
+        'https://downloads.sourceforge.net/project/turbovnc/3.0.1/turbovnc_3.0.1_amd64.deb?use_mirror=autoselect' && \
+    apt-get install -y /tmp/turbovnc.deb && \
+    rm -f /tmp/turbovnc.deb && \
+	echo 'PATH="$PATH:/opt/TurboVNC/bin"' >> /spesbot/.bashrc
+
+RUN curl -L -o /tmp/virtualgl.deb \
+        'https://downloads.sourceforge.net/project/virtualgl/3.0.2/virtualgl_3.0.2_amd64.deb?use_mirror=autoselect' && \
+    apt-get install -y /tmp/virtualgl.deb && \
+    rm -f /tmp/virtualgl.deb && \
+	echo 'PATH="$PATH:/opt/VirtualGL/bin"' >> /spesbot/.bashrc && \
+	printf "1\n\n\n\nX" | /opt/VirtualGL/bin/vglserver_config && \
+	sudo usermod -a -G vglusers spesbot
+
+RUN apt-get install -y novnc && \
+	ln -sf /usr/share/novnc/vnc.html /usr/share/novnc/index.html && \
+    mkdir -p /spesbot/.host
+
+
+RUN apt-get install -y --no-install-recommends \
+        xorg \
+        dbus-x11 \
+        xfce4 \
+        xfce4-terminal && \
+    echo '/usr/sbin/lightdm' > /etc/X11/default-display-manager
+
 
 COPY cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
