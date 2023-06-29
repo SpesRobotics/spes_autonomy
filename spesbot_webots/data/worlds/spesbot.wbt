@@ -1105,7 +1105,7 @@ Cherry {
   name "cherry_right_9"
   translation 0.9849999999993392 -0.135 0.035153193393140145
 }
-Robot {
+DEF Spesbot Robot {
   translation 0.182505 -0.063374 0.095352
   rotation 0 0 1 -1.5707953071795862
   children [

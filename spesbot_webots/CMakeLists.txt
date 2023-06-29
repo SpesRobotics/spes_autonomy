@@ -7,7 +7,7 @@ find_package(ament_cmake REQUIRED)
 
 # resources
 install(
-  DIRECTORY launch data
+  DIRECTORY launch resource data
   DESTINATION share/${PROJECT_NAME}
 )
 
