@@ -44,10 +44,10 @@ def generate_launch_description():
     package_dir = get_package_share_directory('spesbot_webots')
 
     controller_params = os.path.join(get_package_share_directory('spesbot_hardware'),
-                             'resource', 'ros2_control.yaml')
+                             'resource', 'controllers.yaml')
 
     robot_description = pathlib.Path(
-        os.path.join(package_dir, 'resource', 'robot_description.urdf')).read_text()
+        os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
     
     webots = WebotsLauncher(world=os.path.join(package_dir, 'data',
                                                'worlds', 'spesbot.wbt'), ros2_supervisor=True)

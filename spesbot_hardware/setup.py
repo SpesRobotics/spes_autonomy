@@ -15,8 +15,8 @@ setup(
         ]),
         ('share/' + package_name + '/resource',
          [
-             'resource/ros2_control.yaml',
-             'resource/ros2_control.urdf',
+             'resource/controllers.yaml',
+             'resource/description.urdf',
          ]),
     ],
     install_requires=['setuptools'],
