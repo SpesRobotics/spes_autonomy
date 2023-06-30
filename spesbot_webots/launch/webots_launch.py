@@ -19,7 +19,7 @@ def get_controller_spawners(controller_params_file):
     for controller_name in controller_names:
         if controller_name in ['update_rate', 'publish_rate']:
             continue
-
+        
         controller_spawners.append(Node(
             package='controller_manager',
             executable='spawner',
@@ -48,7 +48,7 @@ def generate_launch_description():
 
     robot_description = pathlib.Path(
         os.path.join(package_dir, 'resource', 'robot_description.urdf')).read_text()
-    print("JSNDXMSNM:", robot_description)
+    
     webots = WebotsLauncher(world=os.path.join(package_dir, 'data',
                                                'worlds', 'spesbot.wbt'), ros2_supervisor=True)
                                     
@@ -67,13 +67,10 @@ def generate_launch_description():
         ],
         remappings=[
             ('/diffdrive_controller/cmd_vel_unstamped', 'cmd_vel'),
-            ('/diffdrive_controller/odom', 'odom'),
-            ('/tf', 'tf'),
-            ('/tf_static', 'tf_static'),
-            ('/scan', 'scan'),
-            ('/scan/point_cloud', 'scan/point_cloud'),
+            ('/diffdrive_controller/odom', 'odom')
         ],
         ros_arguments=['--log-level', 'warn'],
+        additional_env={'WEBOTS_CONTROLLER_URL': 'spesbot'},
     )
 
     # Standard ROS 2 launch description
