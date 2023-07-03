@@ -25,13 +25,8 @@ def generate_launch_description():
     robot_description = pathlib.Path(
         os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
     
-    camera_description = pathlib.Path(
-        os.path.join(package_dir, 'resource', 'camera.urdf')).read_text()
-    
     webots = WebotsLauncher(world=os.path.join(package_dir, 'data',
                                                'worlds', 'spesbot.wbt'), ros2_supervisor=True)
-                                    
-
     webots_robot_driver = Node(
         package='webots_ros2_driver',
         executable='driver',
@@ -52,19 +47,8 @@ def generate_launch_description():
         ros_arguments=['--log-level', 'warn'],
         additional_env={'WEBOTS_CONTROLLER_URL': 'spesbot'},
     )
-    webots_camera_driver = Node(
-        package='webots_ros2_driver',
-        executable='driver',
-        output='screen',  # debugging
-        emulate_tty=True,  # debugging
-        parameters=[{
-            'robot_description': camera_description,
-            'use_sim_time': True
-        }],
-        ros_arguments=['--log-level', 'warn']
-    )
 
-    webots_camera_subscriber = Node(
+    ros2virtualcam = Node(
         package='spesbot_webots',
         executable='image_subscriber.py',
         output='screen',
@@ -92,17 +76,11 @@ def generate_launch_description():
             ])
         )
     
-
-
-    # Standard ROS 2 launch description
     return launch.LaunchDescription([
-        # Start the Webots node
         webots,
         webots._supervisor,
         webots_robot_driver,
-        webots_camera_driver,
-        webots_camera_subscriber,
-        # This action will kill all nodes once the Webots simulation has exited
+        # ros2virtualcam,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(
             target_action=webots,

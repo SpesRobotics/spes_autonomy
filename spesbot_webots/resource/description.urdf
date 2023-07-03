@@ -2,6 +2,16 @@
 <robot name="spesbot">
     <webots>
         <plugin type="webots_ros2_control::Ros2Control" />
+
+        <device type="Camera">
+            <ros>
+                <enabled>true</enabled>
+                <updateRate>1</updateRate>
+                <topicName>/camera</topicName>
+                <alwaysOn>true</alwaysOn>
+                <frameName>camera0</frameName>
+            </ros>
+        </device>
     </webots>
     <ros2_control name="JointControl" type="system">
         <hardware>
