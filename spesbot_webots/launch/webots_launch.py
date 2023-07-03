@@ -74,7 +74,7 @@ def generate_launch_description():
         webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
-        # ros2virtualcam,
+        ros2virtualcam,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(
             target_action=webots,
