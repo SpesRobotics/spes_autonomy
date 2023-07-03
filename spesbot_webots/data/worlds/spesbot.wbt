@@ -22,8 +22,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation 0.007436580608983035 0.999563232698816 -0.028601417893846057 0.5089628302794965
-  position -3.150518480495797 0.17454153194503016 1.6000060484215648
+  orientation 0.017416159142974907 0.9985493219072312 -0.05095026122911754 0.6596391568336978
+  position -3.269555110994423 0.23332793449332043 2.275970432317645
 }
 TexturedBackground {
 }
@@ -948,6 +948,27 @@ DEF Spesbot Robot {
   translation 0.1824807003756751 -0.06437675837899388 0.08449936394725384
   rotation 0.02755396230675904 0.0281175778500758 -0.9992247900132596 1.5718631348377647
   children [
+    DEF camera_support Solid {
+      translation 0 0 0.1
+      children [
+        DEF camera Camera {
+          translation 0 0 0.11
+        }
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry DEF camera_support Box {
+            size 0.02 0.05 0.2
+          }
+        }
+      ]
+      boundingObject USE camera_support
+      physics Physics {
+      }
+    }
     DEF central_wheel Solid {
       translation -0.28 -3.44968e-07 -0.04
       rotation 0 0 1 3.14159
