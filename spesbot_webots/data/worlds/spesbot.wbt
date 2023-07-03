@@ -952,7 +952,10 @@ DEF Spesbot Robot {
       translation 0 0 0.1
       children [
         DEF camera Camera {
-          translation 0 0 0.11
+          translation 0.01 0 0.11
+          locked TRUE
+          width 1920
+          height 1080
         }
         Shape {
           appearance Appearance {
@@ -960,12 +963,12 @@ DEF Spesbot Robot {
               diffuseColor 0.5 0.5 0.5
             }
           }
-          geometry DEF camera_support Box {
+          geometry DEF CAMERA_SUPPORT Box {
             size 0.02 0.05 0.2
           }
         }
       ]
-      boundingObject USE camera_support
+      boundingObject USE CAMERA_SUPPORT
       physics Physics {
       }
     }

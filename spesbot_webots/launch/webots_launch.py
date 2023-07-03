@@ -25,6 +25,9 @@ def generate_launch_description():
     robot_description = pathlib.Path(
         os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
     
+    camera_description = pathlib.Path(
+        os.path.join(package_dir, 'resource', 'camera.urdf')).read_text()
+    
     webots = WebotsLauncher(world=os.path.join(package_dir, 'data',
                                                'worlds', 'spesbot.wbt'), ros2_supervisor=True)
                                     
@@ -48,6 +51,18 @@ def generate_launch_description():
         ],
         ros_arguments=['--log-level', 'warn'],
         additional_env={'WEBOTS_CONTROLLER_URL': 'spesbot'},
+    )
+    webots_camera_driver = Node(
+        package='webots_ros2_driver',
+        executable='driver',
+        output='screen',  # debugging
+        emulate_tty=True,  # debugging
+        parameters=[{
+            'robot_description': camera_description,
+            'use_sim_time': True
+        }],
+        ros_arguments=['--log-level', 'warn'],
+        additional_env={'WEBOTS_CONTROLLER_URL': 'camera'}
     )
 
     controller_spawners = []
@@ -77,6 +92,7 @@ def generate_launch_description():
         webots,
         webots._supervisor,
         webots_robot_driver,
+        webots_camera_driver,
         # This action will kill all nodes once the Webots simulation has exited
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(

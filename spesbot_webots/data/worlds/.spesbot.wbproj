@@ -8,4 +8,4 @@ orthographicViewHeight: 1
 textFiles: -1
 globalOptionalRendering: CameraFrustums
 consoles: Console:All:All
-renderingDevicePerspectives: spesbot:camera;1;1;0;0
+renderingDevicePerspectives: spesbot:camera;1;0.142593;0;0

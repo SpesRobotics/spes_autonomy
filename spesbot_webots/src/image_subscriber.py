@@ -12,12 +12,16 @@ class ImageSubscriber(Node):
 
     def image_callback(self, msg):
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg)
+        print("===============")
+        print(cv_image)
+        #cv2.imshow('Image', cv_image)
+        #cv2.waitKey(1)
 
-        cv2.imshow('Image', cv_image)
-        cv2.waitKey(1)
+def main(args=None):
+    rclpy.init(args=args)
+    image_subscriber = ImageSubscriber()
+    rclpy.spin(image_subscriber)
+    rclpy.shutdown()
 
-# def main(args=None):
-#     rclpy.init(args=args)
-#     image_subscriber = ImageSubscriber()
-#     rclpy.spin(image_subscriber)
-#     rclpy.shutdown()
+if __name__ == '__main__':
+    main()
