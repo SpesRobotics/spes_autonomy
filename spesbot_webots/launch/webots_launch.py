@@ -61,8 +61,16 @@ def generate_launch_description():
             'robot_description': camera_description,
             'use_sim_time': True
         }],
-        ros_arguments=['--log-level', 'warn'],
-        additional_env={'WEBOTS_CONTROLLER_URL': 'camera'}
+        ros_arguments=['--log-level', 'warn']
+    )
+
+    webots_camera_subscriber = Node(
+        package='spesbot_webots',
+        executable='image_subscriber.py',
+        output='screen',
+        remappings=[
+            ('/spesbot/camera', 'camera')
+        ]
     )
 
     controller_spawners = []
@@ -93,6 +101,7 @@ def generate_launch_description():
         webots._supervisor,
         webots_robot_driver,
         webots_camera_driver,
+        webots_camera_subscriber,
         # This action will kill all nodes once the Webots simulation has exited
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(

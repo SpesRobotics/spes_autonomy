@@ -22,8 +22,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation 0.017416159142974907 0.9985493219072312 -0.05095026122911754 0.6596391568336978
-  position -3.269555110994423 0.23332793449332043 2.275970432317645
+  orientation -0.002560230166476165 0.9999677354141466 0.007614023390935509 0.6487694945319356
+  position -3.3283694267926864 0.13752112806819772 2.2919304503910594
 }
 TexturedBackground {
 }
@@ -956,6 +956,7 @@ DEF Spesbot Robot {
           locked TRUE
           width 1920
           height 1080
+          far 0.6
         }
         Shape {
           appearance Appearance {
@@ -968,6 +969,7 @@ DEF Spesbot Robot {
           }
         }
       ]
+      name "camera_support"
       boundingObject USE CAMERA_SUPPORT
       physics Physics {
       }
@@ -1107,7 +1109,7 @@ DEF Spesbot Robot {
       ]
       endPoint DEF wheel_left Solid {
         translation 0 -0.18 0
-        rotation 0.9999999999998349 -4.0641701015308036e-07 4.0641850300885793e-07 1.5708000000001652
+        rotation 0.9999999999998349 -4.0641701015308036e-07 4.064185030088579e-07 1.5708000000001652
         children [
           DEF WHEEL_SHAPE Shape {
             appearance Appearance {
@@ -1140,7 +1142,7 @@ DEF Spesbot Robot {
       ]
       endPoint Solid {
         translation 0 0.16 0
-        rotation 0.9999999999998354 -4.0560119912089213e-07 4.0564325127707746e-07 1.5709000000001647
+        rotation 0.9999999999998354 -4.056011991208921e-07 4.056432512770775e-07 1.5709000000001647
         children [
           USE WHEEL_SHAPE
         ]
