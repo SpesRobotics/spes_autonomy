@@ -7,8 +7,14 @@ find_package(ament_cmake REQUIRED)
 
 # resources
 install(
-  DIRECTORY launch resource data src
+  DIRECTORY launch resource data
   DESTINATION share/${PROJECT_NAME}
+)
+
+# Python scripts
+install(PROGRAMS
+  scripts/ros2virtualcam
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_package()

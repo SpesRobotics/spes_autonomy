@@ -50,40 +50,34 @@ def generate_launch_description():
 
     ros2virtualcam = Node(
         package='spesbot_webots',
-        executable='image_subscriber.py',
+        executable='ros2virtualcam',
         output='screen',
         remappings=[
             ('/spesbot/camera', 'camera')
         ]
     )
 
-    controller_spawners = []
-    for controller_name in controller_names:
-        if controller_name in ['update_rate', 'publish_rate']:
-            continue
-        
-        controller_spawners.append(Node(
-            package='controller_manager',
-            executable='spawner',
-            output='screen',
-            emulate_tty=True,
-            arguments=[
-                controller_name,
-                '--controller-manager-timeout',
-                '50',
-                '--controller-manager',
-                'controller_manager',
-            ])
-        )
+    diffdrive_controller_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        output='screen',
+        emulate_tty=True,
+        arguments=[
+            'diffdrive_controller',
+            '--controller-manager-timeout',
+            '50'
+        ]
+    )
     
     return launch.LaunchDescription([
         webots,
         webots._supervisor,
         webots_robot_driver,
+        diffdrive_controller_spawner,
         # ros2virtualcam,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(
             target_action=webots,
             on_exit=[launch.actions.EmitEvent(event=launch.events.Shutdown())],
         ))
-    ] + controller_spawners)
+    ])
