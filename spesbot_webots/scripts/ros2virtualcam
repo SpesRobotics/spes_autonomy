@@ -5,9 +5,12 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
+import numpy as np
+import pyvirtualcam
 
 
 class ImageSubscriber(Node):
+    print("*****")
     def __init__(self):
         super().__init__('image_subscriber')
         self.subscription = self.create_subscription(Image, 'camera', self.image_callback, 10)
@@ -15,10 +18,17 @@ class ImageSubscriber(Node):
 
     def image_callback(self, msg):
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg)
-        print("===============")
-        print(cv_image)
-        #cv2.imshow('Image', cv_image)
-        #cv2.waitKey(1)
+        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGBA2RGB)
+        image = cv2.resize(cv_image, (1280, 720))
+        print(image)
+        with pyvirtualcam.Camera(width=1280, height=720, fps=20, device="/dev/video2") as cam:
+            print(f'Using virtual camera: {cam.device}')
+            print(image.shape)
+            frame = np.zeros((cam.height, cam.width, 3), np.uint8)  # RGB
+            while True:
+                frame[:] = cam.frames_sent % 255  # grayscale animation
+                cam.send(image)
+                cam.sleep_until_next_frame()
 
 def main(args=None):
     rclpy.init(args=args)
