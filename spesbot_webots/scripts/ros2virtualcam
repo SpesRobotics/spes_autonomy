@@ -8,6 +8,8 @@ import cv2
 import numpy as np
 import pyvirtualcam
 
+import time
+
 
 class ImageSubscriber(Node):
     print("*****")
@@ -15,20 +17,21 @@ class ImageSubscriber(Node):
         super().__init__('image_subscriber')
         self.subscription = self.create_subscription(Image, 'camera', self.image_callback, 10)
         self.cv_bridge = CvBridge()
+        self.cam = pyvirtualcam.Camera(width=1280, height=720, fps=20, device="/dev/video2")
 
     def image_callback(self, msg):
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg)
-        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGBA2RGB)
+        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGRA2RGB)
         image = cv2.resize(cv_image, (1280, 720))
-        print(image)
-        with pyvirtualcam.Camera(width=1280, height=720, fps=20, device="/dev/video2") as cam:
-            print(f'Using virtual camera: {cam.device}')
-            print(image.shape)
-            frame = np.zeros((cam.height, cam.width, 3), np.uint8)  # RGB
-            while True:
-                frame[:] = cam.frames_sent % 255  # grayscale animation
-                cam.send(image)
-                cam.sleep_until_next_frame()
+
+        self.get_logger().info(f'My log message {self.cam.device}')
+        
+        #self.get_logger().info(image.shape)
+        frame = np.zeros((self.cam.height, self.cam.width, 3), np.uint8)  # RGB
+        
+        frame[:] = self.cam.frames_sent % 255  # grayscale animation
+        self.cam.send(image)
+        self.cam.sleep_until_next_frame()
 
 def main(args=None):
     rclpy.init(args=args)
