@@ -23,7 +23,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.002560230166476165 0.9999677354141466 0.007614023390935509 0.6487694945319356
-  position -3.3283694267926864 0.13752112806819772 2.2919304503910594
+  position -3.010424791792667 0.13914921416140405 2.050850894843681
 }
 TexturedBackground {
 }
@@ -953,6 +953,7 @@ DEF Spesbot Robot {
       children [
         DEF camera Camera {
           translation 0.01 0 0.11
+          rotation 0 1 0 0.2617996938995747
           locked TRUE
           width 1920
           height 1080
