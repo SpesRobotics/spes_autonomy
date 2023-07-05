@@ -17,14 +17,14 @@ class ImageSubscriber(Node):
         super().__init__('image_subscriber')
         self.subscription = self.create_subscription(Image, 'camera', self.image_callback, 10)
         self.cv_bridge = CvBridge()
-        self.cam = pyvirtualcam.Camera(width=1280, height=720, fps=20, device="/dev/video2")
+        self.cam = pyvirtualcam.Camera(width=640, height=480, fps=20, device="/dev/video2")
 
     def image_callback(self, msg):
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg)
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGRA2RGB)
-        image = cv2.resize(cv_image, (1280, 720))
+        image = cv2.resize(cv_image, (640, 480))
 
-        self.get_logger().info(f'My log message {self.cam.device}')
+        self.get_logger().info(f'Device:2068 {self.cam.device}')
         
         #self.get_logger().info(image.shape)
         frame = np.zeros((self.cam.height, self.cam.width, 3), np.uint8)  # RGB
