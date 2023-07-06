@@ -26,7 +26,6 @@ class ImageSubscriber(Node):
 
         self.get_logger().info(f'Device:2068 {self.cam.device}')
         
-        #self.get_logger().info(image.shape)
         frame = np.zeros((self.cam.height, self.cam.width, 3), np.uint8)  # RGB
         
         frame[:] = self.cam.frames_sent % 255  # grayscale animation

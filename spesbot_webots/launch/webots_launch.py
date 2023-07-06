@@ -26,7 +26,7 @@ def generate_launch_description():
         os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
     
     webots = WebotsLauncher(world=os.path.join(package_dir, 'data',
-                                               'worlds', 'spesbot.wbt'), ros2_supervisor=True)
+                                               'worlds', 'eurobot.wbt'), ros2_supervisor=True)
     webots_robot_driver = Node(
         package='webots_ros2_driver',
         executable='driver',
