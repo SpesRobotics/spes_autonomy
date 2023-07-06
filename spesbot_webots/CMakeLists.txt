@@ -14,6 +14,7 @@ install(
 # Python scripts
 install(PROGRAMS
   scripts/ros2virtualcam
+  scripts/visual_controller
   DESTINATION lib/${PROJECT_NAME}
 )
 

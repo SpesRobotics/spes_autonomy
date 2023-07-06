@@ -23,7 +23,7 @@ class Ros2VirtualCam(Node):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGRA2RGB)
         image = cv2.resize(cv_image, (640, 480))
 
-        self.get_logger().info(f'Device:2068 {self.cam.device}')
+        # self.get_logger().info(f'Device:2068 {self.cam.device}')
         
         frame = np.zeros((self.cam.height, self.cam.width, 3), np.uint8)  # RGB
         

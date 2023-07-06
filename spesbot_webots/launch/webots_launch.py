@@ -47,6 +47,12 @@ def generate_launch_description():
         output='screen',
     )
 
+    virtual_controller = Node(
+        package='spesbot_webots',
+        executable='visual_controller',
+        output='screen',
+    )
+
     diffdrive_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -65,6 +71,7 @@ def generate_launch_description():
         webots_robot_driver,
         diffdrive_controller_spawner,
         ros2virtualcam,
+        virtual_controller,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(
             target_action=webots,
