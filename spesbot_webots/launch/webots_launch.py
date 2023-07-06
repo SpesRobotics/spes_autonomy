@@ -10,18 +10,12 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # HOTFIX: https://github.com/cyberbotics/webots_ros2/issues/567
-    os.environ['LD_LIBRARY_PATH'] += ':/opt/ros/humble/lib/controller'
 
     package_dir = get_package_share_directory('spesbot_webots')
 
     controller_params = os.path.join(get_package_share_directory('spesbot_hardware'),
                              'resource', 'controllers.yaml')
     
-    with open(controller_params, 'r') as f:
-        controller_data = yaml.safe_load(f)
-    controller_names = list(controller_data['controller_manager']['ros__parameters'].keys())
-
     robot_description = pathlib.Path(
         os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
     
@@ -52,9 +46,6 @@ def generate_launch_description():
         package='spesbot_webots',
         executable='ros2virtualcam',
         output='screen',
-        remappings=[
-            ('/spesbot/camera', 'camera')
-        ]
     )
 
     diffdrive_controller_spawner = Node(

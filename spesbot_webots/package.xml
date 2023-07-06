@@ -4,7 +4,7 @@
   <name>spesbot_webots</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="spesbot@todo.todo">spesbot</maintainer>
+  <maintainer email="marijagolubovic16@gmail.com">spesbot</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
