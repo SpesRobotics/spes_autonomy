@@ -36,7 +36,6 @@ def generate_launch_description():
         remappings=[
             ('/diffdrive_controller/cmd_vel_unstamped', 'cmd_vel'),
             ('/diffdrive_controller/odom', 'odom'),
-            ('/spesbot/camera', 'camera')
         ],
         ros_arguments=['--log-level', 'warn'],
         additional_env={'WEBOTS_CONTROLLER_URL': 'spesbot'},

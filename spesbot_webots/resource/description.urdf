@@ -3,10 +3,10 @@
     <webots>
         <plugin type="webots_ros2_control::Ros2Control" />
 
-        <device type="Camera">
+        <device reference="camera" type="Camera">
             <ros>
                 <enabled>true</enabled>
-                <updateRate>1</updateRate>
+                <updateRate>20</updateRate>
                 <topicName>/camera</topicName>
                 <alwaysOn>true</alwaysOn>
                 <frameName>camera0</frameName>
