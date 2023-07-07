@@ -17,7 +17,8 @@ class VisualController(Node):
         self.timer = self.create_timer(0.1, self.udp_callback)
 
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
-        
+        self.current_instance = -1
+        self.can_change_instance = True
     
     def move_robot(self, center_x, center_y, width, height):
         linear_vel = 0.002
@@ -30,23 +31,30 @@ class VisualController(Node):
         twist_msg = Twist()
         if img_center_x - int(center_x) > epsilon_x:
             twist_msg.linear.x = 0.0
-            twist_msg.angular.z = angular_vel * (img_center_x - int(center_x))
+            twist_msg.angular.z = angular_vel * abs(img_center_x - int(center_x))
             self.publisher.publish(twist_msg)
+
         elif  int(center_x) - img_center_x > epsilon_x:
             twist_msg.linear.x = 0.0
-            twist_msg.angular.z = -angular_vel * (img_center_x - int(center_x))
+            twist_msg.angular.z = -angular_vel * abs(img_center_x - int(center_x))
             self.publisher.publish(twist_msg)
             
         elif int(center_y) - img_center_y  < epsilon_y:
-            twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y)
+            twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y) + epsilon_y
             twist_msg.angular.z = 0.0
             self.publisher.publish(twist_msg)
+        if img_center_x - int(center_x) > epsilon_x and int(center_x) - img_center_x > epsilon_x and int(center_y) - img_center_y  < epsilon_y:
+            self.can_change_instance = True
             
 
 
     def udp_callback(self):
         data, addr = self.sock.recvfrom(1024)  # buffer size is 1024 bytes
         unpacked_data = struct.unpack('>HIHHHHBqq', data)
+        if self.can_change_instance == True:
+            self.current_instance = unpacked_data[1]
+            self.is_finish =  False
+
 
         class_ = unpacked_data[0]
         instance = unpacked_data[1]
@@ -64,8 +72,8 @@ class VisualController(Node):
 
         self.get_logger().info(f"class = {class_}, instance = {instance}, center_x = {center_x}, center_y = {center_y}, height = {height}, width = {width}, precision = {precision/100}, timestamp_sec = {formatted_time}")
     
-
-        self.move_robot(center_x, center_y, width, height)
+        if self.current_instance == instance:
+            self.move_robot(center_x, center_y, width, height)
         
 
     
