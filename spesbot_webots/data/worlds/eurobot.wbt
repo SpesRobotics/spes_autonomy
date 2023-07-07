@@ -1103,7 +1103,7 @@ DEF Spesbot Robot {
     DEF LEFT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
         position 8.128370060178053e-07
-        axis 0 -1 0
+        axis 0 1 0
       }
       device [
         DEF LEFT_MOTOR RotationalMotor {
@@ -1136,7 +1136,7 @@ DEF Spesbot Robot {
     DEF RIGHT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
         position 8.112865025542439e-07
-        axis 0 -1 0
+        axis 0 1 0
       }
       device [
         PositionSensor {
