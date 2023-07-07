@@ -27,7 +27,7 @@ namespace spes_move
     void update();
 
   private:
-    void on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg){};
+    void on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg);
 
     bool init_move(const spes_msgs::msg::MoveCommand::SharedPtr msg);
     void init_rotation(double diff_yaw);
@@ -39,10 +39,14 @@ namespace spes_move
     double get_diff_final_orientation(const tf2::Transform& tf_base_target);
     double get_distance(const tf2::Transform &tf_base_target);
 
+    bool update_odom_target_tf();
+
     rclcpp::Node::SharedPtr node_;
     double cycle_frequency_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
+    rclcpp::Subscription<spes_msgs::msg::MoveCommand>::SharedPtr command_sub_;
+
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_;
     std::shared_ptr<nav2_costmap_2d::FootprintCollisionChecker<nav2_costmap_2d::Costmap2D *>> collision_checker_;
@@ -51,9 +55,8 @@ namespace spes_move
     spes_msgs::msg::MoveCommand::SharedPtr default_command_{new spes_msgs::msg::MoveCommand()};
 
     std::string robot_frame_{"base_link"};
+  
     tf2::Transform tf_odom_target_;
-
-    rclcpp::Duration timeout_{0, 0};
     rclcpp::Time end_time_;
 
     rclcpp::Time debouncing_end_;
@@ -75,6 +78,9 @@ namespace spes_move
     ruckig::InputParameter<1> translation_ruckig_input_;
     ruckig::OutputParameter<1> translation_ruckig_output_;
     double translation_last_input_;
+
+    rclcpp::Duration command_timeout_{0, 0};
+    rclcpp::Time last_command_received_;
 
     MoveState state_{MoveState::IDLE};
 

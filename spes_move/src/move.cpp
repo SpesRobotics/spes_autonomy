@@ -5,6 +5,43 @@
 
 namespace spes_move
 {
+  void Move::on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg)
+  {
+    if (state_ == MoveState::IDLE)
+    {
+      init_move(msg);
+      return;
+    }
+
+    update_odom_target_tf();
+  }
+
+  bool Move::update_odom_target_tf()
+  {
+    tf2::Transform tf_global_target;
+    tf_global_target.setOrigin(tf2::Vector3(command_->target.x, command_->target.y, 0.0));
+    tf_global_target.setRotation(tf2::Quaternion(
+        tf2::Vector3(0, 0, 1), command_->target.theta));
+
+    geometry_msgs::msg::PoseStamped tf_global_odom_message;
+    if (!nav2_util::getCurrentPose(
+            tf_global_odom_message, *tf_, command_->global_frame, command_->odom_frame,
+            transform_tolerance_))
+    {
+      RCLCPP_ERROR(node_->get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
+      return false;
+    }
+    tf2::Transform tf_global_odom;
+    tf2::convert(tf_global_odom_message.pose, tf_global_odom);
+    tf_odom_target_ = tf_global_odom.inverse() * tf_global_target;
+
+    // Reset multiturn
+    multiturn_n_ = 0;
+    use_multiturn_ = false;
+    previous_yaw_ = tf2::getYaw(tf_global_target.getRotation());
+    return true;
+  }
+
   bool Move::init_move(const spes_msgs::msg::MoveCommand::SharedPtr command)
   {
     command_ = command;
@@ -43,28 +80,7 @@ namespace spes_move
     if (command_->angular_properties.tolerance == 0.0)
       command_->angular_properties.tolerance = default_command_->angular_properties.tolerance;
 
-    // Target in the global frame
-    tf2::Transform tf_global_target;
-    tf_global_target.setOrigin(tf2::Vector3(command->target.x, command->target.y, 0.0));
-    tf_global_target.setRotation(tf2::Quaternion(
-        tf2::Vector3(0, 0, 1), command->target.theta));
-
-    geometry_msgs::msg::PoseStamped tf_global_odom_message;
-    if (!nav2_util::getCurrentPose(
-            tf_global_odom_message, *tf_, command_->global_frame, command_->odom_frame,
-            transform_tolerance_))
-    {
-      RCLCPP_ERROR(node_->get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
-      return false;
-    }
-    tf2::Transform tf_global_odom;
-    tf2::convert(tf_global_odom_message.pose, tf_global_odom);
-    tf_odom_target_ = tf_global_odom.inverse() * tf_global_target;
-
-    // Reset multiturn
-    multiturn_n_ = 0;
-    use_multiturn_ = false;
-    previous_yaw_ = tf2::getYaw(tf_global_target.getRotation());
+    update_odom_target_tf();
 
     // Kickoff FSM
     lock_tf_odom_base_ = false;
@@ -359,12 +375,20 @@ namespace spes_move
     cycle_frequency_ = cycle_frequency;
 
     cmd_vel_pub_ = node_->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
+    command_sub_ = node_->create_subscription<spes_msgs::msg::MoveCommand>(
+        "move_command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
+
     tf_ =
         std::make_unique<tf2_ros::Buffer>(node->get_clock());
     tf_listener_ =
         std::make_shared<tf2_ros::TransformListener>(*tf_);
 
     // Read parameters
+    double command_timeout;
+    node->declare_parameter("command_timeout", rclcpp::ParameterValue(0.5));
+    node->get_parameter("command_timeout", command_timeout);
+    command_timeout_ = rclcpp::Duration::from_seconds(command_timeout);
+
     double debouncing_duration;
     node->declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.05));
     node->get_parameter("debouncing_duration", debouncing_duration);
