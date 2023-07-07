@@ -20,7 +20,6 @@ class VisualController(Node):
         
     
     def move_robot(self, center_x, center_y):
-        print("********************", center_x, center_y)
         linear_vel = 0.2
         angular_vel = 0.5
         img_center_x = 640/2
@@ -28,7 +27,6 @@ class VisualController(Node):
 
         twist_msg = Twist()
         if img_center_x != int(center_x) or img_center_y != int(center_y):
-            print("=================", int(center_x), int(center_y), type(int(center_x)))
             twist_msg.linear.x = linear_vel
             twist_msg.angular.z = 0.0
             self.publisher.publish(twist_msg)
