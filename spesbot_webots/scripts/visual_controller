@@ -4,6 +4,7 @@ from rclpy.node import Node
 import socket
 import struct
 from datetime import datetime, timedelta
+from geometry_msgs.msg import Twist
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
@@ -14,6 +15,24 @@ class VisualController(Node):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
         self.sock.bind((UDP_IP, UDP_PORT))
         self.timer = self.create_timer(0.1, self.udp_callback)
+
+        self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        
+    
+    def move_robot(self, center_x, center_y):
+        print("********************", center_x, center_y)
+        linear_vel = 0.2
+        angular_vel = 0.5
+        img_center_x = 640/2
+        img_center_y = 480 /2
+
+        twist_msg = Twist()
+        if img_center_x != int(center_x) or img_center_y != int(center_y):
+            print("=================", int(center_x), int(center_y), type(int(center_x)))
+            twist_msg.linear.x = linear_vel
+            twist_msg.angular.z = 0.0
+            self.publisher.publish(twist_msg)
+
 
     def udp_callback(self):
         data, addr = self.sock.recvfrom(1024)  # buffer size is 1024 bytes
@@ -34,11 +53,20 @@ class VisualController(Node):
         formatted_time = dt_with_ns.strftime("%H:%M:%S.%f")[:-3]
 
         self.get_logger().info(f"class = {class_}, instance = {instance}, center_x = {center_x}, center_y = {center_y}, height = {height}, width = {width}, precision = {precision/100}, timestamp_sec = {formatted_time}")
+    
+
+        
+        self.move_robot(center_x, center_y)
+        
+
+    
+
+        
 
 def main(args=None):
     rclpy.init(args=args)
-    udp_ros2_node = VisualController()
-    rclpy.spin(udp_ros2_node)
+    visual_controller = VisualController()
+    rclpy.spin(visual_controller)
     rclpy.shutdown()
 
 if __name__ == '__main__':
