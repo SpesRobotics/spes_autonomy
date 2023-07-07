@@ -185,6 +185,7 @@ namespace spes_move
       }
       else
       {
+        // TODO: Parametrize this threshold
         if (dinstace_to_goal < 0.15)
         {
           // When a robot is very close to the goal we cannot use atan2(diff_y, diff_x) as the goal shifts during the rotation.
@@ -366,6 +367,8 @@ namespace spes_move
     const double d_input = translation_ruckig_output_.new_position[0] - translation_last_input_;
     translation_last_input_ = translation_ruckig_output_.new_position[0];
     cmd_vel->linear.x = command_->linear_properties.kp * error_x - command_->linear_properties.kd * d_input;
+
+    // TODO: Parameterize this + add kd
     cmd_vel->angular.z = diff_y * cmd_vel->linear.x * 1.0;
   }
 
