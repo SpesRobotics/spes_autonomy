@@ -1049,7 +1049,7 @@ DEF Spesbot Robot {
       translation -0.219965 -0.089017 0.03
       rotation 0 0 -1 0.6545063061004254
       children [
-        DEF LEFT Shape {
+        DEF RIGHT Shape {
           appearance Appearance {
             material Material {
               diffuseColor 0.5 0.5 0.5
@@ -1060,8 +1060,8 @@ DEF Spesbot Robot {
           }
         }
       ]
-      name "right"
-      boundingObject USE LEFT
+      name "right_profile"
+      boundingObject USE RIGHT
       physics Physics {
       }
     }
@@ -1100,19 +1100,19 @@ DEF Spesbot Robot {
         }
       ]
     }
-    DEF RIGHT_JOINT HingeJoint {
+    DEF LEFT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
         position 8.128370060178053e-07
         axis 0 -1 0
       }
       device [
-        RotationalMotor {
-          name "right_motor"
+        DEF LEFT_MOTOR RotationalMotor {
+          name "left_motor"
         }
         PositionSensor {
         }
       ]
-      endPoint DEF WHELL_RIGHT Solid {
+      endPoint DEF WHELL_LEFT Solid {
         translation 0 0.16 0
         rotation 0.9999999999998349 -4.0641701015308036e-07 4.064185030088579e-07 1.5708
         children [
@@ -1133,7 +1133,7 @@ DEF Spesbot Robot {
         }
       }
     }
-    DEF LEFT_JOINT HingeJoint {
+    DEF RIGHT_JOINT HingeJoint {
       jointParameters HingeJointParameters {
         position 8.112865025542439e-07
         axis 0 -1 0
@@ -1141,17 +1141,17 @@ DEF Spesbot Robot {
       device [
         PositionSensor {
         }
-        RotationalMotor {
-          name "left_motor"
+        DEF RIGHT_MOTOR RotationalMotor {
+          name "right_motor"
         }
       ]
-      endPoint DEF WHELL_LEFT Solid {
+      endPoint DEF WHELL_RIGHT Solid {
         translation 0 -0.16 0
         rotation 0.9999999999998354 -4.056011991208921e-07 4.056432512770775e-07 1.5709
         children [
           USE WHEEL_SHAPE
         ]
-        name "left_motor"
+        name "right_motor"
         boundingObject USE WHEEL_SHAPE
         physics Physics {
         }
