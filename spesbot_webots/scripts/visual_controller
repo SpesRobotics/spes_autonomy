@@ -19,17 +19,29 @@ class VisualController(Node):
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
         
     
-    def move_robot(self, center_x, center_y):
+    def move_robot(self, center_x, center_y, width, height):
         linear_vel = 0.2
-        angular_vel = 0.5
+        angular_vel = 0.1
         img_center_x = 640/2
         img_center_y = 480 /2
+        epsilon_x = round(width / 4)
+        epsilon_y = round(height / 4)
 
         twist_msg = Twist()
-        if img_center_x != int(center_x) or img_center_y != int(center_y):
+        if img_center_x - int(center_x) > epsilon_x:
+            twist_msg.linear.x = 0.0
+            twist_msg.angular.z = angular_vel
+            self.publisher.publish(twist_msg)
+        elif  int(center_x) - img_center_x > epsilon_x:
+            twist_msg.linear.x = 0.0
+            twist_msg.angular.z = -angular_vel
+            self.publisher.publish(twist_msg)
+            
+        elif int(center_y) - img_center_y  < epsilon_y:
             twist_msg.linear.x = linear_vel
             twist_msg.angular.z = 0.0
             self.publisher.publish(twist_msg)
+            
 
 
     def udp_callback(self):
@@ -53,8 +65,7 @@ class VisualController(Node):
         self.get_logger().info(f"class = {class_}, instance = {instance}, center_x = {center_x}, center_y = {center_y}, height = {height}, width = {width}, precision = {precision/100}, timestamp_sec = {formatted_time}")
     
 
-        
-        self.move_robot(center_x, center_y)
+        self.move_robot(center_x, center_y, width, height)
         
 
     
