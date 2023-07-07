@@ -1,0 +1,6 @@
+uint8 RESULT_SUCCESS = 0
+uint8 RESULT_TIMEOUT = 1
+uint8 RESULT_STUCK = 2
+uint8 RESULT_ERROR = 3
+
+uint8 result
