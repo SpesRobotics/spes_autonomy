@@ -20,8 +20,8 @@ class VisualController(Node):
         
     
     def move_robot(self, center_x, center_y, width, height):
-        linear_vel = 0.2
-        angular_vel = 0.1
+        linear_vel = 0.002
+        angular_vel = 0.0005
         img_center_x = 640/2
         img_center_y = 480 /2
         epsilon_x = round(width / 4)
@@ -30,15 +30,15 @@ class VisualController(Node):
         twist_msg = Twist()
         if img_center_x - int(center_x) > epsilon_x:
             twist_msg.linear.x = 0.0
-            twist_msg.angular.z = angular_vel
+            twist_msg.angular.z = angular_vel * (img_center_x - int(center_x))
             self.publisher.publish(twist_msg)
         elif  int(center_x) - img_center_x > epsilon_x:
             twist_msg.linear.x = 0.0
-            twist_msg.angular.z = -angular_vel
+            twist_msg.angular.z = -angular_vel * (img_center_x - int(center_x))
             self.publisher.publish(twist_msg)
             
         elif int(center_y) - img_center_y  < epsilon_y:
-            twist_msg.linear.x = linear_vel
+            twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y)
             twist_msg.angular.z = 0.0
             self.publisher.publish(twist_msg)
             
