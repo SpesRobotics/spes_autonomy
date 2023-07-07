@@ -20,11 +20,12 @@ namespace spes_move
     REGULATE_ROTATION_AT_GOAL
   };
 
-  class Move
+  class Move : public rclcpp::Node
   {
   public:
-    Move(rclcpp::Node::SharedPtr node, double cycle_frequency);
+    Move(std::string name);
     void update();
+    int get_update_rate() { return update_rate_; };
 
   private:
     void on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg);
@@ -41,8 +42,7 @@ namespace spes_move
 
     bool update_odom_target_tf();
 
-    rclcpp::Node::SharedPtr node_;
-    double cycle_frequency_;
+    int update_rate_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Subscription<spes_msgs::msg::MoveCommand>::SharedPtr command_sub_;

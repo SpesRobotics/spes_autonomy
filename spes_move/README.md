@@ -27,6 +27,7 @@ However, `global` + `odom` frames gives us a flexibility to achieve useful behav
 ```yaml
 move:
     ros__parameters:
+        update_rate: 50
         command_timeout: 0.5
 
         # Can be overridden by the command.

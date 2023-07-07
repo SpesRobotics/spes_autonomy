@@ -14,6 +14,7 @@ add_library(
   move
   SHARED
   src/move.cpp
+  src/move_node.cpp
 )
 ament_target_dependencies(
   move

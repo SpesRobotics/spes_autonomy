@@ -28,7 +28,7 @@ namespace spes_move
             tf_global_odom_message, *tf_, command_->global_frame, command_->odom_frame,
             transform_tolerance_))
     {
-      RCLCPP_ERROR(node_->get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
+      RCLCPP_ERROR(get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
       return false;
     }
     tf2::Transform tf_global_odom;
@@ -50,7 +50,7 @@ namespace spes_move
     command_->odom_frame = command->odom_frame;
     command_->ignore_obstacles = command->ignore_obstacles;
     command_->timeout = command->timeout;
-    end_time_ = command_->timeout + node_->now();
+    end_time_ = command_->timeout + now();
     command_->linear_properties = command->linear_properties;
     command_->angular_properties = command->angular_properties;
 
@@ -99,7 +99,7 @@ namespace spes_move
       state_ = MoveState::INITIALIZE_ROTATION_AT_GOAL;
       return true;
     }
-    RCLCPP_ERROR(node_->get_logger(), "Invalid MoveCommand, at least one of rotate_towards_goal, translate, or rotate_at_goal must be true.");
+    RCLCPP_ERROR(get_logger(), "Invalid MoveCommand, at least one of rotate_towards_goal, translate, or rotate_at_goal must be true.");
     return false;
   }
 
@@ -141,12 +141,12 @@ namespace spes_move
       return;
 
     // Timeout
-    rclcpp::Duration time_remaining = end_time_ - node_->now();
+    rclcpp::Duration time_remaining = end_time_ - now();
     if (time_remaining.seconds() < 0.0 && rclcpp::Duration(command_->timeout).seconds() > 0.0)
     {
       // stopRobot();
       RCLCPP_WARN(
-          node_->get_logger(),
+          get_logger(),
           "Exceeded time allowance before reaching the Move goal - Exiting Move");
       state_ = MoveState::IDLE;
       return;
@@ -158,7 +158,7 @@ namespace spes_move
             tf_odom_base_message, *tf_, command_->odom_frame, robot_frame_,
             transform_tolerance_))
     {
-      RCLCPP_ERROR(node_->get_logger(), "Initial odom_frame -> base frame is not available.");
+      RCLCPP_ERROR(get_logger(), "Initial odom_frame -> base frame is not available.");
       state_ = MoveState::IDLE;
       return;
     }
@@ -204,7 +204,7 @@ namespace spes_move
       regulate_rotation(cmd_vel.get(), diff_yaw);
       if (abs(diff_yaw) < command_->angular_properties.tolerance)
       {
-        if (node_->now() >= debouncing_end_)
+        if (now() >= debouncing_end_)
         {
           // stopRobot();
           lock_tf_odom_base_ = false;
@@ -227,7 +227,7 @@ namespace spes_move
       regulate_translation(cmd_vel.get(), tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
       if (abs(tf_base_target.getOrigin().x()) < command_->linear_properties.tolerance)
       {
-        if (node_->now() >= debouncing_end_)
+        if (now() >= debouncing_end_)
         {
           // stopRobot();
           if (command_->rotate_at_goal)
@@ -261,7 +261,7 @@ namespace spes_move
       regulate_rotation(cmd_vel.get(), final_yaw);
       if (abs(final_yaw) < command_->angular_properties.tolerance)
       {
-        if (node_->now() >= debouncing_end_)
+        if (now() >= debouncing_end_)
         {
           // stopRobot();
           debouncing_reset();
@@ -285,7 +285,7 @@ namespace spes_move
     //           current_pose, *tf_, command_->global_frame, robot_frame_,
     //           transform_tolerance_))
     //   {
-    //     RCLCPP_ERROR(node_->get_logger(), "Current robot pose is not available.");
+    //     RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
     //     state_ = MoveState::IDLE;
     //     return;
     //   }
@@ -301,7 +301,7 @@ namespace spes_move
     //   if (!collision_checker_->isCollisionFree(pose2d))
     //   {
     //     // stopRobot();
-    //     RCLCPP_WARN(node_->get_logger(), "Collision Ahead - Exiting Move");
+    //     RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
     //     state_ = MoveState::IDLE;
     //     return;
     //   }
@@ -315,7 +315,7 @@ namespace spes_move
     if (rotation_ruckig_ != nullptr)
       delete rotation_ruckig_;
 
-    rotation_ruckig_ = new ruckig::Ruckig<1>{1.0 / cycle_frequency_};
+    rotation_ruckig_ = new ruckig::Ruckig<1>{1.0 / update_rate_};
     rotation_ruckig_input_.max_velocity = {command_->angular_properties.max_velocity};
     rotation_ruckig_input_.max_acceleration = {command_->angular_properties.max_acceleration};
     rotation_ruckig_input_.max_jerk = {99999999999.0};
@@ -344,7 +344,7 @@ namespace spes_move
     if (translation_ruckig_ != nullptr)
       delete translation_ruckig_;
 
-    translation_ruckig_ = new ruckig::Ruckig<1>{1.0 / cycle_frequency_};
+    translation_ruckig_ = new ruckig::Ruckig<1>{1.0 / update_rate_};
     translation_ruckig_input_.max_velocity = {command_->linear_properties.max_velocity};
     translation_ruckig_input_.max_acceleration = {command_->linear_properties.max_acceleration};
     translation_ruckig_input_.max_jerk = {99999999999.0};
@@ -369,66 +369,66 @@ namespace spes_move
     cmd_vel->angular.z = diff_y * cmd_vel->linear.x * 1.0;
   }
 
-  Move::Move(rclcpp::Node::SharedPtr node, double cycle_frequency)
+  Move::Move(std::string name) : Node(name)
   {
-    node_ = node;
-    cycle_frequency_ = cycle_frequency;
-
-    cmd_vel_pub_ = node_->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
-    command_sub_ = node_->create_subscription<spes_msgs::msg::MoveCommand>(
+    cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
+    command_sub_ = create_subscription<spes_msgs::msg::MoveCommand>(
         "move_command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
 
     tf_ =
-        std::make_unique<tf2_ros::Buffer>(node->get_clock());
+        std::make_unique<tf2_ros::Buffer>(get_clock());
     tf_listener_ =
         std::make_shared<tf2_ros::TransformListener>(*tf_);
 
     // Read parameters
+    declare_parameter("update_rate", rclcpp::ParameterValue(50));
+    get_parameter("update_rate", update_rate_);
+
     double command_timeout;
-    node->declare_parameter("command_timeout", rclcpp::ParameterValue(0.5));
-    node->get_parameter("command_timeout", command_timeout);
+    declare_parameter("command_timeout", rclcpp::ParameterValue(0.5));
+    get_parameter("command_timeout", command_timeout);
     command_timeout_ = rclcpp::Duration::from_seconds(command_timeout);
 
     double debouncing_duration;
-    node->declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.05));
-    node->get_parameter("debouncing_duration", debouncing_duration);
+    declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.05));
+    get_parameter("debouncing_duration", debouncing_duration);
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
 
     // Linear
-    node->declare_parameter("linear.kp", rclcpp::ParameterValue(15.0));
-    node->get_parameter("linear.kp", default_command_->linear_properties.kp);
+    declare_parameter("linear.kp", rclcpp::ParameterValue(15.0));
+    get_parameter("linear.kp", default_command_->linear_properties.kp);
 
-    node->declare_parameter("linear.kd", rclcpp::ParameterValue(0.0));
-    node->get_parameter("linear.kd", default_command_->linear_properties.kd);
+    declare_parameter("linear.kd", rclcpp::ParameterValue(0.0));
+    get_parameter("linear.kd", default_command_->linear_properties.kd);
 
-    node->declare_parameter("linear.max_velocity", rclcpp::ParameterValue(0.5));
-    node->get_parameter("linear.max_velocity", default_command_->linear_properties.max_velocity);
+    declare_parameter("linear.max_velocity", rclcpp::ParameterValue(0.5));
+    get_parameter("linear.max_velocity", default_command_->linear_properties.max_velocity);
 
-    node->declare_parameter("linear.max_acceleration", rclcpp::ParameterValue(0.5));
-    node->get_parameter("linear.max_acceleration", default_command_->linear_properties.max_acceleration);
+    declare_parameter("linear.max_acceleration", rclcpp::ParameterValue(0.5));
+    get_parameter("linear.max_acceleration", default_command_->linear_properties.max_acceleration);
 
-    node->declare_parameter("linear.tolerance", rclcpp::ParameterValue(0.01));
-    node->get_parameter("linear.tolerance", default_command_->linear_properties.tolerance);
+    declare_parameter("linear.tolerance", rclcpp::ParameterValue(0.01));
+    get_parameter("linear.tolerance", default_command_->linear_properties.tolerance);
 
     // Angular
-    node->declare_parameter("angular.kp", rclcpp::ParameterValue(15.0));
-    node->get_parameter("angular.kp", default_command_->angular_properties.kp);
+    declare_parameter("angular.kp", rclcpp::ParameterValue(15.0));
+    get_parameter("angular.kp", default_command_->angular_properties.kp);
 
-    node->declare_parameter("angular.kd", rclcpp::ParameterValue(0.0));
-    node->get_parameter("angular.kd", default_command_->angular_properties.kd);
+    declare_parameter("angular.kd", rclcpp::ParameterValue(0.0));
+    get_parameter("angular.kd", default_command_->angular_properties.kd);
 
-    node->declare_parameter("angular.max_velocity", rclcpp::ParameterValue(0.5));
-    node->get_parameter("angular.max_velocity", default_command_->angular_properties.max_velocity);
+    declare_parameter("angular.max_velocity", rclcpp::ParameterValue(0.5));
+    get_parameter("angular.max_velocity", default_command_->angular_properties.max_velocity);
 
-    node->declare_parameter("angular.max_acceleration", rclcpp::ParameterValue(0.5));
-    node->get_parameter("angular.max_acceleration", default_command_->angular_properties.max_acceleration);
+    declare_parameter("angular.max_acceleration", rclcpp::ParameterValue(0.5));
+    get_parameter("angular.max_acceleration", default_command_->angular_properties.max_acceleration);
 
-    node->declare_parameter("angular.tolerance", rclcpp::ParameterValue(0.03));
-    node->get_parameter("angular.tolerance", default_command_->angular_properties.tolerance);
+    declare_parameter("angular.tolerance", rclcpp::ParameterValue(0.03));
+    get_parameter("angular.tolerance", default_command_->angular_properties.tolerance);
   }
 
   void Move::debouncing_reset()
   {
-    debouncing_end_ = node_->now() + debouncing_duration_;
+    debouncing_end_ = now() + debouncing_duration_;
   }
 };
