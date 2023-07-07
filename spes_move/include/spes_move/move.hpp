@@ -47,23 +47,14 @@ namespace spes_move
     std::unique_ptr<tf2_ros::Buffer> tf_;
     std::shared_ptr<nav2_costmap_2d::FootprintCollisionChecker<nav2_costmap_2d::Costmap2D *>> collision_checker_;
 
-    spes_msgs::msg::MoveCommand::SharedPtr move_command_;
+    spes_msgs::msg::MoveCommand::SharedPtr command_;
+    spes_msgs::msg::MoveCommand::SharedPtr default_command_{new spes_msgs::msg::MoveCommand()};
 
-    std::string global_frame_;
-    std::string odom_frame_;
     std::string robot_frame_{"base_link"};
     tf2::Transform tf_odom_target_;
-    bool ignore_obstacles_;
-
-    spes_msgs::msg::MoveProperties linear_properties_;
-    spes_msgs::msg::MoveProperties angular_properties_;
-
-    spes_msgs::msg::MoveProperties default_linear_properties_;
-    spes_msgs::msg::MoveProperties default_angular_properties_;
 
     rclcpp::Duration timeout_{0, 0};
     rclcpp::Time end_time_;
-    double simulate_ahead_distance_;
 
     rclcpp::Time debouncing_end_;
     rclcpp::Duration debouncing_duration_{0, 0};
@@ -86,7 +77,6 @@ namespace spes_move
     double translation_last_input_;
 
     MoveState state_{MoveState::IDLE};
-    uint8_t reversing_;
 
     // TODO: Remove
     double transform_tolerance_{0.5};

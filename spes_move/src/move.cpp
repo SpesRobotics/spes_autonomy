@@ -7,42 +7,41 @@ namespace spes_move
 {
   bool Move::init_move(const spes_msgs::msg::MoveCommand::SharedPtr command)
   {
-    move_command_ = command;
+    command_ = command;
 
-    global_frame_ = command->header.frame_id;
-    odom_frame_ = command->odom_frame;
-    ignore_obstacles_ = command->ignore_obstacles;
-    timeout_ = command->timeout;
-    end_time_ = timeout_ + node_->now();
-    linear_properties_ = command->linear_properties;
-    angular_properties_ = command->angular_properties;
-    reversing_ = command->reversing;
+    command_->global_frame = command->global_frame;
+    command_->odom_frame = command->odom_frame;
+    command_->ignore_obstacles = command->ignore_obstacles;
+    command_->timeout = command->timeout;
+    end_time_ = command_->timeout + node_->now();
+    command_->linear_properties = command->linear_properties;
+    command_->angular_properties = command->angular_properties;
 
     // Apply defaults
-    if (global_frame_ == "")
-      global_frame_ = "map";
-    if (odom_frame_ == "")
-      odom_frame_ = "odom";
-    if (linear_properties_.max_velocity == 0.0)
-      linear_properties_.max_velocity = default_linear_properties_.max_velocity;
-    if (linear_properties_.max_acceleration == 0.0)
-      linear_properties_.max_acceleration = default_linear_properties_.max_acceleration;
-    if (linear_properties_.kp == 0.0)
-      linear_properties_.kp = default_linear_properties_.kp;
-    if (linear_properties_.kd == 0.0)
-      linear_properties_.kd = default_linear_properties_.kd;
-    if (linear_properties_.tolerance == 0.0)
-      linear_properties_.tolerance = default_linear_properties_.tolerance;
-    if (angular_properties_.max_velocity == 0.0)
-      angular_properties_.max_velocity = default_angular_properties_.max_velocity;
-    if (angular_properties_.max_acceleration == 0.0)
-      angular_properties_.max_acceleration = default_angular_properties_.max_acceleration;
-    if (angular_properties_.kp == 0.0)
-      angular_properties_.kp = default_angular_properties_.kp;
-    if (angular_properties_.kd == 0.0)
-      angular_properties_.kd = default_angular_properties_.kd;
-    if (angular_properties_.tolerance == 0.0)
-      angular_properties_.tolerance = default_angular_properties_.tolerance;
+    if (command_->global_frame == "")
+      command_->global_frame = "map";
+    if (command_->odom_frame == "")
+      command_->odom_frame = "odom";
+    if (command_->linear_properties.max_velocity == 0.0)
+      command_->linear_properties.max_velocity = default_command_->linear_properties.max_velocity;
+    if (command_->linear_properties.max_acceleration == 0.0)
+      command_->linear_properties.max_acceleration = default_command_->linear_properties.max_acceleration;
+    if (command_->linear_properties.kp == 0.0)
+      command_->linear_properties.kp = default_command_->linear_properties.kp;
+    if (command_->linear_properties.kd == 0.0)
+      command_->linear_properties.kd = default_command_->linear_properties.kd;
+    if (command_->linear_properties.tolerance == 0.0)
+      command_->linear_properties.tolerance = default_command_->linear_properties.tolerance;
+    if (command_->angular_properties.max_velocity == 0.0)
+      command_->angular_properties.max_velocity = default_command_->angular_properties.max_velocity;
+    if (command_->angular_properties.max_acceleration == 0.0)
+      command_->angular_properties.max_acceleration = default_command_->angular_properties.max_acceleration;
+    if (command_->angular_properties.kp == 0.0)
+      command_->angular_properties.kp = default_command_->angular_properties.kp;
+    if (command_->angular_properties.kd == 0.0)
+      command_->angular_properties.kd = default_command_->angular_properties.kd;
+    if (command_->angular_properties.tolerance == 0.0)
+      command_->angular_properties.tolerance = default_command_->angular_properties.tolerance;
 
     // Target in the global frame
     tf2::Transform tf_global_target;
@@ -52,10 +51,10 @@ namespace spes_move
 
     geometry_msgs::msg::PoseStamped tf_global_odom_message;
     if (!nav2_util::getCurrentPose(
-            tf_global_odom_message, *tf_, global_frame_, odom_frame_,
+            tf_global_odom_message, *tf_, command_->global_frame, command_->odom_frame,
             transform_tolerance_))
     {
-      RCLCPP_ERROR(node_->get_logger(), "Initial global_frame -> odom_frame_ is not available.");
+      RCLCPP_ERROR(node_->get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
       return false;
     }
     tf2::Transform tf_global_odom;
@@ -92,7 +91,7 @@ namespace spes_move
 
     // Timeout
     rclcpp::Duration time_remaining = end_time_ - node_->now();
-    if (time_remaining.seconds() < 0.0 && timeout_.seconds() > 0.0)
+    if (time_remaining.seconds() < 0.0 && rclcpp::Duration(command_->timeout).seconds() > 0.0)
     {
       // stopRobot();
       RCLCPP_WARN(
@@ -105,7 +104,7 @@ namespace spes_move
     // Target in the base frame
     geometry_msgs::msg::PoseStamped tf_odom_base_message;
     if (!nav2_util::getCurrentPose(
-            tf_odom_base_message, *tf_, odom_frame_, robot_frame_,
+            tf_odom_base_message, *tf_, command_->odom_frame, robot_frame_,
             transform_tolerance_))
     {
       RCLCPP_ERROR(node_->get_logger(), "Initial odom_frame -> base frame is not available.");
@@ -135,13 +134,13 @@ namespace spes_move
     const double diff_y = tf_base_target.getOrigin().y();
 
     double diff_yaw = 0;
-    if (reversing_ == spes_msgs::msg::MoveCommand::REVERSING_AUTO)
+    if (command_->reversing == spes_msgs::msg::MoveCommand::REVERSING_AUTO)
     {
       const double diff_yaw_back = atan2(-diff_y, -diff_x);
       const double diff_yaw_forward = atan2(diff_y, diff_x);
       diff_yaw = (abs(diff_yaw_back) < abs(diff_yaw_forward)) ? diff_yaw_back : diff_yaw_forward;
     }
-    else if (reversing_ == spes_msgs::msg::MoveCommand::REVERSING_FORCE)
+    else if (command_->reversing == spes_msgs::msg::MoveCommand::REVERSING_FORCE)
     {
       diff_yaw = atan2(-diff_y, -diff_x);
     }
@@ -157,7 +156,7 @@ namespace spes_move
     case MoveState::INITIALIZE_ROTATION_TOWARDS_GOAL:
     {
       const double dinstace_to_goal = sqrt(diff_x * diff_x + diff_y * diff_y);
-      if (dinstace_to_goal < linear_properties_.tolerance)
+      if (dinstace_to_goal < command_->linear_properties.tolerance)
       {
         // In case we are already at the goal we skip rotation towards the goal and translation.
         state_ = MoveState::INITIALIZE_ROTATION_AT_GOAL;
@@ -178,7 +177,7 @@ namespace spes_move
     break;
     case MoveState::REGULATE_ROTATION_TOWARDS_GOAL:
       regulate_rotation(cmd_vel.get(), diff_yaw);
-      if (abs(diff_yaw) < angular_properties_.tolerance)
+      if (abs(diff_yaw) < command_->angular_properties.tolerance)
       {
         if (node_->now() >= debouncing_end_)
         {
@@ -199,12 +198,12 @@ namespace spes_move
       break;
     case MoveState::REGULATE_TRANSLATION:
       regulate_translation(cmd_vel.get(), diff_x, diff_y);
-      if (abs(diff_x) < linear_properties_.tolerance)
+      if (abs(diff_x) < command_->linear_properties.tolerance)
       {
         if (node_->now() >= debouncing_end_)
         {
           // stopRobot();
-          if (move_command_->rotate_at_goal) {
+          if (command_->rotate_at_goal) {
             state_ = MoveState::INITIALIZE_ROTATION_AT_GOAL;
             debouncing_reset();
           } else {
@@ -225,7 +224,7 @@ namespace spes_move
       break;
     case MoveState::REGULATE_ROTATION_AT_GOAL:
       regulate_rotation(cmd_vel.get(), final_yaw);
-      if (abs(final_yaw) < angular_properties_.tolerance)
+      if (abs(final_yaw) < command_->angular_properties.tolerance)
       {
         if (node_->now() >= debouncing_end_)
         {
@@ -243,11 +242,11 @@ namespace spes_move
     }
 
     // Stop if there is a collision
-    // if (!ignore_obstacles_)
+    // if (!command_->ignore_obstacles)
     // {
     //   geometry_msgs::msg::PoseStamped current_pose;
     //   if (!nav2_util::getCurrentPose(
-    //           current_pose, *tf_, global_frame_, robot_frame_,
+    //           current_pose, *tf_, command_->global_frame, robot_frame_,
     //           transform_tolerance_))
     //   {
     //     RCLCPP_ERROR(node_->get_logger(), "Current robot pose is not available.");
@@ -281,8 +280,8 @@ namespace spes_move
       delete rotation_ruckig_;
 
     rotation_ruckig_ = new ruckig::Ruckig<1>{1.0 / cycle_frequency_};
-    rotation_ruckig_input_.max_velocity = {angular_properties_.max_velocity};
-    rotation_ruckig_input_.max_acceleration = {angular_properties_.max_acceleration};
+    rotation_ruckig_input_.max_velocity = {command_->angular_properties.max_velocity};
+    rotation_ruckig_input_.max_acceleration = {command_->angular_properties.max_acceleration};
     rotation_ruckig_input_.max_jerk = {99999999999.0};
     rotation_ruckig_input_.target_position = {0};
     rotation_ruckig_input_.current_position = {diff_yaw};
@@ -301,7 +300,7 @@ namespace spes_move
     const double error_yaw = diff_yaw - rotation_ruckig_output_.new_position[0];
     const double d_input = rotation_ruckig_output_.new_position[0] - rotation_last_input_;
     rotation_last_input_ = rotation_ruckig_output_.new_position[0];
-    cmd_vel->angular.z = angular_properties_.kp * error_yaw - angular_properties_.kd * d_input;
+    cmd_vel->angular.z = command_->angular_properties.kp * error_yaw - command_->angular_properties.kd * d_input;
   }
 
   void Move::init_translation(double diff_x, double diff_y)
@@ -310,8 +309,8 @@ namespace spes_move
       delete translation_ruckig_;
 
     translation_ruckig_ = new ruckig::Ruckig<1>{1.0 / cycle_frequency_};
-    translation_ruckig_input_.max_velocity = {linear_properties_.max_velocity};
-    translation_ruckig_input_.max_acceleration = {linear_properties_.max_acceleration};
+    translation_ruckig_input_.max_velocity = {command_->linear_properties.max_velocity};
+    translation_ruckig_input_.max_acceleration = {command_->linear_properties.max_acceleration};
     translation_ruckig_input_.max_jerk = {99999999999.0};
     translation_ruckig_input_.target_position = {0};
     translation_ruckig_input_.current_position = {diff_x};
@@ -330,7 +329,7 @@ namespace spes_move
     const double error_x = diff_x - translation_ruckig_output_.new_position[0];
     const double d_input = translation_ruckig_output_.new_position[0] - translation_last_input_;
     translation_last_input_ = translation_ruckig_output_.new_position[0];
-    cmd_vel->linear.x = linear_properties_.kp * error_x - linear_properties_.kd * d_input;
+    cmd_vel->linear.x = command_->linear_properties.kp * error_x - command_->linear_properties.kd * d_input;
     cmd_vel->angular.z = diff_y * cmd_vel->linear.x * 1.0;
   }
 
@@ -345,9 +344,7 @@ namespace spes_move
     tf_listener_ =
       std::make_shared<tf2_ros::TransformListener>(*tf_);
 
-    node->declare_parameter("simulate_ahead_distance", rclcpp::ParameterValue(0.2));
-    node->get_parameter("simulate_ahead_distance", simulate_ahead_distance_);
-
+    // Read parameters
     double debouncing_duration;
     node->declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.05));
     node->get_parameter("debouncing_duration", debouncing_duration);
@@ -355,35 +352,35 @@ namespace spes_move
 
     // Linear
     node->declare_parameter("linear.kp", rclcpp::ParameterValue(15.0));
-    node->get_parameter("linear.kp", default_linear_properties_.kp);
+    node->get_parameter("linear.kp", default_command_->linear_properties.kp);
 
     node->declare_parameter("linear.kd", rclcpp::ParameterValue(0.0));
-    node->get_parameter("linear.kd", default_linear_properties_.kd);
+    node->get_parameter("linear.kd", default_command_->linear_properties.kd);
 
     node->declare_parameter("linear.max_velocity", rclcpp::ParameterValue(0.5));
-    node->get_parameter("linear.max_velocity", default_linear_properties_.max_velocity);
+    node->get_parameter("linear.max_velocity", default_command_->linear_properties.max_velocity);
 
     node->declare_parameter("linear.max_acceleration", rclcpp::ParameterValue(0.5));
-    node->get_parameter("linear.max_acceleration", default_linear_properties_.max_acceleration);
+    node->get_parameter("linear.max_acceleration", default_command_->linear_properties.max_acceleration);
 
     node->declare_parameter("linear.tolerance", rclcpp::ParameterValue(0.01));
-    node->get_parameter("linear.tolerance", default_linear_properties_.tolerance);
+    node->get_parameter("linear.tolerance", default_command_->linear_properties.tolerance);
 
     // Angular
     node->declare_parameter("angular.kp", rclcpp::ParameterValue(15.0));
-    node->get_parameter("angular.kp", default_angular_properties_.kp);
+    node->get_parameter("angular.kp", default_command_->angular_properties.kp);
 
     node->declare_parameter("angular.kd", rclcpp::ParameterValue(0.0));
-    node->get_parameter("angular.kd", default_angular_properties_.kd);
+    node->get_parameter("angular.kd", default_command_->angular_properties.kd);
 
     node->declare_parameter("angular.max_velocity", rclcpp::ParameterValue(0.5));
-    node->get_parameter("angular.max_velocity", default_angular_properties_.max_velocity);
+    node->get_parameter("angular.max_velocity", default_command_->angular_properties.max_velocity);
 
     node->declare_parameter("angular.max_acceleration", rclcpp::ParameterValue(0.5));
-    node->get_parameter("angular.max_acceleration", default_angular_properties_.max_acceleration);
+    node->get_parameter("angular.max_acceleration", default_command_->angular_properties.max_acceleration);
 
     node->declare_parameter("angular.tolerance", rclcpp::ParameterValue(0.03));
-    node->get_parameter("angular.tolerance", default_angular_properties_.tolerance);
+    node->get_parameter("angular.tolerance", default_command_->angular_properties.tolerance);
   }
 
   void Move::debouncing_reset()
