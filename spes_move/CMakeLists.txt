@@ -10,9 +10,8 @@ find_package(geometry_msgs REQUIRED)
 find_package(ruckig REQUIRED)
 find_package(spes_msgs REQUIRED)
 
-add_library(
+add_executable(
   move
-  SHARED
   src/move.cpp
   src/move_node.cpp
 )
