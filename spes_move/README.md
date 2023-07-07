@@ -21,3 +21,25 @@ However, `global` + `odom` frames gives us a flexibility to achieve useful behav
 - If `global` = `base_link` and `odom` = `odom` then the robot moves relative to its current pose.
 - If `global` = `marker_1` (a fiducial marker) and `odom` = `marker_1` then the robot moves to the marker pose (e.g. to pick the object). 
 - However, if the robot loses the `marker_1` from its sight then we can set the following `global` = `marker_1` and `odom` = `odom`.
+
+## Configuration
+
+```yaml
+move:
+    ros__parameters:
+        command_timeout: 0.5
+
+        # Can be overridden by the command.
+        linear:
+            kp: 0.5
+            kd: 0.0
+            max_velocity: 0.5
+            max_acceleration: 0.5
+            tolerance: 0.1
+        angular:
+            kp: 0.5
+            kd: 0.0
+            max_velocity: 0.5
+            max_acceleration: 0.5
+            tolerance: 0.1
+```
