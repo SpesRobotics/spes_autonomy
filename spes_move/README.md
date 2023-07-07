@@ -2,7 +2,7 @@
 
 > Based on [`mep3_navigation::MoveBehavior`](https://github.com/memristor/mep3/edit/main/mep3_navigation/src/move_behavior/README.md).
 
-Provides primitive but flexible robot motion behavior.
+Primitive but flexible move behavior for visual navigation and industrial mobile robots.
 
 ## Frames
 
