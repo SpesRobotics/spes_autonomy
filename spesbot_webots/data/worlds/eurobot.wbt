@@ -1020,6 +1020,7 @@ DEF Spesbot Robot {
           }
         }
       ]
+      name "central_wheel_solid"
       boundingObject USE WHEEL_SUPORT
       physics Physics {
       }
@@ -1039,11 +1040,12 @@ DEF Spesbot Robot {
           }
         }
       ]
+      name "center"
       boundingObject USE CENTER
       physics Physics {
       }
     }
-    DEF left Solid {
+    DEF right Solid {
       translation -0.219965 -0.089017 0.03
       rotation 0 0 -1 0.6545063061004254
       children [
@@ -1058,11 +1060,12 @@ DEF Spesbot Robot {
           }
         }
       ]
+      name "right"
       boundingObject USE LEFT
       physics Physics {
       }
     }
-    DEF right Solid {
+    DEF left Solid {
       translation -0.219957 0.0890142 0.03
       rotation 0 0 -1 -0.654506
       children [
@@ -1077,6 +1080,7 @@ DEF Spesbot Robot {
           }
         }
       ]
+      name "left"
       boundingObject USE RIGHT
       physics Physics {
       }
@@ -1096,21 +1100,21 @@ DEF Spesbot Robot {
         }
       ]
     }
-    DEF left HingeJoint {
+    DEF right HingeJoint {
       jointParameters HingeJointParameters {
         position 8.128370060178053e-07
         axis 0 -1 0
       }
       device [
         RotationalMotor {
-          name "left_motor"
+          name "right_motor"
         }
         PositionSensor {
         }
       ]
-      endPoint DEF wheel_left Solid {
-        translation 0 -0.18 0
-        rotation 0.9999999999998349 -4.0641701015308036e-07 4.064185030088579e-07 1.5708000000001652
+      endPoint DEF wheel_right Solid {
+        translation 0 0.16 0
+        rotation 0.9999999999998349 -4.0641701015308036e-07 4.064185030088579e-07 1.5708
         children [
           DEF WHEEL_SHAPE Shape {
             appearance Appearance {
@@ -1129,7 +1133,7 @@ DEF Spesbot Robot {
         }
       }
     }
-    DEF right HingeJoint {
+    DEF left HingeJoint {
       jointParameters HingeJointParameters {
         position 8.112865025542439e-07
         axis 0 -1 0
@@ -1138,12 +1142,12 @@ DEF Spesbot Robot {
         PositionSensor {
         }
         RotationalMotor {
-          name "right_motor"
+          name "left_motor"
         }
       ]
-      endPoint Solid {
-        translation 0 0.16 0
-        rotation 0.9999999999998354 -4.056011991208921e-07 4.056432512770775e-07 1.5709000000001647
+      endPoint DEF left Solid {
+        translation 0 -0.16 0
+        rotation 0.9999999999998354 -4.056011991208921e-07 4.056432512770775e-07 1.5709
         children [
           USE WHEEL_SHAPE
         ]
