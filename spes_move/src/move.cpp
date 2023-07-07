@@ -68,20 +68,55 @@ namespace spes_move
 
     // Kickoff FSM
     lock_tf_odom_base_ = false;
-    if (command->rotate_towards_goal) {
+    if (command->rotate_towards_goal)
+    {
       state_ = MoveState::INITIALIZE_ROTATION_TOWARDS_GOAL;
       return true;
     }
-    if (command->translate) {
+    if (command->translate)
+    {
       state_ = MoveState::INITIALIZE_TRANSLATION;
       return true;
     }
-    if (command->rotate_at_goal) {
+    if (command->rotate_at_goal)
+    {
       state_ = MoveState::INITIALIZE_ROTATION_AT_GOAL;
       return true;
     }
     RCLCPP_ERROR(node_->get_logger(), "Invalid MoveCommand, at least one of rotate_towards_goal, translate, or rotate_at_goal must be true.");
     return false;
+  }
+
+  double Move::get_diff_final_orientation(const tf2::Transform &tf_base_target)
+  {
+    const double final_yaw_raw = tf2::getYaw(tf_base_target.getRotation());
+    if (use_multiturn_)
+    {
+      if (final_yaw_raw - previous_yaw_ > M_PI)
+        multiturn_n_--;
+      else if (final_yaw_raw - previous_yaw_ < -M_PI)
+        multiturn_n_++;
+    }
+    previous_yaw_ = final_yaw_raw;
+    return final_yaw_raw + multiturn_n_ * 2 * M_PI;
+  }
+
+  double Move::get_diff_heading(const tf2::Transform &tf_base_target)
+  {
+    if (command_->reversing == spes_msgs::msg::MoveCommand::REVERSING_AUTO)
+    {
+      const double diff_yaw_back = atan2(-tf_base_target.getOrigin().y(), -tf_base_target.getOrigin().x());
+      const double diff_yaw_forward = atan2(tf_base_target.getOrigin().y(), tf_base_target.getOrigin().x());
+      return (abs(diff_yaw_back) < abs(diff_yaw_forward)) ? diff_yaw_back : diff_yaw_forward;
+    }
+    if (command_->reversing == spes_msgs::msg::MoveCommand::REVERSING_FORCE)
+      return atan2(-tf_base_target.getOrigin().y(), -tf_base_target.getOrigin().x());
+    return atan2(tf_base_target.getOrigin().y(), tf_base_target.getOrigin().x());
+  }
+
+  double Move::get_distance(const tf2::Transform &tf_base_target)
+  {
+    return sqrt(tf_base_target.getOrigin().x() * tf_base_target.getOrigin().x() + tf_base_target.getOrigin().y() * tf_base_target.getOrigin().y());
   }
 
   void Move::update()
@@ -120,42 +155,13 @@ namespace spes_move
     }
     const tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
 
-    const double final_yaw_raw = tf2::getYaw(tf_base_target.getRotation());
-    if (use_multiturn_)
-    {
-      if (final_yaw_raw - previous_yaw_ > M_PI)
-        multiturn_n_--;
-      else if (final_yaw_raw - previous_yaw_ < -M_PI)
-        multiturn_n_++;
-    }
-    previous_yaw_ = final_yaw_raw;
-    const double final_yaw = final_yaw_raw + multiturn_n_ * 2 * M_PI;
-    const double diff_x = tf_base_target.getOrigin().x();
-    const double diff_y = tf_base_target.getOrigin().y();
-
-    double diff_yaw = 0;
-    if (command_->reversing == spes_msgs::msg::MoveCommand::REVERSING_AUTO)
-    {
-      const double diff_yaw_back = atan2(-diff_y, -diff_x);
-      const double diff_yaw_forward = atan2(diff_y, diff_x);
-      diff_yaw = (abs(diff_yaw_back) < abs(diff_yaw_forward)) ? diff_yaw_back : diff_yaw_forward;
-    }
-    else if (command_->reversing == spes_msgs::msg::MoveCommand::REVERSING_FORCE)
-    {
-      diff_yaw = atan2(-diff_y, -diff_x);
-    }
-    else
-    {
-      diff_yaw = atan2(diff_y, diff_x);
-    }
-
     // FSM
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
     switch (state_)
     {
     case MoveState::INITIALIZE_ROTATION_TOWARDS_GOAL:
     {
-      const double dinstace_to_goal = sqrt(diff_x * diff_x + diff_y * diff_y);
+      const double dinstace_to_goal = get_distance(tf_base_target);
       if (dinstace_to_goal < command_->linear_properties.tolerance)
       {
         // In case we are already at the goal we skip rotation towards the goal and translation.
@@ -165,10 +171,11 @@ namespace spes_move
       {
         if (dinstace_to_goal < 0.15)
         {
-          // When a robot is very close to the goal we cannot use atan2(diff_y, diff_x) as the goal shits during the rotation.
+          // When a robot is very close to the goal we cannot use atan2(diff_y, diff_x) as the goal shifts during the rotation.
           lock_tf_odom_base_ = true;
           locked_tf_odom_base_ = tf_odom_base;
         }
+        const double diff_yaw = get_diff_heading(tf_base_target);
         init_rotation(diff_yaw);
         regulate_rotation(cmd_vel.get(), diff_yaw);
         state_ = MoveState::REGULATE_ROTATION_TOWARDS_GOAL;
@@ -176,6 +183,8 @@ namespace spes_move
     }
     break;
     case MoveState::REGULATE_ROTATION_TOWARDS_GOAL:
+    {
+      const double diff_yaw = get_diff_heading(tf_base_target);
       regulate_rotation(cmd_vel.get(), diff_yaw);
       if (abs(diff_yaw) < command_->angular_properties.tolerance)
       {
@@ -191,22 +200,27 @@ namespace spes_move
       {
         debouncing_reset();
       }
-      break;
+    }
+    break;
     case MoveState::INITIALIZE_TRANSLATION:
-      init_translation(diff_x, diff_y);
+      init_translation(tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
+      regulate_translation(cmd_vel.get(), tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
       state_ = MoveState::REGULATE_TRANSLATION;
       break;
     case MoveState::REGULATE_TRANSLATION:
-      regulate_translation(cmd_vel.get(), diff_x, diff_y);
-      if (abs(diff_x) < command_->linear_properties.tolerance)
+      regulate_translation(cmd_vel.get(), tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
+      if (abs(tf_base_target.getOrigin().x()) < command_->linear_properties.tolerance)
       {
         if (node_->now() >= debouncing_end_)
         {
           // stopRobot();
-          if (command_->rotate_at_goal) {
+          if (command_->rotate_at_goal)
+          {
             state_ = MoveState::INITIALIZE_ROTATION_AT_GOAL;
             debouncing_reset();
-          } else {
+          }
+          else
+          {
             state_ = MoveState::IDLE;
             return;
           }
@@ -218,11 +232,16 @@ namespace spes_move
       }
       break;
     case MoveState::INITIALIZE_ROTATION_AT_GOAL:
+    {
+      const double final_yaw = get_diff_final_orientation(tf_base_target);
       init_rotation(final_yaw);
       regulate_rotation(cmd_vel.get(), final_yaw);
       state_ = MoveState::REGULATE_ROTATION_AT_GOAL;
-      break;
+    }
+    break;
     case MoveState::REGULATE_ROTATION_AT_GOAL:
+    {
+      const double final_yaw = get_diff_final_orientation(tf_base_target);
       regulate_rotation(cmd_vel.get(), final_yaw);
       if (abs(final_yaw) < command_->angular_properties.tolerance)
       {
@@ -238,7 +257,8 @@ namespace spes_move
       {
         debouncing_reset();
       }
-      break;
+    }
+    break;
     }
 
     // Stop if there is a collision
@@ -340,9 +360,9 @@ namespace spes_move
 
     cmd_vel_pub_ = node_->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     tf_ =
-      std::make_unique<tf2_ros::Buffer>(node->get_clock());
+        std::make_unique<tf2_ros::Buffer>(node->get_clock());
     tf_listener_ =
-      std::make_shared<tf2_ros::TransformListener>(*tf_);
+        std::make_shared<tf2_ros::TransformListener>(*tf_);
 
     // Read parameters
     double debouncing_duration;

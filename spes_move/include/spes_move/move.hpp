@@ -39,6 +39,10 @@ namespace spes_move
     void init_translation(double diff_x, double diff_y);
     void regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y);
 
+    double get_diff_heading(const tf2::Transform &tf_base_target);
+    double get_diff_final_orientation(const tf2::Transform& tf_base_target);
+    double get_distance(const tf2::Transform &tf_base_target);
+
     rclcpp::Node::SharedPtr node_;
     double cycle_frequency_;
 
