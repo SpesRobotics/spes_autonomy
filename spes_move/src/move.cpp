@@ -395,23 +395,23 @@ namespace spes_move
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
 
     // Linear
-    declare_parameter("linear.kp", rclcpp::ParameterValue(15.0));
+    declare_parameter("linear.kp", rclcpp::ParameterValue(0.3));
     get_parameter("linear.kp", default_command_->linear_properties.kp);
 
     declare_parameter("linear.kd", rclcpp::ParameterValue(0.0));
     get_parameter("linear.kd", default_command_->linear_properties.kd);
 
-    declare_parameter("linear.max_velocity", rclcpp::ParameterValue(0.5));
+    declare_parameter("linear.max_velocity", rclcpp::ParameterValue(0.1));
     get_parameter("linear.max_velocity", default_command_->linear_properties.max_velocity);
 
-    declare_parameter("linear.max_acceleration", rclcpp::ParameterValue(0.5));
+    declare_parameter("linear.max_acceleration", rclcpp::ParameterValue(1.5));
     get_parameter("linear.max_acceleration", default_command_->linear_properties.max_acceleration);
 
     declare_parameter("linear.tolerance", rclcpp::ParameterValue(0.01));
     get_parameter("linear.tolerance", default_command_->linear_properties.tolerance);
 
     // Angular
-    declare_parameter("angular.kp", rclcpp::ParameterValue(15.0));
+    declare_parameter("angular.kp", rclcpp::ParameterValue(1.0));
     get_parameter("angular.kp", default_command_->angular_properties.kp);
 
     declare_parameter("angular.kd", rclcpp::ParameterValue(0.0));

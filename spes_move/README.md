@@ -44,3 +44,20 @@ move:
             max_acceleration: 0.5
             tolerance: 0.1
 ```
+
+## Examples
+
+Move forward and stop:
+```bash
+ros2 topic pub -1 /move_command spes_msgs/msg/MoveCommand '{ "global_frame": "base_link", "odom_frame": "odom", "target": { "x": 0.2 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
+```
+
+Keep moving forward:
+```bash
+ros2 topic pub -r1 /move_command spes_msgs/msg/MoveCommand '{ "global_frame": "base_link", "odom_frame": "odom", "target": { "x": 0.5 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
+```
+
+Rotate in place:
+```bash
+ros2 topic pub -1 /move_command spes_msgs/msg/MoveCommand '{ "global_frame": "base_link", "odom_frame": "odom", "target": { "theta": 1.507 }, "rotate_towards_goal": false, "translate": false }'
+```
