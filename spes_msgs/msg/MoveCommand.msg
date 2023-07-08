@@ -2,7 +2,7 @@ uint8 REVERSING_NO = 0
 uint8 REVERSING_AUTO = 1
 uint8 REVERSING_FORCE = 2
 
-string global_frame
+std_msgs/Header header
 string odom_frame
 
 geometry_msgs/Pose2D target

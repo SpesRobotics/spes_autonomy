@@ -26,7 +26,7 @@ namespace spes_move
     geometry_msgs::msg::TransformStamped tf_global_odom_message;
     try
     {
-      tf_global_odom_message = tf_->lookupTransform(command_->global_frame, command_->odom_frame, tf2::TimePointZero);
+      tf_global_odom_message = tf_->lookupTransform(command_->header.frame_id, command_->odom_frame, command_->header.stamp);
     }
     catch (const tf2::TransformException &ex)
     {
@@ -48,18 +48,11 @@ namespace spes_move
   bool Move::init_move(const spes_msgs::msg::MoveCommand::SharedPtr command)
   {
     command_ = command;
-
-    command_->global_frame = command->global_frame;
-    command_->odom_frame = command->odom_frame;
-    command_->ignore_obstacles = command->ignore_obstacles;
-    command_->timeout = command->timeout;
     end_time_ = command_->timeout + now();
-    command_->linear_properties = command->linear_properties;
-    command_->angular_properties = command->angular_properties;
 
     // Apply defaults
-    if (command_->global_frame == "")
-      command_->global_frame = "map";
+    if (command_->header.frame_id == "")
+      command_->header.frame_id = "map";
     if (command_->odom_frame == "")
       command_->odom_frame = "odom";
     if (command_->linear_properties.max_velocity == 0.0)
@@ -286,7 +279,7 @@ namespace spes_move
     // {
     //   geometry_msgs::msg::PoseStamped current_pose;
     //   if (!nav2_util::getCurrentPose(
-    //           current_pose, *tf_, command_->global_frame, robot_frame_,
+    //           current_pose, *tf_, command_->header.frame_id, robot_frame_,
     //           transform_tolerance_))
     //   {
     //     RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
