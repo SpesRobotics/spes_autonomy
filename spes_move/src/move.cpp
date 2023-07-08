@@ -23,16 +23,19 @@ namespace spes_move
     tf_global_target.setRotation(tf2::Quaternion(
         tf2::Vector3(0, 0, 1), command_->target.theta));
 
-    geometry_msgs::msg::PoseStamped tf_global_odom_message;
-    if (!nav2_util::getCurrentPose(
-            tf_global_odom_message, *tf_, command_->global_frame, command_->odom_frame,
-            transform_tolerance_))
+    geometry_msgs::msg::TransformStamped tf_global_odom_message;
+    try
+    {
+      tf_global_odom_message = tf_->lookupTransform(command_->global_frame, command_->odom_frame, tf2::TimePointZero);
+    }
+    catch (const tf2::TransformException &ex)
     {
       RCLCPP_ERROR(get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
       return false;
     }
+
     tf2::Transform tf_global_odom;
-    tf2::convert(tf_global_odom_message.pose, tf_global_odom);
+    tf2::convert(tf_global_odom_message.transform, tf_global_odom);
     tf_odom_target_ = tf_global_odom.inverse() * tf_global_target;
 
     // Reset multiturn

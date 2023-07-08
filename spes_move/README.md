@@ -1,8 +1,29 @@
-# Move Behavior
+# Move
 
 > Based on [`mep3_navigation::MoveBehavior`](https://github.com/memristor/mep3/edit/main/mep3_navigation/src/move_behavior/README.md).
 
 Primitive but flexible move behavior for visual navigation and industrial mobile robots.
+
+Main features:
+- **Accurate position control.** Implements the distance-angle controller.
+- **Motion generation.** Define maximum velocity, acceleration, and jerk.
+- **Frame transformations.** Define target frame and robot moving frame.
+- **Position based servoing.** Stream position commands and the robot will follow it.
+- **Latency compensation.** Utilizes odometry + TF buffer to compensate for the latency. 
+- **Debouncing.** Regulates position until the robot completely stops.
+- **Obstacle detection (WIP).** Integrates Nav2 costmaps to detect obstacles on a simulated path.
+
+Published topics:
+- `cmd_vel` (geometry_msgs/msg/Twist): velocity commands.
+- `~/status` (spes_msgs/msg/MoveStatus): move status (WIP).
+
+Subscribed topics:
+- `~/command` (spes_msgs/msg/MoveCommand): position commands.
+- `/tf` (tf2_msgs/msg/TFMessage): TF2 transforms.
+- `/costmap` (optional, nav2_msgs/msg/Costmap): costmap updates (WIP).
+
+Action servers:
+- `~/move` (spes_msgs/action/Move): move to the target pose (WIP).
 
 ## Frames
 
@@ -24,6 +45,7 @@ However, `global` + `odom` frames gives us a flexibility to achieve useful behav
 
 ## Configuration
 
+Find a configuration example below:
 ```yaml
 move:
     ros__parameters:
@@ -47,17 +69,26 @@ move:
 
 ## Examples
 
-Move forward and stop:
+Some ideas on how to utilize the move behavior.
+
+> Make sure to the `move` as `ros2 run spes_move move` before executing the examples.`;
+
+Move 20cm forward and stop:
 ```bash
 ros2 topic pub -1 /move_command spes_msgs/msg/MoveCommand '{ "global_frame": "base_link", "odom_frame": "odom", "target": { "x": 0.2 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
 ```
 
-Keep moving forward:
+Keep moving forward until canceled:
 ```bash
 ros2 topic pub -r1 /move_command spes_msgs/msg/MoveCommand '{ "global_frame": "base_link", "odom_frame": "odom", "target": { "x": 0.5 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
 ```
 
-Rotate in place:
+Rotate in place for 90 degrees:
 ```bash
 ros2 topic pub -1 /move_command spes_msgs/msg/MoveCommand '{ "global_frame": "base_link", "odom_frame": "odom", "target": { "theta": 1.507 }, "rotate_towards_goal": false, "translate": false }'
+```
+
+Move to pose (-0.5, -0.5):
+```bash
+ros2 topic pub -r10 /move_command spes_msgs/msg/MoveCommand '{ "global_frame": "odom", "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
 ```
