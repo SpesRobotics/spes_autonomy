@@ -2,7 +2,7 @@
 
 > Based on [`mep3_navigation::MoveBehavior`](https://github.com/memristor/mep3/edit/main/mep3_navigation/src/move_behavior/README.md).
 
-Primitive but flexible move behavior for visual navigation and industrial mobile robots.
+Local navigation. Low-level mobile robot motion package for short distances (e.g. up to 1m). Designed for applications such as visual positioning, docking, inplace rotation, and odometry calibration.
 
 Main features:
 - **Accurate position control.** Implements the distance-angle controller.
