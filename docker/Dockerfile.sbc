@@ -29,6 +29,12 @@ RUN apt-get update && apt-get install -y \
     ros-humble-v4l2-camera \
     ros-humble-xacro
 
+RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
+    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/SpesRobotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
+    cd /${DOCKERUSER}/ros2_libs_ws && \
+    . /opt/ros/humble/setup.sh && \
+    colcon build --symlink-install
+
 COPY cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
@@ -36,7 +42,6 @@ ENV DOCKERUSER=${DOCKERUSER}
 
 USER ${DOCKERUSER}
 RUN pip3 install odrive==0.5.4 fibre
-
 
 COPY bashrc /tmp/bashrc
 RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
