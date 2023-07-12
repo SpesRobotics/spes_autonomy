@@ -90,5 +90,5 @@ ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_i
 
 Move to pose (-0.5, -0.5):
 ```bash
-ros2 topic pub -r10 move/command spes_msgs/msg/MoveCommand '{ "global_frame": "odom", "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
+ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
 ```

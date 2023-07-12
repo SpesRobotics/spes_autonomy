@@ -240,6 +240,8 @@ namespace spes_move
     if (state_ == spes_msgs::msg::MoveState::IDLE)
       return;
 
+    uint8_t previous_state = state_;
+
     // Timeout
     rclcpp::Duration time_remaining = end_time_ - now();
     if (time_remaining.seconds() < 0.0 && rclcpp::Duration(command_->timeout).seconds() > 0.0)
@@ -323,8 +325,9 @@ namespace spes_move
     state_msg.distance_xy = get_distance(tf_base_target);
     state_msg.distance_x = tf_base_target.getOrigin().x();
     state_msg.distance_yaw = get_diff_final_orientation(tf_base_target);
+    state_pub_->publish(state_msg);
 
-    previous_state_ = state_;
+    previous_state_ = previous_state;
   }
 
   void Move::init_rotation(double diff_yaw)
