@@ -1,6 +1,6 @@
 UID:=$(shell id -u)
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-NVIDIA_GPU:=$(shell docker info | grep Runtimes | grep nvidia 1> /dev/null && echo '--runtime nvidia --gpus all' || echo '')
+NVIDIA_GPU:=$(shell docker info | grep Runtimes | grep nvidia 1> /dev/null && nvidia-smi 1> /dev/null && echo '--runtime nvidia --gpus all' || echo '')
 DOCKERUSER:=spesbot
 BASENAME:=spesbot
 DOCKERUSERCOMMENT:="SpesBot (Spes Robotics)"
