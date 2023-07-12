@@ -1,0 +1,32 @@
+#VRML_SIM R2023a utf8
+# template language: javascript
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "Walls.proto"
+
+PROTO StaticObjects [
+]
+{
+Group {
+  children [
+    Floor {
+      name "table"
+      contactMaterial "floor"
+      size 2 3
+      tileSize 2 3
+      appearance PBRAppearance {
+        baseColorMap ImageTexture {
+          url [
+            "../worlds/assets/table.png"
+          ]
+          repeatS FALSE
+          repeatT FALSE
+        }
+        roughness 1
+        metalness 0
+      }
+    }
+    Walls {}
+  ]
+}
+}

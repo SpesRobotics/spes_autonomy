@@ -21,13 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
     ros-humble-rqt-common-plugins \
     ros-humble-teleop-twist-keyboard \
     ros-humble-webots-ros2 \
+    ros-humble-ros2-controllers \
+    ros-humble-ros2-control \
     nano \
     alsa \
     libxshmfence1 \
     libgtk-3-dev \ 
     libopencv-dev \
     software-properties-common \
-    vim
+    vim \
+    python3-pip
 
 # Webots
 RUN curl -L -o /tmp/webots.deb \
@@ -57,4 +60,6 @@ COPY bashrc /tmp/bashrc
 RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
 
 USER ${DOCKERUSER}
+
+RUN  pip3 install --user pyvirtualcam
 WORKDIR /${DOCKERUSER}/ros2_ws
