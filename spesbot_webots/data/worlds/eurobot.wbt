@@ -1,0 +1,1164 @@
+#VRML_SIM R2023a utf8
+
+EXTERNPROTO "../protos/StaticObjects.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+
+WorldInfo {
+  basicTimeStep 10
+  contactProperties [
+    ContactProperties {
+      material1 "floor"
+      material2 "wheel"
+      coulombFriction [
+        100
+      ]
+    }
+    ContactProperties {
+      coulombFriction [
+        0.1
+      ]
+    }
+  ]
+}
+Viewpoint {
+  orientation 0.0018144819595219974 0.9998827059672045 -0.015207957223750882 0.23752759937415197
+  position -4.455950629044988 0.09547833832012066 1.1718550959662606
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+  luminosity 0.7
+}
+StaticObjects {
+}
+Solid {
+  translation -0.775 0.925 0.029687737499999995
+  rotation -0.0930623219795723 0.0824128450138715 0.9922436833784783 1.1352662536329338e-16
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.00995
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/pink.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "pink_back_left_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 0.4 0.6
+  ]
+}
+Solid {
+  translation -0.775 0.725 0.029687737499999995
+  rotation -0.04438512211279005 0.11224285758804195 -0.99268902575555 6.729363122612101e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.02995
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/yellow.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "yellow_back_left_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 1 0.2
+  ]
+}
+Solid {
+  translation -0.275 0.375 0.029687737499999995
+  rotation -0.04401169584724097 -0.12902227456811044 0.990664536204825 6.204030359309764e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/brown.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "brown_back_left_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    0.2 0.1 0
+  ]
+}
+Solid {
+  translation 0.775 0.925 0.029687737499999995
+  rotation -0.0930623219795723 0.0824128450138715 0.9922436833784783 1.1352662536329338e-16
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/pink.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "pink_back_right_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 0.4 0.6
+  ]
+}
+Solid {
+  translation 0.775 0.725 0.029687737499999995
+  rotation -0.04438512211279005 0.11224285758804195 -0.99268902575555 6.729363122612101e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/yellow.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "yellow_back_right_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 1 0.2
+  ]
+}
+Solid {
+  translation 0.275 -0.375 0.029687737499999995
+  rotation -0.11852357141657618 -0.0591996692577568 0.9911849283450752 2.9411064867967826e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/brown.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "brown_back_right_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    0.2 0.1 0
+  ]
+}
+Solid {
+  translation 0.275 0.375 0.029687737499999995
+  rotation -0.2637566036512876 -0.03166648901902674 0.9640693374978512 2.9741043550392473e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/brown.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "brown_front_right_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    0.2 0.1 0
+  ]
+}
+Solid {
+  translation -0.775 -0.925 0.029687737499999995
+  rotation -0.08074915907255555 0.06452522831274753 0.9946436890767782 1.128460127380254e-16
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/pink.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "pink_front_left_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 0.4 0.6
+  ]
+}
+Solid {
+  translation -0.775 -0.725 0.029687737499999995
+  rotation -0.0012005609746290854 0.14077583939654706 -0.9900407676937065 6.761387555167195e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/yellow.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "yellow_front_left_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 1 0.2
+  ]
+}
+Solid {
+  translation -0.275 -0.375 0.029687737499999995
+  rotation -0.04401169584724097 -0.12902227456811044 0.990664536204825 6.204030359309764e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/brown.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "brown_front_left_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    0.2 0.1 0
+  ]
+}
+Solid {
+  translation 0.775 -0.925 0.029687737499999995
+  rotation -0.08074915907255555 0.06452522831274753 0.9946436890767782 1.128460127380254e-16
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/pink.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.0304
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "pink_front_right_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 0.4 0.6
+  ]
+}
+Solid {
+  translation 0.775 -0.725 0.029687737499999995
+  rotation -0.0012005609746290854 0.14077583939654706 -0.9900407676937065 6.761387555167195e-17
+  children [
+    Shape {
+      appearance DEF CAKE_APPEARANCE PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry Cylinder {
+        height 0.0594
+        radius 0.06
+      }
+    }
+    Transform {
+      translation 0 0 0.0304
+      children [
+        Connector {
+          translation 0 0 0.0075
+          rotation 0 1 0 -1.5708
+          name "top"
+          type "passive"
+          numberOfRotations 0
+        }
+        DEF CAKE_SHAPE Shape {
+          appearance PBRAppearance {
+            baseColorMap ImageTexture {
+              url [
+                "assets/cakes/yellow.png"
+              ]
+              repeatS FALSE
+              repeatT FALSE
+              filtering 1
+            }
+            roughness 1
+            metalness 0
+          }
+          geometry Cylinder {
+            height 0.0001
+            radius 0.06
+          }
+        }
+      ]
+    }
+    Transform {
+      translation 0 0 -0.00995
+      children [
+        Connector {
+          rotation 0 1 0 1.5708
+          name "bottom"
+          type "passive"
+          numberOfRotations 0
+        }
+        USE CAKE_SHAPE
+      ]
+    }
+  ]
+  name "yellow_front_right_top"
+  boundingObject Group {
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.0594
+          radius 0.06
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.1
+  }
+  recognitionColors [
+    1 1 0.2
+  ]
+}
+DEF Spesbot Robot {
+  translation 0.1824807003756751 -0.06437675837899388 0.08449936394725384
+  rotation -1.26828e-17 3.74278e-18 -1 1.0472
+  children [
+    DEF CAMERA_SUPPORT Solid {
+      translation 0 0 0.1
+      children [
+        DEF camera Camera {
+          translation 0.01 0 0.11
+          rotation 0 1 0 0.2617996938995747
+          locked TRUE
+          width 1920
+          height 1080
+          far 0.6
+        }
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry DEF CAMERA_SUPPORT Box {
+            size 0.02 0.05 0.2
+          }
+        }
+      ]
+      name "camera_support"
+      boundingObject USE CAMERA_SUPPORT
+      physics Physics {
+      }
+    }
+    DEF CENTRAL_WHEEL Solid {
+      translation -0.28 -3.44968e-07 -0.02
+      rotation 0 0 1 3.14159
+      children [
+        DEF wheel_suport Solid {
+          translation -0.0010778898115112734 3.647104313117544e-05 -0.0051394172830611096
+          rotation -0.010125424020987739 0.9999349777505068 0.005245575229558288 0.05571206851003739
+          children [
+            Solid {
+              translation 0 0 -0.04
+              children [
+                DEF sphere Shape {
+                  appearance Appearance {
+                    material Material {
+                      diffuseColor 0.1 0.1 0.1
+                    }
+                  }
+                  geometry Sphere {
+                    radius 0.02
+                  }
+                }
+              ]
+              boundingObject USE sphere
+              physics Physics {
+              }
+            }
+            DEF WHEEL_SUPORT Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 0.5 0.5 0.5
+                }
+              }
+              geometry Box {
+                size 0.01 0.015 0.11
+              }
+            }
+          ]
+          name "wheel_suport"
+          boundingObject USE WHEEL_SUPORT
+          physics Physics {
+          }
+        }
+      ]
+      name "central_wheel_solid"
+      physics Physics {
+      }
+    }
+    DEF CENTRAL_PROFILE Solid {
+      translation -0.275 -0.000495055 0.03
+      rotation 0 0 1 -1.5708053071795867
+      children [
+        DEF CENTER Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.095 0.02 0.02
+          }
+        }
+      ]
+      name "center"
+      boundingObject USE CENTER
+      physics Physics {
+      }
+    }
+    DEF RIGHT_PROFILE Solid {
+      translation -0.219965 -0.089017 0.03
+      rotation 0 0 -1 0.6545063061004254
+      children [
+        DEF RIGHT Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.15 0.02 0.02
+          }
+        }
+      ]
+      name "right_profile"
+      boundingObject USE RIGHT
+      physics Physics {
+      }
+    }
+    DEF LEFT_PROFILE Solid {
+      translation -0.219957 0.0890142 0.03
+      rotation 0 0 -1 -0.654506
+      children [
+        DEF RIGHT Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.15 0.02 0.02
+          }
+        }
+      ]
+      name "left"
+      boundingObject USE RIGHT
+      physics Physics {
+      }
+    }
+    DEF BASE_BODY Transform {
+      translation 0 0 0.03
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.33 0.29 0.02
+          }
+        }
+      ]
+    }
+    DEF LEFT_JOINT HingeJoint {
+      jointParameters HingeJointParameters {
+        position 8.128370060178053e-07
+        axis 0 1 0
+      }
+      device [
+        DEF LEFT_MOTOR RotationalMotor {
+          name "left_motor"
+        }
+        PositionSensor {
+        }
+      ]
+      endPoint DEF WHELL_LEFT Solid {
+        translation 0 0.16 0
+        rotation 0.9999999999998349 -4.0641701015308036e-07 4.064185030088579e-07 1.5708
+        children [
+          DEF WHEEL_SHAPE Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0.1 0.1 0.1
+              }
+            }
+            geometry Cylinder {
+              height 0.03
+              radius 0.085
+            }
+          }
+        ]
+        boundingObject USE WHEEL_SHAPE
+        physics Physics {
+        }
+      }
+    }
+    DEF RIGHT_JOINT HingeJoint {
+      jointParameters HingeJointParameters {
+        position 8.112865025542439e-07
+        axis 0 1 0
+      }
+      device [
+        PositionSensor {
+        }
+        DEF RIGHT_MOTOR RotationalMotor {
+          name "right_motor"
+        }
+      ]
+      endPoint DEF WHELL_RIGHT Solid {
+        translation 0 -0.16 0
+        rotation 0.9999999999998354 -4.056011991208921e-07 4.056432512770775e-07 1.5709
+        children [
+          USE WHEEL_SHAPE
+        ]
+        name "right_motor"
+        boundingObject USE WHEEL_SHAPE
+        physics Physics {
+        }
+      }
+    }
+  ]
+  name "spesbot"
+  boundingObject USE BASE_BODY
+  physics Physics {
+  }
+  controller "<extern>"
+  supervisor TRUE
+}
