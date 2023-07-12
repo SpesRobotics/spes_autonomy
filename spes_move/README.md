@@ -15,7 +15,7 @@ Main features:
 
 Published topics:
 - `cmd_vel` (geometry_msgs/msg/Twist): velocity commands.
-- `~/status` (spes_msgs/msg/MoveStatus): move status (WIP).
+- `~/state` (spes_msgs/msg/MoveState): move status.
 
 Subscribed topics:
 - `~/command` (spes_msgs/msg/MoveCommand): position commands.
