@@ -4,22 +4,12 @@
 #include "nav2_behaviors/timed_behavior.hpp"
 #include "spes_msgs/msg/move_command.hpp"
 #include "spes_msgs/msg/move_properties.hpp"
+#include "spes_msgs/msg/move_state.hpp"
 #include "ruckig/ruckig.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace spes_move
 {
-  enum MoveState
-  {
-    IDLE,
-    INITIALIZE_ROTATION_TOWARDS_GOAL,
-    REGULATE_ROTATION_TOWARDS_GOAL,
-    INITIALIZE_TRANSLATION,
-    REGULATE_TRANSLATION,
-    INITIALIZE_ROTATION_AT_GOAL,
-    REGULATE_ROTATION_AT_GOAL
-  };
-
   class Move : public rclcpp::Node
   {
   public:
@@ -36,6 +26,11 @@ namespace spes_move
     void init_translation(double diff_x, double diff_y);
     void regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y);
 
+    void state_rotating_towards_goal(const tf2::Transform &tf_base_target, const tf2::Transform &tf_odom_base, geometry_msgs::msg::Twist *cmd_vel);
+    void state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel);
+    void state_rotating_at_goal(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel);
+    void state_stopping();
+
     double get_diff_heading(const tf2::Transform &tf_base_target);
     double get_diff_final_orientation(const tf2::Transform& tf_base_target);
     double get_distance(const tf2::Transform &tf_base_target);
@@ -46,6 +41,7 @@ namespace spes_move
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Subscription<spes_msgs::msg::MoveCommand>::SharedPtr command_sub_;
+    rclcpp::Publisher<spes_msgs::msg::MoveState>::SharedPtr state_pub_;
 
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_;
@@ -82,7 +78,8 @@ namespace spes_move
     rclcpp::Duration command_timeout_{0, 0};
     rclcpp::Time last_command_received_;
 
-    MoveState state_{MoveState::IDLE};
+    uint8_t state_{spes_msgs::msg::MoveState::IDLE};
+    uint8_t previous_state_{spes_msgs::msg::MoveState::IDLE};
 
     // TODO: Remove
     double transform_tolerance_{0.5};

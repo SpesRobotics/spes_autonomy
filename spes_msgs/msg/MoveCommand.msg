@@ -16,3 +16,6 @@ uint8 reversing
 bool rotate_towards_goal true
 bool translate true
 bool rotate_at_goal true
+
+# TODO
+float64 translate_yaw_error_tolerance
