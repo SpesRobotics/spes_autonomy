@@ -337,16 +337,15 @@ namespace spes_move
     rotation_ruckig_output_.new_velocity = {0.0};
     rotation_ruckig_output_.new_acceleration = {0.0};
     rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
-    rotation_last_input_ = rotation_ruckig_output_.new_position[0];
   }
 
   void Move::regulate_rotation(geometry_msgs::msg::Twist *cmd_vel, double diff_yaw)
   {
+    const double previous_input = rotation_ruckig_input_.target_position[0];
     if (rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_) != ruckig::Finished)
       rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
     const double error_yaw = diff_yaw - rotation_ruckig_output_.new_position[0];
-    const double d_input = rotation_ruckig_output_.new_position[0] - rotation_last_input_;
-    rotation_last_input_ = rotation_ruckig_output_.new_position[0];
+    const double d_input = rotation_ruckig_output_.new_position[0] - previous_input;
     cmd_vel->angular.z = command_->angular_properties.kp * error_yaw - command_->angular_properties.kd * d_input;
   }
 
@@ -366,16 +365,15 @@ namespace spes_move
     translation_ruckig_output_.new_velocity = {0.0};
     translation_ruckig_output_.new_acceleration = {0.0};
     translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
-    translation_last_input_ = translation_ruckig_output_.new_position[0];
   }
 
   void Move::regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y)
   {
+    const double previous_input = translation_ruckig_input_.target_position[0];
     if (translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_) != ruckig::Finished)
       translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
     const double error_x = diff_x - translation_ruckig_output_.new_position[0];
-    const double d_input = translation_ruckig_output_.new_position[0] - translation_last_input_;
-    translation_last_input_ = translation_ruckig_output_.new_position[0];
+    const double d_input = translation_ruckig_output_.new_position[0] - previous_input;
     cmd_vel->linear.x = command_->linear_properties.kp * error_x - command_->linear_properties.kd * d_input;
 
     // TODO: Parameterize this + add kd
