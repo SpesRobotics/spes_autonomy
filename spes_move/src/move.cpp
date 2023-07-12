@@ -168,21 +168,16 @@ namespace spes_move
         state_ = spes_msgs::msg::MoveState::TRANSLATING;
         debouncing_reset();
       }
+      return;
     }
-    else
-    {
-      debouncing_reset();
-    }
+    debouncing_reset();
   }
 
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
   {
     const bool should_init = (state_ != previous_state_);
-
     if (should_init)
-    {
       init_translation(tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
-    }
 
     regulate_translation(cmd_vel, tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
     if (abs(tf_base_target.getOrigin().x()) < command_->linear_properties.tolerance)
@@ -201,11 +196,9 @@ namespace spes_move
           return;
         }
       }
+      return;
     }
-    else
-    {
-      debouncing_reset();
-    }
+    debouncing_reset();
   }
 
   void Move::state_rotating_at_goal(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
@@ -214,9 +207,7 @@ namespace spes_move
     const double final_yaw = get_diff_final_orientation(tf_base_target);
 
     if (should_init)
-    {
       init_rotation(final_yaw);
-    }
 
     regulate_rotation(cmd_vel, final_yaw);
     if (abs(final_yaw) < command_->angular_properties.tolerance)
@@ -226,21 +217,21 @@ namespace spes_move
         // stopRobot();
         debouncing_reset();
         state_ = spes_msgs::msg::MoveState::IDLE;
-        return;
       }
+      return;
     }
-    else
-    {
-      debouncing_reset();
-    }
+    debouncing_reset();
   }
 
   void Move::update()
   {
     if (state_ == spes_msgs::msg::MoveState::IDLE)
+    {
+      previous_state_ = state_;
       return;
+    }
 
-    uint8_t previous_state = state_;
+    const uint8_t previous_state = state_;
 
     // Timeout
     rclcpp::Duration time_remaining = end_time_ - now();

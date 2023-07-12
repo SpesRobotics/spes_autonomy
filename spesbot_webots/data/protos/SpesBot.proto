@@ -1,0 +1,226 @@
+#VRML_SIM R2023a utf8
+# template language: javascript
+PROTO SpesBot [
+  field SFVec3f    translation  0 0 0
+  field SFRotation rotation     0 1 0 0
+]
+{
+Robot {
+  translation IS translation
+  rotation IS rotation
+  children [
+    DEF CAMERA_SUPPORT Solid {
+      translation 0 0 0.1
+      children [
+        DEF camera Camera {
+          translation 0.01 0 0.11
+          rotation 0 1 0 0.2617996938995747
+          locked TRUE
+          width 1920
+          height 1080
+          far 0.6
+        }
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry DEF CAMERA_SUPPORT Box {
+            size 0.02 0.05 0.2
+          }
+        }
+      ]
+      name "camera_support"
+      boundingObject USE CAMERA_SUPPORT
+      physics Physics {
+      }
+    }
+    DEF CENTRAL_WHEEL Solid {
+      translation -0.28 -3.44968e-07 -0.02
+      rotation 0 0 1 3.14159
+      children [
+        DEF wheel_suport Solid {
+          translation -0.0010778898115112734 3.647104313117544e-05 -0.0051394172830611096
+          rotation -0.010125424020987739 0.9999349777505068 0.005245575229558288 0.05571206851003739
+          children [
+            Solid {
+              translation 0 0 -0.04
+              children [
+                DEF sphere Shape {
+                  appearance Appearance {
+                    material Material {
+                      diffuseColor 0.1 0.1 0.1
+                    }
+                  }
+                  geometry Sphere {
+                    radius 0.02
+                  }
+                }
+              ]
+              boundingObject USE sphere
+              physics Physics {
+              }
+            }
+            DEF WHEEL_SUPORT Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 0.5 0.5 0.5
+                }
+              }
+              geometry Box {
+                size 0.01 0.015 0.11
+              }
+            }
+          ]
+          name "wheel_suport"
+          boundingObject USE WHEEL_SUPORT
+          physics Physics {
+          }
+        }
+      ]
+      name "central_wheel_solid"
+      physics Physics {
+      }
+    }
+    DEF CENTRAL_PROFILE Solid {
+      translation -0.275 -0.000495055 0.03
+      rotation 0 0 1 -1.5708053071795867
+      children [
+        DEF CENTER Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.095 0.02 0.02
+          }
+        }
+      ]
+      name "center"
+      boundingObject USE CENTER
+      physics Physics {
+      }
+    }
+    DEF RIGHT_PROFILE Solid {
+      translation -0.219965 -0.089017 0.03
+      rotation 0 0 -1 0.6545063061004254
+      children [
+        DEF RIGHT Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.15 0.02 0.02
+          }
+        }
+      ]
+      name "right_profile"
+      boundingObject USE RIGHT
+      physics Physics {
+      }
+    }
+    DEF LEFT_PROFILE Solid {
+      translation -0.219957 0.0890142 0.03
+      rotation 0 0 -1 -0.654506
+      children [
+        DEF RIGHT Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.15 0.02 0.02
+          }
+        }
+      ]
+      name "left"
+      boundingObject USE RIGHT
+      physics Physics {
+      }
+    }
+    DEF BASE_BODY Transform {
+      translation 0 0 0.03
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 0.5 0.5 0.5
+            }
+          }
+          geometry Box {
+            size 0.33 0.29 0.02
+          }
+        }
+      ]
+    }
+    DEF LEFT_JOINT HingeJoint {
+      jointParameters HingeJointParameters {
+        position 8.128370060178053e-07
+        axis 0 1 0
+      }
+      device [
+        DEF LEFT_MOTOR RotationalMotor {
+          name "left_motor"
+        }
+        PositionSensor {
+        }
+      ]
+      endPoint DEF WHELL_LEFT Solid {
+        translation 0 0.16 0
+        rotation 0.9999999999998349 -4.0641701015308036e-07 4.064185030088579e-07 1.5708
+        children [
+          DEF WHEEL_SHAPE Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0.1 0.1 0.1
+              }
+            }
+            geometry Cylinder {
+              height 0.03
+              radius 0.085
+            }
+          }
+        ]
+        boundingObject USE WHEEL_SHAPE
+        physics Physics {
+        }
+      }
+    }
+    DEF RIGHT_JOINT HingeJoint {
+      jointParameters HingeJointParameters {
+        position 8.112865025542439e-07
+        axis 0 1 0
+      }
+      device [
+        PositionSensor {
+        }
+        DEF RIGHT_MOTOR RotationalMotor {
+          name "right_motor"
+        }
+      ]
+      endPoint DEF WHELL_RIGHT Solid {
+        translation 0 -0.16 0
+        rotation 0.9999999999998354 -4.056011991208921e-07 4.056432512770775e-07 1.5709
+        children [
+          USE WHEEL_SHAPE
+        ]
+        name "right_motor"
+        boundingObject USE WHEEL_SHAPE
+        physics Physics {
+        }
+      }
+    }
+  ]
+  name "spesbot"
+  boundingObject USE BASE_BODY
+  physics Physics {
+  }
+  controller "<extern>"
+  supervisor TRUE
+}
+}
