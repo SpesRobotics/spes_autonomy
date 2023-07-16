@@ -37,6 +37,7 @@ namespace spes_move
     tf2::Transform tf_global_odom;
     tf2::convert(tf_global_odom_message.transform, tf_global_odom);
     tf_odom_target_ = tf_global_odom.inverse() * tf_global_target;
+    target_updated_ = true;
 
     // Reset multiturn
     multiturn_n_ = 0;
@@ -333,20 +334,27 @@ namespace spes_move
     rotation_ruckig_input_.target_position = {0};
     rotation_ruckig_input_.current_position = {diff_yaw};
     rotation_ruckig_input_.control_interface = ruckig::ControlInterface::Position;
-    rotation_ruckig_output_.new_position = {diff_yaw};
-    rotation_ruckig_output_.new_velocity = {0.0};
-    rotation_ruckig_output_.new_acceleration = {0.0};
-    rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
+    rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_);
+
+    last_error_yaw_ = 0;
   }
 
   void Move::regulate_rotation(geometry_msgs::msg::Twist *cmd_vel, double diff_yaw)
   {
-    const double previous_input = rotation_ruckig_input_.target_position[0];
-    if (rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_) != ruckig::Finished)
-      rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
-    const double error_yaw = diff_yaw - rotation_ruckig_output_.new_position[0];
+    if (target_updated_) {
+      // TODO: This will produce minor jitter when a goal is updated.
+      rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
+      target_updated_ = false;
+    }
+
+    const double previous_input = rotation_ruckig_output_.new_position[0];
+    const bool is_trajectory_finished = (rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_) == ruckig::Finished);
+    last_error_yaw_ = diff_yaw - rotation_ruckig_output_.new_position[0];
     const double d_input = rotation_ruckig_output_.new_position[0] - previous_input;
-    cmd_vel->angular.z = command_->angular_properties.kp * error_yaw - command_->angular_properties.kd * d_input;
+    cmd_vel->angular.z = command_->angular_properties.kp * last_error_yaw_ - command_->angular_properties.kd * d_input;
+  
+    if (!is_trajectory_finished)
+      rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
   }
 
   void Move::init_translation(double diff_x, double diff_y)
@@ -361,23 +369,31 @@ namespace spes_move
     translation_ruckig_input_.target_position = {0};
     translation_ruckig_input_.current_position = {diff_x};
     translation_ruckig_input_.control_interface = ruckig::ControlInterface::Position;
-    translation_ruckig_output_.new_position = {diff_x};
-    translation_ruckig_output_.new_velocity = {0.0};
-    translation_ruckig_output_.new_acceleration = {0.0};
-    translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
+    translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_);
+
+    last_error_x_ = 0;
+    last_error_y_ = 0;
   }
 
   void Move::regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y)
   {
-    const double previous_input = translation_ruckig_input_.target_position[0];
-    if (translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_) != ruckig::Finished)
-      translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
-    const double error_x = diff_x - translation_ruckig_output_.new_position[0];
+    if (target_updated_) {
+      // TODO: This will produce minor jitter when a goal is updated.
+      translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
+      target_updated_ = false;
+    }
+
+    const double previous_input = translation_ruckig_output_.new_position[0];
+    const bool is_trajectory_finished = (translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_) == ruckig::Finished);
+    last_error_x_ = diff_x - translation_ruckig_output_.new_position[0];
     const double d_input = translation_ruckig_output_.new_position[0] - previous_input;
-    cmd_vel->linear.x = command_->linear_properties.kp * error_x - command_->linear_properties.kd * d_input;
+    cmd_vel->linear.x = command_->linear_properties.kp * last_error_x_ - command_->linear_properties.kd * d_input;
 
     // TODO: Parameterize this + add kd
     cmd_vel->angular.z = diff_y * cmd_vel->linear.x * 1.0;
+
+    if (!is_trajectory_finished)
+      translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
   }
 
   Move::Move(std::string name) : Node(name)
@@ -407,7 +423,7 @@ namespace spes_move
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
 
     // Linear
-    declare_parameter("linear.kp", rclcpp::ParameterValue(0.3));
+    declare_parameter("linear.kp", rclcpp::ParameterValue(3.0));
     get_parameter("linear.kp", default_command_->linear_properties.kp);
 
     declare_parameter("linear.kd", rclcpp::ParameterValue(0.0));

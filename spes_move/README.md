@@ -12,6 +12,7 @@ Main features:
 - **Latency compensation.** Utilizes odometry + TF buffer to compensate for the latency. 
 - **Debouncing.** Regulates position until the robot completely stops.
 - **Obstacle detection (WIP).** Integrates Nav2 costmaps to detect obstacles on a simulated path.
+- **Stuck detection. (WIP)** Implements a robust stuck detection algorithm.
 
 Published topics:
 - `cmd_vel` (geometry_msgs/msg/Twist): velocity commands.
