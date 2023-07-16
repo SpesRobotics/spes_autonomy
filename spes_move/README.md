@@ -68,7 +68,7 @@ move:
             tolerance: 0.1
 ```
 
-## Examples
+## Command Examples
 
 Some ideas on how to utilize the move behavior.
 
@@ -92,4 +92,11 @@ ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_i
 Move to pose (-0.5, -0.5):
 ```bash
 ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
+```
+
+## Usage Examples
+
+Follow a red ball with 300ms+ latency:
+```bash
+ros2 launch spesbot_webots test_latency_compensation_launch.py
 ```
