@@ -47,7 +47,7 @@ class Move(Node):
                 time.sleep(0.3)
 
                 move_command = MoveCommand()
-                move_command.target.theta = -error_x * 0.3
+                move_command.target.theta = -error_x * 0.4
                 move_command.rotate_towards_goal = False
                 move_command.translate = False
                 

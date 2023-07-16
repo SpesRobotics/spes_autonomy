@@ -270,8 +270,6 @@ namespace spes_move
     }
     const tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
 
-    RCLCPP_INFO(get_logger(), "Current state: %lf", get_diff_final_orientation(tf_base_target));
-
     // FSM
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
     switch (state_)

@@ -24,12 +24,12 @@ diffdrive_controller:
     linear.x.min_velocity: -0.5
     linear.x.max_velocity: 0.5
     linear.x.has_acceleration_limits: true
-    linear.x.min_acceleration: -0.6
-    linear.x.max_acceleration: 0.6
+    linear.x.min_acceleration: -1.0
+    linear.x.max_acceleration: 1.0
 
     angular.z.has_velocity_limits: true
     angular.z.min_velocity: -5.0
     angular.z.max_velocity: 5.0
     angular.z.has_acceleration_limits: true
-    angular.z.min_acceleration: -5.0
-    angular.z.max_acceleration: 5.0
+    angular.z.min_acceleration: -10.0
+    angular.z.max_acceleration: 10.0

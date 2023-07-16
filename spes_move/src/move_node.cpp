@@ -23,21 +23,15 @@ int main(int argc, char **argv)
     std::thread move_thread(
         [move]()
         {
-            auto const period = std::chrono::nanoseconds(1'000'000'000 / move->get_update_rate());
-            auto const move_now = std::chrono::nanoseconds(move->now().nanoseconds());
-            std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>
-                next_iteration_time{move_now};
+            rclcpp::Time end_period = move->now();
+            rclcpp::Duration period(std::chrono::nanoseconds(1000000000 / move->get_update_rate()));
 
-            rclcpp::Time previous_time = move->now();
             while (rclcpp::ok())
             {
-                auto const current_time = move->now();
-                previous_time = current_time;
+                end_period += period;
+                std::this_thread::sleep_for(std::chrono::nanoseconds((end_period - move->now()).nanoseconds()));
 
                 move->update();
-
-                next_iteration_time += period;
-                std::this_thread::sleep_until(next_iteration_time);
             }
         });
 

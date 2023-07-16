@@ -56,7 +56,11 @@ def generate_launch_description():
         package='spes_move',
         executable='move',
         output='screen',
-        parameters=[{'use_sim_time': True}],
+        parameters=[{
+            'use_sim_time': True,
+            'angular.max_velocity': 1.0,
+            'angular.max_acceleration': 1.0
+        }],
     )
 
     test_latency_compensation = Node(
