@@ -37,6 +37,7 @@ namespace spes_move
     tf2::Transform tf_global_odom;
     tf2::convert(tf_global_odom_message.transform, tf_global_odom);
     tf_odom_target_ = tf_global_odom.inverse() * tf_global_target;
+    target_updated_ = true;
 
     // Reset multiturn
     multiturn_n_ = 0;
@@ -138,6 +139,7 @@ namespace spes_move
 
     if (should_init)
     {
+      debouncing_reset();
       const double distance_to_goal = get_distance(tf_base_target);
       if (distance_to_goal < command_->linear_properties.tolerance)
       {
@@ -168,19 +170,16 @@ namespace spes_move
         state_ = spes_msgs::msg::MoveState::TRANSLATING;
         debouncing_reset();
       }
+      return;
     }
-    else
-    {
-      debouncing_reset();
-    }
+    debouncing_reset();
   }
 
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
   {
     const bool should_init = (state_ != previous_state_);
-
-    if (should_init)
-    {
+    if (should_init) {
+      debouncing_reset();
       init_translation(tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
     }
 
@@ -201,11 +200,9 @@ namespace spes_move
           return;
         }
       }
+      return;
     }
-    else
-    {
-      debouncing_reset();
-    }
+    debouncing_reset();
   }
 
   void Move::state_rotating_at_goal(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
@@ -213,8 +210,8 @@ namespace spes_move
     const bool should_init = (state_ != previous_state_);
     const double final_yaw = get_diff_final_orientation(tf_base_target);
 
-    if (should_init)
-    {
+    if (should_init) {
+      debouncing_reset();
       init_rotation(final_yaw);
     }
 
@@ -226,21 +223,21 @@ namespace spes_move
         // stopRobot();
         debouncing_reset();
         state_ = spes_msgs::msg::MoveState::IDLE;
-        return;
       }
+      return;
     }
-    else
-    {
-      debouncing_reset();
-    }
+    debouncing_reset();
   }
 
   void Move::update()
   {
     if (state_ == spes_msgs::msg::MoveState::IDLE)
+    {
+      previous_state_ = state_;
       return;
+    }
 
-    uint8_t previous_state = state_;
+    const uint8_t previous_state = state_;
 
     // Timeout
     rclcpp::Duration time_remaining = end_time_ - now();
@@ -342,21 +339,27 @@ namespace spes_move
     rotation_ruckig_input_.target_position = {0};
     rotation_ruckig_input_.current_position = {diff_yaw};
     rotation_ruckig_input_.control_interface = ruckig::ControlInterface::Position;
-    rotation_ruckig_output_.new_position = {diff_yaw};
-    rotation_ruckig_output_.new_velocity = {0.0};
-    rotation_ruckig_output_.new_acceleration = {0.0};
-    rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
-    rotation_last_input_ = rotation_ruckig_output_.new_position[0];
+    rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_);
+
+    last_error_yaw_ = 0;
   }
 
   void Move::regulate_rotation(geometry_msgs::msg::Twist *cmd_vel, double diff_yaw)
   {
-    if (rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_) != ruckig::Finished)
+    if (target_updated_) {
+      // TODO: This will produce minor jitter when a goal is updated.
+      rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
+      target_updated_ = false;
+    }
+
+    const double previous_input = rotation_ruckig_output_.new_position[0];
+    const bool is_trajectory_finished = (rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_) == ruckig::Finished);
+    last_error_yaw_ = diff_yaw - rotation_ruckig_output_.new_position[0];
+    const double d_input = rotation_ruckig_output_.new_position[0] - previous_input;
+    cmd_vel->angular.z = command_->angular_properties.kp * last_error_yaw_ - command_->angular_properties.kd * d_input;
+  
+    if (!is_trajectory_finished)
       rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
-    const double error_yaw = diff_yaw - rotation_ruckig_output_.new_position[0];
-    const double d_input = rotation_ruckig_output_.new_position[0] - rotation_last_input_;
-    rotation_last_input_ = rotation_ruckig_output_.new_position[0];
-    cmd_vel->angular.z = command_->angular_properties.kp * error_yaw - command_->angular_properties.kd * d_input;
   }
 
   void Move::init_translation(double diff_x, double diff_y)
@@ -371,24 +374,31 @@ namespace spes_move
     translation_ruckig_input_.target_position = {0};
     translation_ruckig_input_.current_position = {diff_x};
     translation_ruckig_input_.control_interface = ruckig::ControlInterface::Position;
-    translation_ruckig_output_.new_position = {diff_x};
-    translation_ruckig_output_.new_velocity = {0.0};
-    translation_ruckig_output_.new_acceleration = {0.0};
-    translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
-    translation_last_input_ = translation_ruckig_output_.new_position[0];
+    translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_);
+
+    last_error_x_ = 0;
+    last_error_y_ = 0;
   }
 
   void Move::regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y)
   {
-    if (translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_) != ruckig::Finished)
-      translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
-    const double error_x = diff_x - translation_ruckig_output_.new_position[0];
-    const double d_input = translation_ruckig_output_.new_position[0] - translation_last_input_;
-    translation_last_input_ = translation_ruckig_output_.new_position[0];
-    cmd_vel->linear.x = command_->linear_properties.kp * error_x - command_->linear_properties.kd * d_input;
+    if (target_updated_) {
+      // TODO: This will produce minor jitter when a goal is updated.
+      translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
+      target_updated_ = false;
+    }
+
+    const double previous_input = translation_ruckig_output_.new_position[0];
+    const bool is_trajectory_finished = (translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_) == ruckig::Finished);
+    last_error_x_ = diff_x - translation_ruckig_output_.new_position[0];
+    const double d_input = translation_ruckig_output_.new_position[0] - previous_input;
+    cmd_vel->linear.x = command_->linear_properties.kp * last_error_x_ - command_->linear_properties.kd * d_input;
 
     // TODO: Parameterize this + add kd
     cmd_vel->angular.z = diff_y * cmd_vel->linear.x * 1.0;
+
+    if (!is_trajectory_finished)
+      translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
   }
 
   Move::Move(std::string name) : Node(name)
@@ -418,7 +428,7 @@ namespace spes_move
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
 
     // Linear
-    declare_parameter("linear.kp", rclcpp::ParameterValue(0.3));
+    declare_parameter("linear.kp", rclcpp::ParameterValue(3.0));
     get_parameter("linear.kp", default_command_->linear_properties.kp);
 
     declare_parameter("linear.kd", rclcpp::ParameterValue(0.0));
@@ -434,7 +444,7 @@ namespace spes_move
     get_parameter("linear.tolerance", default_command_->linear_properties.tolerance);
 
     // Angular
-    declare_parameter("angular.kp", rclcpp::ParameterValue(1.0));
+    declare_parameter("angular.kp", rclcpp::ParameterValue(5.0));
     get_parameter("angular.kp", default_command_->angular_properties.kp);
 
     declare_parameter("angular.kd", rclcpp::ParameterValue(0.0));
@@ -443,7 +453,7 @@ namespace spes_move
     declare_parameter("angular.max_velocity", rclcpp::ParameterValue(0.5));
     get_parameter("angular.max_velocity", default_command_->angular_properties.max_velocity);
 
-    declare_parameter("angular.max_acceleration", rclcpp::ParameterValue(0.5));
+    declare_parameter("angular.max_acceleration", rclcpp::ParameterValue(0.1));
     get_parameter("angular.max_acceleration", default_command_->angular_properties.max_acceleration);
 
     declare_parameter("angular.tolerance", rclcpp::ParameterValue(0.03));

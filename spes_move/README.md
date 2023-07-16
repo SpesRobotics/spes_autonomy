@@ -6,12 +6,13 @@ Local navigation. Low-level mobile robot motion package for short distances (e.g
 
 Main features:
 - **Accurate position control.** Implements the distance-angle controller.
-- **Motion generation.** Define maximum velocity, acceleration, and jerk.
-- **Frame transformations.** Define target frame and robot moving frame.
-- **Position based servoing.** Stream position commands and the robot will follow it.
+- **Motion generation.** Limits velocity, acceleration, and jerk.
+- **Frame transformations.** Receives (x,y,yaw) in a target frame and regulates position in the odom frame.
+- **Position based servoing.** Accepts continuous position commands.
 - **Latency compensation.** Utilizes odometry + TF buffer to compensate for the latency. 
 - **Debouncing.** Regulates position until the robot completely stops.
 - **Obstacle detection (WIP).** Integrates Nav2 costmaps to detect obstacles on a simulated path.
+- **Stuck detection. (WIP)** Implements a robust stuck detection algorithm.
 
 Published topics:
 - `cmd_vel` (geometry_msgs/msg/Twist): velocity commands.
@@ -67,7 +68,7 @@ move:
             tolerance: 0.1
 ```
 
-## Examples
+## Command Examples
 
 Some ideas on how to utilize the move behavior.
 
@@ -91,4 +92,11 @@ ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_i
 Move to pose (-0.5, -0.5):
 ```bash
 ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
+```
+
+## Usage Examples
+
+Follow a red ball with 300ms+ latency:
+```bash
+ros2 launch spesbot_webots test_latency_compensation_launch.py
 ```

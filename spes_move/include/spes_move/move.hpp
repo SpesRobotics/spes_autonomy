@@ -54,6 +54,10 @@ namespace spes_move
   
     tf2::Transform tf_odom_target_;
     rclcpp::Time end_time_;
+    bool target_updated_{false};
+    double last_error_x_;
+    double last_error_y_;
+    double last_error_yaw_;
 
     rclcpp::Time debouncing_end_;
     rclcpp::Duration debouncing_duration_{0, 0};
@@ -62,7 +66,6 @@ namespace spes_move
     ruckig::Ruckig<1> *rotation_ruckig_{nullptr};
     ruckig::InputParameter<1> rotation_ruckig_input_;
     ruckig::OutputParameter<1> rotation_ruckig_output_;
-    double rotation_last_input_;
     double previous_yaw_;
     int multiturn_n_;
     bool use_multiturn_;
@@ -73,7 +76,6 @@ namespace spes_move
     ruckig::Ruckig<1> *translation_ruckig_{nullptr};
     ruckig::InputParameter<1> translation_ruckig_input_;
     ruckig::OutputParameter<1> translation_ruckig_output_;
-    double translation_last_input_;
 
     rclcpp::Duration command_timeout_{0, 0};
     rclcpp::Time last_command_received_;
