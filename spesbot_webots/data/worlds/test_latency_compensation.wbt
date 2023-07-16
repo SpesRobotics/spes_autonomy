@@ -6,10 +6,11 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/project
 EXTERNPROTO "../protos/SpesBot.proto"
 
 WorldInfo {
+  basicTimeStep 20
 }
 Viewpoint {
-  orientation -0.240568649357027 0.13947150378594725 0.9605594331316631 2.125366623335183
-  position 1.2780702320337938 -2.1241397056589832 1.4051185392347634
+  orientation -0.1627388975038373 0.1517302040702072 0.9749328163581577 1.6660989935649566
+  position 0.3812817744623527 -2.474115500930047 1.0602236265948284
 }
 RectangleArena {
   floorSize 3 3
@@ -19,7 +20,7 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 DEF BALL Solid {
-  translation 1 0 0.2
+  translation 0.89 0 0.11
   children [
     Shape {
       appearance PBRAppearance {

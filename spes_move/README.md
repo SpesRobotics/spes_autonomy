@@ -6,9 +6,9 @@ Local navigation. Low-level mobile robot motion package for short distances (e.g
 
 Main features:
 - **Accurate position control.** Implements the distance-angle controller.
-- **Motion generation.** Define maximum velocity, acceleration, and jerk.
-- **Frame transformations.** Define target frame and robot moving frame.
-- **Position based servoing.** Stream position commands and the robot will follow it.
+- **Motion generation.** Limits velocity, acceleration, and jerk.
+- **Frame transformations.** Receives (x,y,yaw) in a target frame and regulates position in the odom frame.
+- **Position based servoing.** Accepts continuous position commands.
 - **Latency compensation.** Utilizes odometry + TF buffer to compensate for the latency. 
 - **Debouncing.** Regulates position until the robot completely stops.
 - **Obstacle detection (WIP).** Integrates Nav2 costmaps to detect obstacles on a simulated path.

@@ -16,8 +16,8 @@ Robot {
           translation 0.01 0 0.11
           rotation 0 1 0 0.2617996938995747
           locked TRUE
-          width 1920
-          height 1080
+          width 1280
+          height 720
           far 0.6
         }
         Shape {

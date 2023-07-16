@@ -139,6 +139,7 @@ namespace spes_move
 
     if (should_init)
     {
+      debouncing_reset();
       const double distance_to_goal = get_distance(tf_base_target);
       if (distance_to_goal < command_->linear_properties.tolerance)
       {
@@ -177,8 +178,10 @@ namespace spes_move
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
   {
     const bool should_init = (state_ != previous_state_);
-    if (should_init)
+    if (should_init) {
+      debouncing_reset();
       init_translation(tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
+    }
 
     regulate_translation(cmd_vel, tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
     if (abs(tf_base_target.getOrigin().x()) < command_->linear_properties.tolerance)
@@ -207,8 +210,10 @@ namespace spes_move
     const bool should_init = (state_ != previous_state_);
     const double final_yaw = get_diff_final_orientation(tf_base_target);
 
-    if (should_init)
+    if (should_init) {
+      debouncing_reset();
       init_rotation(final_yaw);
+    }
 
     regulate_rotation(cmd_vel, final_yaw);
     if (abs(final_yaw) < command_->angular_properties.tolerance)
@@ -264,6 +269,8 @@ namespace spes_move
       tf_odom_base.getOrigin().setY(locked_tf_odom_base_.getOrigin().y());
     }
     const tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
+
+    RCLCPP_INFO(get_logger(), "Current state: %lf", get_diff_final_orientation(tf_base_target));
 
     // FSM
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
@@ -439,7 +446,7 @@ namespace spes_move
     get_parameter("linear.tolerance", default_command_->linear_properties.tolerance);
 
     // Angular
-    declare_parameter("angular.kp", rclcpp::ParameterValue(1.0));
+    declare_parameter("angular.kp", rclcpp::ParameterValue(5.0));
     get_parameter("angular.kp", default_command_->angular_properties.kp);
 
     declare_parameter("angular.kd", rclcpp::ParameterValue(0.0));
@@ -448,7 +455,7 @@ namespace spes_move
     declare_parameter("angular.max_velocity", rclcpp::ParameterValue(0.5));
     get_parameter("angular.max_velocity", default_command_->angular_properties.max_velocity);
 
-    declare_parameter("angular.max_acceleration", rclcpp::ParameterValue(0.5));
+    declare_parameter("angular.max_acceleration", rclcpp::ParameterValue(0.1));
     get_parameter("angular.max_acceleration", default_command_->angular_properties.max_acceleration);
 
     declare_parameter("angular.tolerance", rclcpp::ParameterValue(0.03));
