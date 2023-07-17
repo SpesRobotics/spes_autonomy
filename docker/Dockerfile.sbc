@@ -27,10 +27,14 @@ RUN apt-get update && apt-get install -y \
     ros-humble-ros2-control \
     ros-humble-hls-lfcd-lds-driver \
     ros-humble-v4l2-camera \
-    ros-humble-xacro
+    ros-humble-navigation2 \
+    ros-humble-nav2-bringup \
+    ros-humble-xacro \
+    ros-humble-ruckig \
+    ros-humble-teleop-twist-keyboard
 
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
-    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/SpesRobotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
+    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
     cd /${DOCKERUSER}/ros2_libs_ws && \
     . /opt/ros/humble/setup.sh && \
     colcon build --symlink-install
