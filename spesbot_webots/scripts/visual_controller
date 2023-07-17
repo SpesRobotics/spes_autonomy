@@ -41,8 +41,8 @@ class VisualController(Node):
         #     twist_msg.angular.z = -angular_vel * abs(img_center_x - int(center_x))
         #     self.publisher.publish(twist_msg)
             
-        elif int(center_y) - img_center_y  < epsilon_y:
-            twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y)
+        elif int(center_y) - (img_center_y + 64) < epsilon_y:
+            twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y + 64)
             twist_msg.angular.z = 0.0
             self.publisher.publish(twist_msg)
             
