@@ -6,6 +6,8 @@ import struct
 from datetime import datetime, timedelta
 from geometry_msgs.msg import Twist
 
+from spes_msgs.msg import MoveCommand
+
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
 
