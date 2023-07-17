@@ -36,7 +36,6 @@ class VisualController(Node):
             move_command.rotate_towards_goal = False
             move_command.translate = False
 
-            move_command.header.stamp = msg.header.stamp
                 
             move_command.header.frame_id = 'base_link'
             self._publisher.publish(move_command)
