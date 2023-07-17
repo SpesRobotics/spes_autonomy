@@ -34,7 +34,9 @@ RUN apt-get update && apt-get install -y \
     ros-humble-teleop-twist-keyboard
 
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
-    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
+    git clone --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
+    cd /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
+    git checkout d0523b481f0d9c && \
     cd /${DOCKERUSER}/ros2_libs_ws && \
     . /opt/ros/humble/setup.sh && \
     colcon build --symlink-install
