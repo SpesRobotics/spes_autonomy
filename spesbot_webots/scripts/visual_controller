@@ -19,7 +19,7 @@ class VisualController(Node):
         self.timer = self.create_timer(0.1, self.udp_callback)
 
         self._publisher = self.create_publisher(MoveCommand, '/move/command', 1)
-        #self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
     
     def move_robot(self, center_x, center_y, width, height,instance):
         linear_vel = 0.0009
