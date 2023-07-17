@@ -27,15 +27,19 @@ class VisualController(Node):
         epsilon_y = 20 #tolerance
 
         twist_msg = Twist()
-        if img_center_x - int(center_x) > epsilon_x:
-            twist_msg.linear.x = 0.0
-            twist_msg.angular.z = angular_vel * abs(img_center_x - int(center_x))
-            self.publisher.publish(twist_msg)
+        if abs(img_center_x - int(center_x) >) epsilon_x:
+            move_command = MoveCommand()
+            move_command.target.theta = angular_vel * (img_center_x - int(center_x))
+            move_command.rotate_towards_goal = False
+            move_command.translate = False
+            #twist_msg.linear.x = 0.0
+            #twist_msg.angular.z = angular_vel * abs(img_center_x - int(center_x))
+            #self.publisher.publish(twist_msg)
 
-        elif  int(center_x) - img_center_x > epsilon_x:
-            twist_msg.linear.x = 0.0
-            twist_msg.angular.z = -angular_vel * abs(img_center_x - int(center_x))
-            self.publisher.publish(twist_msg)
+        # elif  int(center_x) - img_center_x > epsilon_x:
+        #     twist_msg.linear.x = 0.0
+        #     twist_msg.angular.z = -angular_vel * abs(img_center_x - int(center_x))
+        #     self.publisher.publish(twist_msg)
             
         elif int(center_y) - img_center_y  < epsilon_y:
             twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y)
