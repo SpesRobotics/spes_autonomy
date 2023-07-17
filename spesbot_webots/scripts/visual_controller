@@ -17,8 +17,6 @@ class VisualController(Node):
         self.timer = self.create_timer(0.1, self.udp_callback)
 
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
-        self.current_instance = -1
-        self.can_change_instance = True
     
     def move_robot(self, center_x, center_y, width, height,instance):
         linear_vel = 0.0009
@@ -29,29 +27,28 @@ class VisualController(Node):
         epsilon_y = 20 #tolerance
 
         twist_msg = Twist()
-        if  self.current_instance == instance:
-            if img_center_x - int(center_x) > epsilon_x:
-                twist_msg.linear.x = 0.0
-                twist_msg.angular.z = angular_vel * abs(img_center_x - int(center_x))
-                self.publisher.publish(twist_msg)
+        if img_center_x - int(center_x) > epsilon_x:
+            twist_msg.linear.x = 0.0
+            twist_msg.angular.z = angular_vel * abs(img_center_x - int(center_x))
+            self.publisher.publish(twist_msg)
 
-            elif  int(center_x) - img_center_x > epsilon_x:
-                twist_msg.linear.x = 0.0
-                twist_msg.angular.z = -angular_vel * abs(img_center_x - int(center_x))
-                self.publisher.publish(twist_msg)
-                
-            elif int(center_y) - img_center_y  < epsilon_y:
-                twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y)
-                twist_msg.angular.z = 0.0
-                self.publisher.publish(twist_msg)
-                
-            else:
-                twist_msg.linear.x = 0.0
-                twist_msg.angular.z = 0.0
-                self.can_change_instance = True
-                self.get_logger().info("*****************")
-                self.get_logger().info(f"=============== = {self.current_instance}")
-                self.publisher.publish(twist_msg)
+        elif  int(center_x) - img_center_x > epsilon_x:
+            twist_msg.linear.x = 0.0
+            twist_msg.angular.z = -angular_vel * abs(img_center_x - int(center_x))
+            self.publisher.publish(twist_msg)
+            
+        elif int(center_y) - img_center_y  < epsilon_y:
+            twist_msg.linear.x = linear_vel * abs(int(center_y) - img_center_y)
+            twist_msg.angular.z = 0.0
+            self.publisher.publish(twist_msg)
+            
+        else:
+            twist_msg.linear.x = 0.0
+            twist_msg.angular.z = 0.0
+            self.can_change_instance = True
+            self.get_logger().info("*****************")
+            self.get_logger().info(f"===============")
+            self.publisher.publish(twist_msg)
             
             
 
@@ -72,9 +69,6 @@ class VisualController(Node):
         timestamp_sec = unpacked_data[7]
         timestamp_nsec = unpacked_data[8]
 
-        if self.can_change_instance == True:
-            self.current_instance = instance
-            self.can_change_instance = False
 
         dt = datetime.fromtimestamp(timestamp_sec)
         dt_with_ns = dt + timedelta(microseconds=timestamp_nsec // 1000)
