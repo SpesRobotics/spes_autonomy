@@ -27,7 +27,7 @@ class VisualController(Node):
         epsilon_y = 20 #tolerance
 
         twist_msg = Twist()
-        if abs(img_center_x - int(center_x) >) epsilon_x:
+        if abs(img_center_x - int(center_x)) > epsilon_x:
             move_command = MoveCommand()
             move_command.target.theta = angular_vel * (img_center_x - int(center_x))
             move_command.rotate_towards_goal = False
