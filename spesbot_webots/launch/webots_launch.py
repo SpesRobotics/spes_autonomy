@@ -53,6 +53,12 @@ def generate_launch_description():
         output='screen',
     )
 
+    move_command = Node(
+        package='spes_move',
+        executable='move',
+        output='screen',
+    )
+
     diffdrive_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -72,6 +78,7 @@ def generate_launch_description():
         diffdrive_controller_spawner,
         ros2virtualcam,
         virtual_controller,
+        move_command,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(
             target_action=webots,
