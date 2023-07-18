@@ -82,7 +82,7 @@ def generate_launch_description():
         diffdrive_controller_spawner,
         tf_base_link_laser,
         controller_manager_node,
-        lidar,
-        tf_base_link_base_footprint,
-        v4l2
+        #lidar,
+        tf_base_link_base_footprint
+        #v4l2
     ])
