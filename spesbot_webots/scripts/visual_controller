@@ -71,9 +71,9 @@ class VisualController(Node):
 
         move_command = MoveCommand()
         move_command.angular_properties.max_acceleration = 0.5
-        move_command.angular_properties.max_velocity = 1.2
+        move_command.angular_properties.max_velocity = 0.3
         move_command.linear_properties.max_acceleration = 0.8
-        move_command.linear_properties.max_velocity = 0.3
+        move_command.linear_properties.max_velocity = 0.1
 
         if abs(img_center_x - int(center_x)) > epsilon_x:
             move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
