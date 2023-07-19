@@ -20,7 +20,7 @@ def generate_launch_description():
         os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
     
     webots = WebotsLauncher(world=os.path.join(package_dir, 'data',
-                                               'worlds', 'eurobot.wbt'), ros2_supervisor=True)
+                                               'worlds', 'eurobot.wbt'), ros2_supervisor=False)
     webots_robot_driver = Node(
         package='webots_ros2_driver',
         executable='driver',
@@ -28,7 +28,7 @@ def generate_launch_description():
         emulate_tty=True,  # debugging
         parameters=[
             {
-                'use_sim_time': True,
+                'use_sim_time': False,
                 'robot_description': robot_description
             },
             controller_params
@@ -73,7 +73,7 @@ def generate_launch_description():
     
     return launch.LaunchDescription([
         webots,
-        webots._supervisor,
+        #webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
         ros2virtualcam,
