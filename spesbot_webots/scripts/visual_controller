@@ -6,6 +6,8 @@ import struct
 import threading
 
 from datetime import datetime, timedelta
+from rclpy.time import Time
+from builtin_interfaces.msg import Time as RosTime
 
 from spes_msgs.msg import MoveCommand
 
@@ -45,6 +47,13 @@ class VisualController(Node):
         timestamp_nsec = unpacked_data[8]
         image_height = unpacked_data[9]
         image_width = unpacked_data[10]
+
+        ros_time = RosTime()
+        ros_time.sec = timestamp_sec
+        ros_time.nanosec = timestamp_nsec
+        timestamp = Time.from_msg(ros_time)
+        self.get_logger().info(f'{timestamp}, {self.get_clock().now()}')
+        self.get_logger().info(f'Time difference: {self.get_clock().now() - timestamp}')
 
         dt = datetime.fromtimestamp(timestamp_sec)
         dt_with_ns = dt + timedelta(microseconds=timestamp_nsec // 1000)
