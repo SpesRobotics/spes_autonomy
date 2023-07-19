@@ -6,9 +6,9 @@ import struct
 import threading
 
 from datetime import datetime, timedelta
-from geometry_msgs.msg import Twist
 
 from spes_msgs.msg import MoveCommand
+
 
 
 UDP_IP = "127.0.0.1"
@@ -57,10 +57,6 @@ class VisualController(Node):
     
     def move_robot(self, center_x, center_y, instance, image_width, image_height):
 
-        #No data
-        if center_x == None or center_y == None:
-            return
-
         linear_vel = 0.0009
         angular_vel = 0.0003
         img_center_x = round(image_width / 2)
@@ -70,7 +66,6 @@ class VisualController(Node):
 
         move_command = MoveCommand()
         if abs(img_center_x - int(center_x)) > epsilon_x:
-            
             move_command.target.theta = angular_vel * (img_center_x - int(center_x))
             move_command.rotate_towards_goal = False
             move_command.translate = False            
@@ -78,7 +73,6 @@ class VisualController(Node):
             self._publisher.publish(move_command)
             
         elif abs(int(center_y) - img_center_y)  > epsilon_y:
-            
             move_command.target.x = linear_vel * (img_center_y - int(center_y))
             move_command.rotate_towards_goal = False
             move_command.translate = True
@@ -87,7 +81,6 @@ class VisualController(Node):
             self._publisher.publish(move_command)
             
         else:
-            
             move_command.target.theta = 0.0
             move_command.target.x = 0.0
             move_command.rotate_towards_goal = True
