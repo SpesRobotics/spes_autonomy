@@ -19,10 +19,8 @@ class VisualController(Node):
         super().__init__('visual_controller')
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
         self.sock.bind((UDP_IP, UDP_PORT))
-        # self.timer = self.create_timer(0.1, self.udp_callback)
 
         self._publisher = self.create_publisher(MoveCommand, '/move/command', 1)
-        self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
 
         self.listener_thread = threading.Thread(target=self.udp_listener)
         self.listener_thread.start()
@@ -54,24 +52,25 @@ class VisualController(Node):
 
         self.get_logger().info(f"class = {class_}, instance = {instance}, center_x = {center_x}, center_y = {center_y}, height = {height}, width = {width}, precision = {precision/100}, timestamp_sec = {formatted_time}, image_width = {image_width}, image_height = {image_height}")
         
-        self.move_robot(center_x, center_y, width, height, instance)
+        self.move_robot(center_x, center_y, instance, image_width, image_height)
 
     
-    def move_robot(self, center_x, center_y, width, height,instance):
-        if center_x == None or center_y ==None:
+    def move_robot(self, center_x, center_y, instance, image_width, image_height):
+
+        #No data
+        if center_x == None or center_y == None:
             return
+
         linear_vel = 0.0009
         angular_vel = 0.0003
-        img_center_x = 640/2
-        img_center_y = 480 /2
-        epsilon = 20
-        epsilon_x = 20 #round(width / 4)
-        epsilon_y = 20 #tolerance
+        img_center_x = round(image_width / 2)
+        img_center_y = round(image_height / 2)
+        epsilon_x = round(image_width * 0.03)
+        epsilon_y = round(image_height * 0.03)
 
-        twist_msg = Twist()
-
+        move_command = MoveCommand()
         if abs(img_center_x - int(center_x)) > epsilon_x:
-            move_command = MoveCommand()
+            
             move_command.target.theta = angular_vel * (img_center_x - int(center_x))
             move_command.rotate_towards_goal = False
             move_command.translate = False            
@@ -79,7 +78,7 @@ class VisualController(Node):
             self._publisher.publish(move_command)
             
         elif abs(int(center_y) - img_center_y)  > epsilon_y:
-            move_command = MoveCommand()
+            
             move_command.target.x = linear_vel * (img_center_y - int(center_y))
             move_command.rotate_towards_goal = False
             move_command.translate = True
@@ -88,7 +87,7 @@ class VisualController(Node):
             self._publisher.publish(move_command)
             
         else:
-            move_command = MoveCommand()
+            
             move_command.target.theta = 0.0
             move_command.target.x = 0.0
             move_command.rotate_towards_goal = True
@@ -96,35 +95,7 @@ class VisualController(Node):
             move_command.rotate_at_goal = True
             move_command.header.frame_id = 'base_link'
             self._publisher.publish(move_command)
-            self.get_logger().info(f"=======IS FINISH========")
-
-
-    def udp_callback(self):
-        data, addr = self.sock.recvfrom(1024)  # buffer size is 1024 bytes
-        unpacked_data = struct.unpack('>HIHHHHBqq', data)
-
-        class_ = unpacked_data[0]
-        instance = unpacked_data[1]
-        center_x = unpacked_data[2]
-        center_y = unpacked_data[3]
-        height = unpacked_data[4]
-        width = unpacked_data[5]
-        precision = unpacked_data[6]
-        timestamp_sec = unpacked_data[7]
-        timestamp_nsec = unpacked_data[8]
-
-
-        dt = datetime.fromtimestamp(timestamp_sec)
-        dt_with_ns = dt + timedelta(microseconds=timestamp_nsec // 1000)
-        formatted_time = dt_with_ns.strftime("%H:%M:%S.%f")[:-3]
-
-        self.get_logger().info(f"class = {class_}, instance = {instance}, center_x = {center_x}, center_y = {center_y}, height = {height}, width = {width}, precision = {precision/100}, timestamp_sec = {formatted_time}")
-    
-        self.move_robot(center_x, center_y, width, height, instance)
-        
-            
-        
-
+            self.get_logger().info(f"=======IS CAME========")
     
 
         
