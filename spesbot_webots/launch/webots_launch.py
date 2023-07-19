@@ -57,6 +57,15 @@ def generate_launch_description():
         package='spes_move',
         executable='move',
         output='screen',
+        parameters=[
+            {
+                'angular.max_acceleration': 0.3,
+                'angular.max_velocity': 0.9,
+                'linear.max_acceleration': 1.8,
+                'linear.max_velocity': 0.3
+            }
+        ]
+
     )
 
     diffdrive_controller_spawner = Node(
