@@ -62,14 +62,19 @@ class VisualController(Node):
         ros_time.sec = timestamp_sec
         ros_time.nanosec = timestamp_nsec
 
-        P_LINEAR = 0.048 / image_height
-        P_ANGULAR = 0.128 / image_width
+        P_LINEAR = 0.048 / image_height * 5
+        P_ANGULAR = 0.128 / image_width * 5
         img_center_x = round(image_width / 2)
         img_center_y = round(image_height / 2)
         epsilon_x = round(image_width * 0.03)
         epsilon_y = round(image_height * 0.03)
 
         move_command = MoveCommand()
+        move_command.angular_properties.max_acceleration = 0.5
+        move_command.angular_properties.max_velocity = 1.2
+        move_command.linear_properties.max_acceleration = 0.8
+        move_command.linear_properties.max_velocity = 0.3
+
         if abs(img_center_x - int(center_x)) > epsilon_x:
             move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
             move_command.rotate_towards_goal = False
