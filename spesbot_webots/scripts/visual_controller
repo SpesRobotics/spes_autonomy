@@ -48,12 +48,6 @@ class VisualController(Node):
         image_height = unpacked_data[9]
         image_width = unpacked_data[10]
 
-        
-        
-        
-        # self.get_logger().info(f'{timestamp}, {self.get_clock().now()}')
-        # self.get_logger().info(f'Time difference: {self.get_clock().now() - timestamp}')
-
         dt = datetime.fromtimestamp(timestamp_sec)
         dt_with_ns = dt + timedelta(microseconds=timestamp_nsec // 1000)
         formatted_time = dt_with_ns.strftime("%H:%M:%S.%f")[:-3]
@@ -68,8 +62,8 @@ class VisualController(Node):
         ros_time.sec = timestamp_sec
         ros_time.nanosec = timestamp_nsec
 
-        linear_vel = 0.0001
-        angular_vel = 0.0002
+        P_LINEAR = 0.048 / image_height
+        P_ANGULAR = 0.128 / image_width
         img_center_x = round(image_width / 2)
         img_center_y = round(image_height / 2)
         epsilon_x = round(image_width * 0.03)
@@ -77,7 +71,7 @@ class VisualController(Node):
 
         move_command = MoveCommand()
         if abs(img_center_x - int(center_x)) > epsilon_x:
-            move_command.target.theta = angular_vel * (img_center_x - int(center_x))
+            move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
             move_command.rotate_towards_goal = False
             move_command.translate = False            
             move_command.header.frame_id = 'base_link'
@@ -86,7 +80,7 @@ class VisualController(Node):
             self._publisher.publish(move_command)
             
         elif abs(int(center_y) - img_center_y)  > epsilon_y:
-            move_command.target.x = linear_vel * (img_center_y - int(center_y))
+            move_command.target.x = P_LINEAR * (img_center_y - int(center_y))
             move_command.rotate_towards_goal = False
             move_command.translate = True
             move_command.rotate_at_goal = False
