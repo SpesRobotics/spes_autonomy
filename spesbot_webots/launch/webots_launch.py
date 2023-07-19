@@ -20,7 +20,7 @@ def generate_launch_description():
         os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
     
     webots = WebotsLauncher(world=os.path.join(package_dir, 'data',
-                                               'worlds', 'eurobot.wbt'), ros2_supervisor=False)
+                                               'worlds', 'eurobot.wbt'), ros2_supervisor=True)
     webots_robot_driver = Node(
         package='webots_ros2_driver',
         executable='driver',
@@ -57,15 +57,6 @@ def generate_launch_description():
         package='spes_move',
         executable='move',
         output='screen',
-        parameters=[
-            {
-                'angular.max_acceleration': 0.3,
-                'angular.max_velocity': 0.9,
-                'linear.max_acceleration': 1.8,
-                'linear.max_velocity': 0.3
-            }
-        ]
-
     )
 
     diffdrive_controller_spawner = Node(
@@ -82,7 +73,7 @@ def generate_launch_description():
     
     return launch.LaunchDescription([
         webots,
-        #webots._supervisor,
+        webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
         ros2virtualcam,
