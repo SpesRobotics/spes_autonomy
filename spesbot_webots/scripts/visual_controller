@@ -57,8 +57,8 @@ class VisualController(Node):
     
     def move_robot(self, center_x, center_y, instance, image_width, image_height):
 
-        linear_vel = 0.0009
-        angular_vel = 0.0003
+        linear_vel = 0.0001
+        angular_vel = 0.0002
         img_center_x = round(image_width / 2)
         img_center_y = round(image_height / 2)
         epsilon_x = round(image_width * 0.03)
