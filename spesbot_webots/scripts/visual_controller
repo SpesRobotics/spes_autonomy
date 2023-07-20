@@ -8,6 +8,7 @@ import threading
 from datetime import datetime, timedelta
 from rclpy.time import Time
 from builtin_interfaces.msg import Time as RosTime
+from enum import Enum
 
 from spes_msgs.msg import MoveCommand
 
@@ -15,6 +16,12 @@ from spes_msgs.msg import MoveCommand
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
+
+class MoveState(Enum):
+    TRANSLATE = 0,
+    ROTATE = 1,
+    IDLE = 2
+
 
 class VisualController(Node):
     def __init__(self):
@@ -26,6 +33,8 @@ class VisualController(Node):
 
         self.listener_thread = threading.Thread(target=self.udp_listener)
         self.listener_thread.start()
+        
+        self.next_state = MoveState.IDLE
     
     def udp_listener(self):
         while True:
@@ -62,13 +71,14 @@ class VisualController(Node):
         ros_time.sec = timestamp_sec
         ros_time.nanosec = timestamp_nsec
 
-        P_LINEAR = 0.048 / image_height * 5
-        P_ANGULAR = 0.128 / image_width * 5
+        P_LINEAR = 0.048 / image_height * 3
+        P_ANGULAR = 0.128 / image_width * 3
         img_center_x = round(image_width / 2)
         img_center_y = round(image_height / 2)
         epsilon_x = round(image_width * 0.03)
         epsilon_y = round(image_height * 0.03)
 
+        #set angular and linear velocity
         move_command = MoveCommand()
         move_command.angular_properties.max_acceleration = 0.5
         move_command.angular_properties.max_velocity = 0.3
@@ -83,8 +93,10 @@ class VisualController(Node):
             move_command.header.stamp = ros_time
 
             self._publisher.publish(move_command)
+        else:
+            self.next_state = MoveState.TRANSLATE
             
-        elif abs(int(center_y) - img_center_y)  > epsilon_y:
+        if abs(int(center_y) - img_center_y)  > epsilon_y and self.next_state == MoveState.TRANSLATE:
             move_command.target.x = P_LINEAR * (img_center_y - int(center_y))
             move_command.rotate_towards_goal = False
             move_command.translate = True
@@ -93,8 +105,10 @@ class VisualController(Node):
             move_command.header.stamp = ros_time
 
             self._publisher.publish(move_command)
-            
         else:
+            self.next_state = MoveState.ROTATE
+            
+        if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y)  < epsilon_y:
             move_command.target.theta = 0.0
             move_command.target.x = 0.0
             move_command.rotate_towards_goal = True
@@ -102,10 +116,13 @@ class VisualController(Node):
             move_command.rotate_at_goal = True
             move_command.header.frame_id = 'base_link'
             move_command.header.stamp = ros_time
+            self.next_state = MoveState.IDLE
 
             self._publisher.publish(move_command)
             self.get_logger().info(f"=======IS CAME========")
-    
+
+        else:
+            self.next_state = MoveState.ROTATE
 
         
 
