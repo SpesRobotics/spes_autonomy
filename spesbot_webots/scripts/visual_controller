@@ -72,7 +72,7 @@ class VisualController(Node):
         ros_time.nanosec = timestamp_nsec
 
         P_LINEAR = 0.048 / image_height * 5
-        P_ANGULAR = 0.128 / image_width * 4
+        P_ANGULAR = 0.128 / image_width * 5
         img_center_x = round(image_width / 2)
         img_center_y = round(image_height / 2)
         epsilon_x = round(image_width * 0.03)
