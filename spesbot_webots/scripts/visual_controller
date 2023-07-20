@@ -82,8 +82,8 @@ class VisualController(Node):
         move_command = MoveCommand()
         move_command.angular_properties.max_acceleration = 0.4
         move_command.angular_properties.max_velocity = 0.2
-        move_command.linear_properties.max_acceleration = 0.5
-        move_command.linear_properties.max_velocity = 0.1
+        move_command.linear_properties.max_acceleration = 0.25
+        move_command.linear_properties.max_velocity = 0.07
 
         if abs(img_center_x - int(center_x)) > epsilon_x and self.next_state == MoveState.ROTATE:
             move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
@@ -109,14 +109,16 @@ class VisualController(Node):
                 self.next_state = MoveState.ROTATE
             
         if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y * 1.4)  < epsilon_y:
-            move_command.target.theta = 0.0
             move_command.linear_properties.max_acceleration = 0.2
+
+            move_command.target.theta = 0.0
             move_command.target.x = 0.3
             move_command.rotate_towards_goal = True
             move_command.translate = True 
             move_command.rotate_at_goal = True
             move_command.header.frame_id = 'base_link'
             move_command.header.stamp = ros_time
+
             self.next_state = MoveState.ROTATE
 
             self._publisher.publish(move_command)
