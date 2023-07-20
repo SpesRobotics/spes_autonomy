@@ -71,12 +71,12 @@ class VisualController(Node):
         ros_time.sec = timestamp_sec
         ros_time.nanosec = timestamp_nsec
 
-        P_LINEAR = 0.048 / image_height * 8
+        P_LINEAR = 0.048 / image_height * 5
         P_ANGULAR = 0.128 / image_width * 5
         img_center_x = round(image_width / 2)
         img_center_y = round(image_height / 2)
         epsilon_x = round(image_width * 0.03)
-        epsilon_y = round(image_height * 0.03)
+        epsilon_y = round(image_height * 0.04)
 
         #set angular and linear velocity
         move_command = MoveCommand()
@@ -96,8 +96,8 @@ class VisualController(Node):
         else:
             self.next_state = MoveState.TRANSLATE
             
-            if abs(int(center_y) - img_center_y * 1.2)  > epsilon_y:
-                move_command.target.x = P_LINEAR * (img_center_y * 1.2 - int(center_y))
+            if abs(int(center_y) - img_center_y * 1.6)  > epsilon_y:
+                move_command.target.x = P_LINEAR * (img_center_y * 1.6 - int(center_y))
                 move_command.rotate_towards_goal = False
                 move_command.translate = True
                 move_command.rotate_at_goal = False
@@ -110,7 +110,7 @@ class VisualController(Node):
             
         if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y)  < epsilon_y:
             move_command.target.theta = 0.0
-            move_command.target.x = 0.0
+            move_command.target.x = 0.2
             move_command.rotate_towards_goal = True
             move_command.translate = True 
             move_command.rotate_at_goal = True
