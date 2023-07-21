@@ -70,6 +70,9 @@ class VisualController(Node):
 
     
     def move_robot(self, center_x, center_y, instance, image_width, image_height, timestamp_sec, timestamp_nsec):
+        if image_height == 0 and image_width == 0:
+            self.next_state = MoveState.ROTATE
+            return
         ros_time = RosTime()
         ros_time.sec = timestamp_sec
         ros_time.nanosec = timestamp_nsec
