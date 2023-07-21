@@ -409,7 +409,7 @@ namespace spes_move
     state_pub_ = create_publisher<spes_msgs::msg::MoveState>("~/state", 1);
 
     tf_ =
-        std::make_unique<tf2_ros::Buffer>(get_clock());
+       std::make_unique<tf2_ros::Buffer>(get_clock());
     tf_listener_ =
         std::make_shared<tf2_ros::TransformListener>(*tf_);
 

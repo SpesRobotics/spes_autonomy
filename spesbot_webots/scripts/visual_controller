@@ -43,6 +43,7 @@ class VisualController(Node):
                 self.process_udp_message(data, addr)
     
     def process_udp_message(self, data, addr):
+
         if len(data) != 35:
             return
         unpacked_data = struct.unpack('>HIHHHHBqqHH', data)
