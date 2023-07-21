@@ -38,11 +38,13 @@ class VisualController(Node):
     
     def udp_listener(self):
         while True:
-            data, addr = self.sock.recvfrom(1024)
+            data, addr = self.sock.recvfrom(2048)
             if data:
                 self.process_udp_message(data, addr)
     
     def process_udp_message(self, data, addr):
+        if len(data) != 35:
+            return
         unpacked_data = struct.unpack('>HIHHHHBqqHH', data)
 
         class_ = unpacked_data[0]
