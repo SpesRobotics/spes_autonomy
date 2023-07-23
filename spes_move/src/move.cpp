@@ -13,6 +13,7 @@ namespace spes_move
       return;
     }
 
+    command_->target = msg->target;
     update_odom_target_tf();
   }
 
@@ -37,6 +38,10 @@ namespace spes_move
     tf2::Transform tf_global_odom;
     tf2::convert(tf_global_odom_message.transform, tf_global_odom);
     tf_odom_target_ = tf_global_odom.inverse() * tf_global_target;
+    RCLCPP_DEBUG(get_logger(), "target updated");
+    RCLCPP_DEBUG(get_logger(), "tf_global_target: %f, %f, %f", tf_global_target.getOrigin().x(), tf_global_target.getOrigin().y(), tf2::getYaw(tf_global_target.getRotation()));
+    RCLCPP_DEBUG(get_logger(), "tf_global_odom: %f, %f, %f", tf_global_odom.getOrigin().x(), tf_global_odom.getOrigin().y(), tf2::getYaw(tf_global_odom.getRotation()));
+    RCLCPP_DEBUG(get_logger(), "tf_odom_target_: %f, %f, %f", tf_odom_target_.getOrigin().x(), tf_odom_target_.getOrigin().y(), tf2::getYaw(tf_odom_target_.getRotation()));
     target_updated_ = true;
 
     // Reset multiturn
@@ -384,9 +389,10 @@ namespace spes_move
   {
     if (target_updated_) {
       // TODO: This will produce minor jitter when a goal is updated.
-      translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
+      translation_ruckig_input_.current_position[0] = diff_x - last_error_x_; // * sign(translation_ruckig_output_.new_position[0]);
       target_updated_ = false;
     }
+    RCLCPP_DEBUG(get_logger(), "diff_x: %f, last_error_x_: %f", diff_x, last_error_x_);
 
     const double previous_input = translation_ruckig_output_.new_position[0];
     const bool is_trajectory_finished = (translation_ruckig_->update(translation_ruckig_input_, translation_ruckig_output_) == ruckig::Finished);
