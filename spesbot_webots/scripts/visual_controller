@@ -11,6 +11,8 @@ from builtin_interfaces.msg import Time as RosTime
 from enum import Enum
 
 from spes_msgs.msg import MoveCommand
+import time
+from datetime import datetime, timedelta
 
 
 
@@ -20,7 +22,8 @@ UDP_PORT = 5005
 class MoveState(Enum):
     TRANSLATE = 0,
     ROTATE = 1,
-    IDLE = 2
+    IDLE = 2,
+    FORWARD = 3
 
 
 class VisualController(Node):
@@ -39,7 +42,11 @@ class VisualController(Node):
 
         self.current_instance = -1
         self.can_change_instance = True
-        self.is_finish = False
+        self.state = MoveState.IDLE
+        self.is_restart = True
+        self.start = datetime.now()
+        self.time_over = datetime.now()
+        
     
     def udp_listener(self):
         while True:
@@ -71,21 +78,121 @@ class VisualController(Node):
 
         self.get_logger().info(f"class = {class_}, instance = {instance}, center_x = {center_x}, center_y = {center_y}, height = {height}, width = {width}, precision = {precision/100}, timestamp_sec = {formatted_time}, image_width = {image_width}, image_height = {image_height}")
         
-        if self.can_change_instance:
+        if self.can_change_instance or (datetime.now() - self.time_over)>=timedelta(seconds=3):
             self.current_instance = instance
             self.can_change_instance = False
         
         self.move_robot(center_x, center_y, instance, image_width, image_height, timestamp_sec, timestamp_nsec)
 
-    
     def move_robot(self, center_x, center_y, instance, image_width, image_height, timestamp_sec, timestamp_nsec):
+        self.get_logger().info(f'{instance, self.current_instance}')
+        if image_height == 0 and image_width == 0:
+            self.next_state = MoveState.ROTATE #TODO when implement BT wait restart action
+            self.can_change_instance = True
+            return
+        
+        move_command = MoveCommand()
+        move_command.angular_properties.max_acceleration = 0.4
+        move_command.angular_properties.max_velocity = 0.2
+        move_command.linear_properties.max_acceleration = 0.25
+        move_command.linear_properties.max_velocity = 0.07
+
+        if instance == self.current_instance:
+            self.time_over = datetime.now()
+            ros_time = RosTime()
+            ros_time.sec = timestamp_sec
+            ros_time.nanosec = timestamp_nsec
+
+            P_LINEAR = 0.048 / image_height * 5
+            P_ANGULAR = 0.128 / image_width * 5
+            img_center_x = round(image_width / 2)
+            img_center_y = round(image_height / 2)
+            epsilon_x = round(image_width * 0.03)
+            epsilon_y = round(image_height * 0.04)
+            
+            if self.state == MoveState.IDLE and self.is_restart:
+                self.state = MoveState.ROTATE
+                self.is_restart = False
+
+            if self.state == MoveState.ROTATE:
+                if abs(img_center_x - int(center_x)) > epsilon_x:
+                    #Rotate
+                    self.state_rotate(move_command, P_ANGULAR, img_center_x, center_x, ros_time)
+                else:
+                    self.state = MoveState.TRANSLATE
+            
+            if self.state == MoveState.TRANSLATE:
+                if abs(int(center_y) - img_center_y * 1.4)  > epsilon_y:
+                    #Transale
+                    self.state_transalte(move_command, P_LINEAR, img_center_y, center_y, ros_time)
+                else:
+                    self.state = MoveState.ROTATE
+            
+            if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y * 1.4)  < epsilon_y:
+                    self.state = MoveState.FORWARD
+                    #FORMWARD
+                    self.state_forward(move_command, ros_time)
+                    self.get_logger().info(f"=======IS CAME========")
+                    self.start = datetime.now()
+            
+            if self.state == MoveState.FORWARD:
+                if (datetime.now() - self.start)>=timedelta(seconds=3):
+                    self.state = MoveState.IDLE
+                    self.is_restart = True
+
+
+
+    def state_rotate(self, move_command, P_ANGULAR, img_center_x, center_x, ros_time):
+        move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
+        move_command.rotate_towards_goal = False
+        move_command.translate = False            
+        move_command.header.frame_id = 'base_link'
+        move_command.header.stamp = ros_time
+
+        self._publisher.publish(move_command)
+    
+    def state_transalte(self, move_command, P_LINEAR, img_center_y, center_y, ros_time):
+        move_command.target.x = P_LINEAR * (img_center_y * 1.4 - int(center_y))
+        move_command.rotate_towards_goal = False
+        move_command.translate = True
+        move_command.rotate_at_goal = False
+        move_command.header.frame_id = 'base_link'
+        move_command.header.stamp = ros_time
+
+        self._publisher.publish(move_command)
+
+    def state_forward(self, move_command, ros_time):
+        move_command.linear_properties.max_acceleration = 0.2
+        move_command.target.theta = 0.0
+        move_command.target.x = 0.3
+        move_command.rotate_towards_goal = True
+        move_command.translate = True 
+        move_command.rotate_at_goal = True
+        move_command.header.frame_id = 'base_link'
+        move_command.header.stamp = ros_time
+
+        self.can_change_instance = True
+
+        self._publisher.publish(move_command)
+        
+
+
+
+    
+    def move_robot_ex(self, center_x, center_y, instance, image_width, image_height, timestamp_sec, timestamp_nsec):
         self.get_logger().info(f'{instance, self.current_instance}')
         
         if image_height == 0 and image_width == 0:
             self.next_state = MoveState.ROTATE
-            self.idle_state = MoveState.ROTATE
             self.can_change_instance = True
             return
+        
+        #set angular and linear velocity
+        move_command = MoveCommand()
+        move_command.angular_properties.max_acceleration = 0.4
+        move_command.angular_properties.max_velocity = 0.2
+        move_command.linear_properties.max_acceleration = 0.25
+        move_command.linear_properties.max_velocity = 0.07
 
         if instance == self.current_instance:
             ros_time = RosTime()
@@ -99,42 +206,34 @@ class VisualController(Node):
             epsilon_x = round(image_width * 0.03)
             epsilon_y = round(image_height * 0.04)
 
-            #set angular and linear velocity
-            move_command = MoveCommand()
-            move_command.angular_properties.max_acceleration = 0.4
-            move_command.angular_properties.max_velocity = 0.2
-            move_command.linear_properties.max_acceleration = 0.25
-            move_command.linear_properties.max_velocity = 0.07
-
-            self.get_logger().info(f"======={self.idle_state}========")
-
-            if abs(img_center_x - int(center_x)) > epsilon_x and self.next_state == MoveState.ROTATE and self.idle_state != MoveState.IDLE:
-                move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
-                move_command.rotate_towards_goal = False
-                move_command.translate = False            
-                move_command.header.frame_id = 'base_link'
-                move_command.header.stamp = ros_time
-
-                self._publisher.publish(move_command)
-            else:
-                self.next_state = MoveState.TRANSLATE
-                
-                if abs(int(center_y) - img_center_y * 1.4)  > epsilon_y:
-                    move_command.target.x = P_LINEAR * (img_center_y * 1.4 - int(center_y))
+            if self.idle_state != MoveState.IDLE:
+                if abs(img_center_x - int(center_x)) > epsilon_x and self.next_state == MoveState.ROTATE:
+                    move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
                     move_command.rotate_towards_goal = False
-                    move_command.translate = True
-                    move_command.rotate_at_goal = False
+                    move_command.translate = False            
                     move_command.header.frame_id = 'base_link'
                     move_command.header.stamp = ros_time
 
                     self._publisher.publish(move_command)
                 else:
-                    self.next_state = MoveState.ROTATE
-                
-            if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y * 1.4)  < epsilon_y:
-                self.idle_state = MoveState.IDLE
+                    self.next_state = MoveState.TRANSLATE
+                    
+                    if abs(int(center_y) - img_center_y * 1.4)  > epsilon_y:
+                        move_command.target.x = P_LINEAR * (img_center_y * 1.4 - int(center_y))
+                        move_command.rotate_towards_goal = False
+                        move_command.translate = True
+                        move_command.rotate_at_goal = False
+                        move_command.header.frame_id = 'base_link'
+                        move_command.header.stamp = ros_time
 
-            if self.idle_state ==  MoveState.IDLE:
+                        self._publisher.publish(move_command)
+                    else:
+                        self.next_state = MoveState.ROTATE
+                    
+                if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y * 1.4)  < epsilon_y:
+                    self.idle_state = MoveState.IDLE
+
+            else:
                 move_command.linear_properties.max_acceleration = 0.2
 
                 self.next_state = MoveState.ROTATE
