@@ -35,8 +35,11 @@ class VisualController(Node):
         self.listener_thread.start()
         
         self.next_state = MoveState.ROTATE
+        self.idle_state = MoveState.ROTATE
+
         self.current_instance = -1
         self.can_change_instance = True
+        self.is_finish = False
     
     def udp_listener(self):
         while True:
@@ -80,6 +83,7 @@ class VisualController(Node):
         
         if image_height == 0 and image_width == 0:
             self.next_state = MoveState.ROTATE
+            self.idle_state = MoveState.ROTATE
             self.can_change_instance = True
             return
 
@@ -102,7 +106,9 @@ class VisualController(Node):
             move_command.linear_properties.max_acceleration = 0.25
             move_command.linear_properties.max_velocity = 0.07
 
-            if abs(img_center_x - int(center_x)) > epsilon_x and self.next_state == MoveState.ROTATE:
+            self.get_logger().info(f"======={self.idle_state}========")
+
+            if abs(img_center_x - int(center_x)) > epsilon_x and self.next_state == MoveState.ROTATE and self.idle_state != MoveState.IDLE:
                 move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
                 move_command.rotate_towards_goal = False
                 move_command.translate = False            
@@ -126,8 +132,13 @@ class VisualController(Node):
                     self.next_state = MoveState.ROTATE
                 
             if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y * 1.4)  < epsilon_y:
+                self.idle_state = MoveState.IDLE
+
+            if self.idle_state ==  MoveState.IDLE:
                 move_command.linear_properties.max_acceleration = 0.2
 
+                self.next_state = MoveState.ROTATE
+                
                 move_command.target.theta = 0.0
                 move_command.target.x = 0.3
                 move_command.rotate_towards_goal = True
@@ -138,9 +149,14 @@ class VisualController(Node):
 
                 self.next_state = MoveState.ROTATE
                 self.can_change_instance = True
+                self.is_finish = True
+                
 
                 self._publisher.publish(move_command)
                 self.get_logger().info(f"=======IS CAME========")
+            
+            
+
 
 
         
