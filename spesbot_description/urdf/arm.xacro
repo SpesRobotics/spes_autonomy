@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="arm" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="arm">
+    <link name="arm_base_link">
+      <visual>
+        <geometry>
+          <mesh filename="package://spesbot_description/urdf/meshes/arm_base.stl" />
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </visual>
+    </link>
+    <joint name="joint_1" type="revolute">
+      <parent link="arm_base_link" />
+      <child link="arm_link_1" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <axis xyz="0 0 1" />
+      <limit lower="-1.57" upper="1.57" effort="100" velocity="0.5" />
+    </joint>
+    <link name="arm_link_1">
+      <visual>
+        <geometry>
+          <mesh filename="package://spesbot_description/urdf/meshes/arm_link_1.stl" />
+        </geometry>
+        <origin xyz="0 0 0.01" rpy="0 0 0" />
+      </visual>
+    </link>
+    <joint name="joint_2" type="revolute">
+      <parent link="arm_link_1" />
+      <child link="arm_link_2" />
+      <origin xyz="0.02 0 0.012" rpy="0 0 0" />
+      <axis xyz="0 1 0" />
+      <limit lower="-1.57" upper="1.57" effort="100" velocity="0.5" />
+    </joint>
+    <link name="arm_link_2">
+      <visual>
+        <geometry>
+          <mesh filename="package://spesbot_description/urdf/meshes/arm_link_2.stl" />
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </visual>
+    </link>
+    <joint name="joint_3" type="revolute">
+      <parent link="arm_link_2" />
+      <child link="arm_link_3" />
+      <origin xyz="0 0 0.1" rpy="0 0 0" />
+      <axis xyz="0 1 0" />
+      <limit lower="-1.57" upper="1.57" effort="100" velocity="0.5" />
+    </joint>
+    <link name="arm_link_3">
+      <visual>
+        <geometry>
+          <mesh filename="package://spesbot_description/urdf/meshes/arm_link_3.stl" />
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </visual>
+    </link>
+    <joint name="joint_4" type="revolute">
+      <parent link="arm_link_3" />
+      <child link="arm_link_4" />
+      <origin xyz="0.12 0 0" rpy="0 0 0" />
+      <axis xyz="0 1 0" />
+      <limit lower="-1.57" upper="1.57" effort="100" velocity="0.5" />
+    </joint>
+    <link name="arm_link_4">
+      <visual>
+        <geometry>
+          <mesh filename="package://spesbot_description/urdf/meshes/arm_link_4.stl" />
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </visual>
+    </link>
+    <joint name="joint_5" type="revolute">
+      <parent link="arm_link_4" />
+      <child link="arm_link_5" />
+      <origin xyz="0.04 0 0" rpy="0 0 0" />
+      <axis xyz="1 0 0" />
+      <limit lower="-1.57" upper="1.57" effort="100" velocity="0.5" />
+    </joint>
+    <link name="arm_link_5">
+      <visual>
+        <geometry>
+          <mesh filename="package://spesbot_description/urdf/meshes/gripper.stl" />
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </visual>
+    </link>
+    <joint name="arm_tcp_joint" type="fixed">
+      <parent link="arm_link_5" />
+      <child link="arm_tcp_link" />
+      <origin xyz="0.1 0 0" rpy="0 0 0" />
+    </joint>
+    <link name="arm_tcp_link" />
+  </xacro:macro>
+</robot>
