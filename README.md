@@ -1,17 +1,17 @@
-# SpesBot
+# Spes Autonomy
 
-Spes Robotics reference platform.
+Spes Robotics autonomy algorithms, software infrastructure, and hardware platform.
 
 ## Quick Start
 
 ```bash
-mkdir -p $HOME/spesbot_ws/src
-git clone git@github.com:SpesRobotics/spesbot.git $HOME/spesbot_ws/src/spesbot
+git clone git@github.com:SpesRobotics/spesbot.git $HOME/spesbot
 
-# Build the Docker image
-make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile build-<pc or sbc>
-make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile run
-make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile exec
+# Build and run the Docker image
+make -f $HOME/spesbot/docker/Makefile build-pc run
+
+# Once built and run just exec to attach to a terminal
+make -f $HOME/spesbot/docker/Makefile exec
 ```
 
 ## Parts
