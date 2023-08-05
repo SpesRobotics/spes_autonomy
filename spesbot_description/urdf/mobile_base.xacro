@@ -12,14 +12,57 @@
         <joint name="left_motor" type="continuous">
             <parent link="base_link" />
             <child link="left_wheel_link" />
-            <origin xyz="0 0.1 0" rpy="0 0 0" />
-            <axis xyz="0 0 1" />
+            <origin xyz="0 0.145 0" rpy="0 0 0" />
+            <axis xyz="0 1 0" />
         </joint>
         <link name="left_wheel_link">
             <visual>
                 <geometry>
                     <mesh
-                        filename="package://spesbot_description/urdf/meshes/simplified/wheel.stl" />
+                        filename="package://spesbot_description/urdf/meshes/wheel.stl" />
+                </geometry>
+            </visual>
+        </link>
+        <joint name="right_motor" type="continuous">
+            <parent link="base_link" />
+            <child link="right_wheel_link" />
+            <origin xyz="0 -0.145 0" rpy="0 0 0" />
+            <axis xyz="0 1 0" />
+        </joint>
+        <link name="right_wheel_link">
+            <visual>
+                <geometry>
+                    <mesh
+                        filename="package://spesbot_description/urdf/meshes/wheel.stl" />
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 3.14159" />
+            </visual>
+        </link>
+        <joint name="caster_steering_joint" type="continuous">
+            <parent link="base_link" />
+            <child link="caster_holder_link" />
+            <origin xyz="-0.31 0 0" rpy="0 0 0" />
+            <axis xyz="0 0 1" />
+        </joint>
+        <link name="caster_holder_link">
+            <visual>
+                <geometry>
+                    <mesh
+                        filename="package://spesbot_description/urdf/meshes/caster_holder.stl" />
+                </geometry>
+            </visual>
+        </link>
+        <joint name="caster_wheel_joint" type="continuous">
+            <parent link="caster_holder_link" />
+            <child link="caster_wheel_link" />
+            <origin xyz="-0.03 0 -0.05" rpy="0 0 0" />
+            <axis xyz="0 1 0" />
+        </joint>
+        <link name="caster_wheel_link">
+            <visual>
+                <geometry>
+                    <mesh
+                        filename="package://spesbot_description/urdf/meshes/caster_wheel.stl" />
                 </geometry>
             </visual>
         </link>

@@ -2,11 +2,14 @@
 
 <robot name="spesbot" xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:include filename="$(find spesbot_description)/urdf/mobile_base.xacro" />
-    <!-- <xacro:include filename="$(find spesbot_description)/urdf/spesbot_arm.xacro" /> -->
+    <xacro:include filename="$(find spesbot_description)/urdf/arm.xacro" />
 
     <xacro:mobile_base />
+    <xacro:arm />
 
-    <!-- <xacro:arm parent="base_link">
-        <origin xyz="0.1 0 0.1" rpy="0 0 0" />
-    </xacro:arm> -->
+    <joint name="arm_fixed_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="arm_base_link" />
+        <origin xyz="0 0.08 0.08" rpy="0 0 0" />
+    </joint>
 </robot>
