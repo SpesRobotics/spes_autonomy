@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
     ros-humble-ros2-control \
     ros-humble-hls-lfcd-lds-driver \
     ros-humble-v4l2-camera \
+    ros-humble-urdf-tutorial \
     nano \
     alsa \
     libxshmfence1 \

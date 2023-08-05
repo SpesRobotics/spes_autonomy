@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<robot name="spesbot" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:include filename="$(find spesbot_description)/urdf/mobile_base.xacro" />
+    <!-- <xacro:include filename="$(find spesbot_description)/urdf/spesbot_arm.xacro" /> -->
+
+    <xacro:mobile_base />
+
+    <!-- <xacro:arm parent="base_link">
+        <origin xyz="0.1 0 0.1" rpy="0 0 0" />
+    </xacro:arm> -->
+</robot>
