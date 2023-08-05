@@ -46,10 +46,11 @@ RUN curl -L -o /tmp/webots.deb \
 COPY ./Webots-R2023a.conf /${DOCKERUSER}/.config/Cyberbotics/Webots-R2023a.conf
 
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
-    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/SpesRobotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
+    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
+    git clone --depth=1 --branch=ros2 https://github.com/fzi-forschungszentrum-informatik/cartesian_controllers.git /${DOCKERUSER}/ros2_libs_ws/src/cartesian_controllers && \
     cd /${DOCKERUSER}/ros2_libs_ws && \
     . /opt/ros/humble/setup.sh && \
-    colcon build --symlink-install
+    colcon build --symlink-install --packages-up-to cartesian_motion_controller cartesian_controller_handles odrive_hardware_interface
 
 # HOTFIX: RViz black screen
 RUN add-apt-repository -y ppa:kisak/kisak-mesa && \

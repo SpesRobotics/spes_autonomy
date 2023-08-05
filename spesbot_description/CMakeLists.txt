@@ -4,7 +4,7 @@ project(spesbot_description)
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY urdf launch
+  DIRECTORY urdf launch resource
   DESTINATION share/${PROJECT_NAME}
 )
 

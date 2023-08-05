@@ -12,4 +12,45 @@
         <child link="arm_base_link" />
         <origin xyz="0 0.08 0.08" rpy="0 0 0" />
     </joint>
+
+    <ros2_control name="fake_system" type="system">
+        <hardware>
+            <plugin>mock_components/GenericSystem</plugin>
+        </hardware>
+
+        <joint name="joint_1">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+
+        <joint name="joint_2">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+
+        <joint name="joint_3">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+
+        <joint name="joint_4">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+
+        <joint name="joint_5">
+            <command_interface name="position" />
+            <state_interface name="position" />
+        </joint>
+
+        <joint name="left_motor">
+            <command_interface name="velocity" />
+            <state_interface name="position" />
+        </joint>
+
+        <joint name="right_motor">
+            <command_interface name="velocity" />
+            <state_interface name="position" />
+        </joint>
+    </ros2_control>
 </robot>
