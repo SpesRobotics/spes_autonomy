@@ -4,8 +4,8 @@
 
 #### Install Arduino CLI and dependencies
 ```bash
-curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/.local/bin sh
-echo "~/.local/bin" >> ~/.bashrc && source ~/.bashrc
+sudo snap install arduino-cli
+sudo apt remove brltty
 arduino-cli core update-index
 arduino-cli core install arduino:avr
 arduino-cli lib install circularbuffer servo
