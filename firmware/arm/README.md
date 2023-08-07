@@ -5,7 +5,8 @@
 #### Install Arduino CLI and dependencies
 ```bash
 sudo adduser $USER dialout
-sudo snap install arduino-cli
+curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/.local/bin sh
+echo 'export PATH="$PATH:~/.local/bin"' >> ~/.bashrc && source ~/.bashrc
 sudo apt remove brltty
 arduino-cli core update-index
 arduino-cli core install arduino:avr
