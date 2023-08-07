@@ -4,6 +4,7 @@
 
 #### Install Arduino CLI and dependencies
 ```bash
+sudo adduser $USER dialout
 sudo snap install arduino-cli
 sudo apt remove brltty
 arduino-cli core update-index
