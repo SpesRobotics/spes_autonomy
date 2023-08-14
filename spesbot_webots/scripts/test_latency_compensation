@@ -44,10 +44,10 @@ class Move(Node):
                     self.cv_bridge.cv2_to_imgmsg(image, 'bgr8'))
 
                 # emulate processing latency
-                # time.sleep(0.3)
+                time.sleep(0.3)
 
                 move_command = MoveCommand()
-                move_command.target.theta = -error_x * 0.4
+                move_command.target.theta = -error_x * 0.3
                 move_command.rotate_towards_goal = False
                 move_command.translate = False
                 

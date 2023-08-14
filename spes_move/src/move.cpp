@@ -14,6 +14,8 @@ namespace spes_move
     }
 
     command_->target = msg->target;
+    command_->header.stamp = msg->header.stamp;
+
     update_odom_target_tf();
   }
 
@@ -351,14 +353,11 @@ namespace spes_move
       // TODO: This will produce minor jerk when a goal is updated.
       double prev = rotation_ruckig_input_.current_position[0];
       rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
-      RCLCPP_INFO(get_logger(), "diff_yaw: %f, last_error_yaw_: %f", diff_yaw, last_error_yaw_);
-      RCLCPP_INFO(get_logger(), "prev: %f, current: %f", prev, rotation_ruckig_input_.current_position[0]);
       target_updated_ = false;
     }
 
     const double previous_input = rotation_ruckig_output_.new_position[0];
     const bool is_trajectory_finished = (rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_) == ruckig::Finished);
-    RCLCPP_INFO(get_logger(), "is_trajectory_finished: %d", is_trajectory_finished);
     last_error_yaw_ = diff_yaw - rotation_ruckig_output_.new_position[0];
     const double d_input = rotation_ruckig_output_.new_position[0] - previous_input;
     cmd_vel->angular.z = command_->angular_properties.kp * last_error_yaw_ - command_->angular_properties.kd * d_input;
