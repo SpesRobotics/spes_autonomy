@@ -39,11 +39,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
 
 # Webots
 RUN curl -L -o /tmp/webots.deb \
-        'https://github.com/cyberbotics/webots/releases/download/R2023a/webots_2023a_amd64.deb' && \
+        'https://github.com/cyberbotics/webots/releases/download/R2023b/webots_2023b_amd64.deb' && \
     apt-get install -y /tmp/webots.deb && \
     rm -f /tmp/webots.deb && \
     mkdir -p /${DOCKERUSER}/.config/Cyberbotics
-COPY ./Webots-R2023a.conf /${DOCKERUSER}/.config/Cyberbotics/Webots-R2023a.conf
+COPY ./Webots-R2023b.conf /${DOCKERUSER}/.config/Cyberbotics/Webots-R2023b.conf
 
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
     git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
