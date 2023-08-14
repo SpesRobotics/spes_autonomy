@@ -13,6 +13,7 @@ namespace spes_move
       return;
     }
 
+    command_->target = msg->target;
     update_odom_target_tf();
   }
 
@@ -347,13 +348,17 @@ namespace spes_move
   void Move::regulate_rotation(geometry_msgs::msg::Twist *cmd_vel, double diff_yaw)
   {
     if (target_updated_) {
-      // TODO: This will produce minor jitter when a goal is updated.
+      // TODO: This will produce minor jerk when a goal is updated.
+      double prev = rotation_ruckig_input_.current_position[0];
       rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
+      RCLCPP_INFO(get_logger(), "diff_yaw: %f, last_error_yaw_: %f", diff_yaw, last_error_yaw_);
+      RCLCPP_INFO(get_logger(), "prev: %f, current: %f", prev, rotation_ruckig_input_.current_position[0]);
       target_updated_ = false;
     }
 
     const double previous_input = rotation_ruckig_output_.new_position[0];
     const bool is_trajectory_finished = (rotation_ruckig_->update(rotation_ruckig_input_, rotation_ruckig_output_) == ruckig::Finished);
+    RCLCPP_INFO(get_logger(), "is_trajectory_finished: %d", is_trajectory_finished);
     last_error_yaw_ = diff_yaw - rotation_ruckig_output_.new_position[0];
     const double d_input = rotation_ruckig_output_.new_position[0] - previous_input;
     cmd_vel->angular.z = command_->angular_properties.kp * last_error_yaw_ - command_->angular_properties.kd * d_input;
@@ -383,8 +388,11 @@ namespace spes_move
   void Move::regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y)
   {
     if (target_updated_) {
-      // TODO: This will produce minor jitter when a goal is updated.
+      // TODO: This will produce minor jerk when a goal is updated.
+      double prev = translation_ruckig_input_.current_position[0];
       translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
+      RCLCPP_INFO(get_logger(), "diff_x: %f, last_error_x_: %f", diff_x, last_error_x_);
+      RCLCPP_INFO(get_logger(), "prev: %f, current: %f", prev, translation_ruckig_input_.current_position[0]);
       target_updated_ = false;
     }
 

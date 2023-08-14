@@ -58,8 +58,8 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'use_sim_time': True,
-            'angular.max_velocity': 1.0,
-            'angular.max_acceleration': 1.0,
+            'angular.max_velocity': 0.3,
+            'angular.max_acceleration': 0.3,
             'update_rate': 100,
         }],
     )
