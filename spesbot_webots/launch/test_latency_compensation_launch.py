@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    use_sime_time = True
+    use_sim_time = launch.substitutions.LaunchConfiguration('use_sim_time', default='true')
     package_dir = get_package_share_directory('spesbot_webots')
 
     controller_params = os.path.join(get_package_share_directory('spesbot_hardware'),
@@ -27,7 +27,7 @@ def generate_launch_description():
         emulate_tty=True,  # debugging
         parameters=[
             {
-                'use_sim_time': use_sime_time,
+                'use_sim_time': use_sim_time,
                 'robot_description': robot_description
             },
             controller_params
@@ -57,9 +57,10 @@ def generate_launch_description():
         executable='move',
         output='screen',
         parameters=[{
-            'use_sim_time': use_sime_time,
-            'angular.max_velocity': 1.0,
-            'angular.max_acceleration': 1.0,
+            'use_sim_time': use_sim_time,
+            'angular.max_velocity': 0.3,
+            'angular.max_acceleration': 0.3,
+            'angular.tolerance': 0.0,
             'update_rate': 100,
         }],
     )
@@ -68,7 +69,7 @@ def generate_launch_description():
         package='spesbot_webots',
         executable='test_latency_compensation',
         output='screen',
-        parameters=[{'use_sim_time': use_sime_time}],
+        parameters=[{'use_sim_time': use_sim_time}],
     )
     
     return launch.LaunchDescription([

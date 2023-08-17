@@ -15,7 +15,7 @@ class Move(Node):
         self.cv_bridge = CvBridge()
         self._publisher = self.create_publisher(MoveCommand, '/move/command', 1)
         self._subscriber = self.create_subscription(
-            Image, '/camera', self._on_image_received, 1)
+            Image, '/camera/image_color', self._on_image_received, 1)
         self._debug_publisher = self.create_publisher(
             Image, '/camera/debug', 1)
 

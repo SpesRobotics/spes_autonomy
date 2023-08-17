@@ -1,26 +1,44 @@
-# SpesBot
+# Spes Autonomy
 
-Spes Robotics reference platform.
+Spes Robotics autonomy packages, software infrastructure, and hardware platform.
 
-## Quick Start
+## Installation
+
+You can install as a typical ROS workspace, but we highly recommend using Docker: 
 
 ```bash
-mkdir -p $HOME/spesbot_ws/src
-git clone git@github.com:SpesRobotics/spesbot.git $HOME/spesbot_ws/src/spesbot
+# Install Docker (and other dependencies) and reboot to apply the user group change
+sudo apt install git make curl
+curl -sSL https://get.docker.com | sh && sudo usermod -aG docker $USER
+sudo reboot 
 
-# Build the Docker image
-make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile build-<pc or sbc>
-make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile run
-make -f $HOME/spesbot_ws/src/spesbot/docker/Makefile exec
+# Clone the repo
+git clone https://github.com/SpesRobotics/spes_autonomy.git $HOME/spes_autonomy
+
+# Build and run the Docker image (only once)
+make -f $HOME/spes_autonomy/docker/Makefile build-pc run
+
+# Attach to a terminal
+make -f $HOME/spes_autonomy/docker/Makefile exec
 ```
 
-## Parts
+## Examples
 
-- Baseus Blade USB C 100W ([link](https://us.baseus.com/p/baseus-blade-usb-c-100w-20000mah-power-bank-107))
-- Intel® RealSense™ Depth Camera D435 ([link](https://www.intelrealsense.com/depth-camera-d435/))
-- 360 Laser Distance Sensor LDS-01 ([link](https://www.robotis.us/360-laser-distance-sensor-lds-01-lidar/), [alternative](https://www.ebay.com/sch/i.html?_nkw=robot+2d+lidar+360), [docs](https://emanual.robotis.com/assets/docs/LDS_Basic_Specification.pdf))
-- Raspberry Pi 4 ([link](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/))
-- ODrive v3.6 ([link](https://odriverobotics.com/shop/odrive-v36), [alternative](https://www.aliexpress.com/wholesale?SearchText=odrive))
-- PD Decoy Board ([link](https://www.aliexpress.com/wholesale?SearchText=PD+decoy))
-- Hoverboard Wheel ([link](https://www.aliexpress.com/wholesale?SearchText=hoverboard+motor+6.5inch))
-- Aluminium Strut Profiles and Connections ([link](https://www.boschrexroth.com/en/xc/products/product-groups/assembly-technology/topics/aluminum-profiles-solutions-components/aluminum-profiles-products/index))
+Visual servoing with latency compensation:
+```bash
+ros2 launch spesbot_webots test_latency_compensation_launch.py
+```
+
+SLAM & Navigation:
+```bash
+# Create a map
+ros2 launch nav2_bringup slam_launch.py
+rviz2
+
+# Save the map
+ros2 run nav2_map_server map_saver_cli -f /spesbot/assets/map
+
+# Navigate
+ros2 launch nav2_bringup bringup_launch.py map:=/spesbot/assets/map.yaml
+ros2 launch nav2_bringup rviz_launch.py
+```
