@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 from ultralytics import YOLO
 from collections import defaultdict
 import cv2
@@ -39,6 +41,7 @@ class UDPStreamer:
         track_ids = results[0].boxes.id.int().cpu().tolist()
         classes = results[0].boxes.cls.int().cpu().tolist()
         confs = results[0].boxes.conf.cpu().tolist()
+        image_height, image_width = results[0].orig_img.shape[:2]
 
         message = struct.pack('>H', len(boxes))
 
@@ -46,13 +49,13 @@ class UDPStreamer:
             x, y, w, h = box
             class_ = int(class_)
             instance = int(class_ * 1e6) + int(track_id)
-            center_x = int(x + w / 2)
-            center_y = int(y + h / 2)
+            center_x = int(x)
+            center_y = int(y)
             width = int(w)
             height = int(h)
             conf = int(conf * 100)
             message += struct.pack(
-                '>HIHHHHBqq',
+                '>HIHHHHBqqHH',
                 class_,
                 instance,
                 center_x,
@@ -62,6 +65,8 @@ class UDPStreamer:
                 conf,
                 timestamp_sec,
                 timestamp_nsec,
+                image_width,
+                image_height,
             )
 
             print(
@@ -100,18 +105,72 @@ def get_annotated_frame(results, track_history):
     return annotated_frame
 
 
+class OpencvCameraReader:
+    def __init__(self, source):
+        self.__capture = cv2.VideoCapture(source)
+
+    def is_open(self):
+        return self.__capture.isOpened()
+
+    def read(self):
+        timestamp = time.time()
+        timestamp_sec = int(time.time())
+        timestamp_nsec = int((timestamp - timestamp_sec) * 1e9)
+        success, image = self.__capture.read()
+        return success, image, (timestamp_sec, timestamp_nsec)
+
+    def close(self):
+        self.__capture.release()
+
+
+class ROSCameraReader:
+    def __init__(self) -> None:
+        import rclpy
+        from sensor_msgs.msg import Image
+        from cv_bridge import CvBridge
+
+        rclpy.init()
+        self.__node = rclpy.create_node('ros_camera_reader')
+        self.__bridge = CvBridge()
+        self.__message = None
+        self.__subscriber = self.__node.create_subscription(
+            Image, '/camera/image_color', self.__callback, 1
+        )
+        self.__thread = threading.Thread(
+            target=rclpy.spin, args=(self.__node,))
+        self.__thread.start()
+
+    def __callback(self, msg):
+        self.__message = msg
+
+    def is_open(self):
+        return True
+
+    def read(self):
+        while self.__message is None:
+            time.sleep(0.01)
+        image = self.__bridge.imgmsg_to_cv2(self.__message, 'bgr8')
+        timestamp = self.__message.header.stamp
+        self.__message = None
+        return True, image, (timestamp.sec, timestamp.nanosec)
+
+    def close(self):
+        self.__thread.join()
+        self.__node.destroy_node()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--model', type=str, default='yolov8n.pt', help='Path to a model'
     )
-    parser.add_argument('--source', type=int, default=0, help='Camera index')
+    parser.add_argument('--source', type=str, default='0', help='Camera index')
     parser.add_argument(
         '--show-detections', type=bool, default=False, help='Show detections'
     )
     parser.add_argument('--port', type=int, default=5000, help='UDP port')
     parser.add_argument('--verbose', type=bool, default=False, help='Verbose')
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     track_history = defaultdict(lambda: [])
 
@@ -119,17 +178,14 @@ def main():
 
     streamer = UDPStreamer(args.port)
 
-    capture = cv2.VideoCapture(args.source)
-    if not capture.isOpened():
+    image_reader = OpencvCameraReader(
+        int(args.source)) if args.source != 'ros' else ROSCameraReader()
+    if not image_reader.is_open():
         print('Unable to open camera')
         exit(1)
 
     while True:
-        timestamp = time.time()
-        timestamp_sec = int(time.time())
-        timestamp_nsec = int((timestamp - timestamp_sec) * 1e9)
-
-        success, image = capture.read()
+        success, image, (timestamp_sec, timestamp_nsec) = image_reader.read()
         if not success:
             break
 
@@ -156,7 +212,7 @@ def main():
             if cv2.waitKey(1) == ord('q'):
                 break
 
-    capture.release()
+    image_reader.close()
     streamer.close()
 
     if args.show_detections:

@@ -1,6 +1,5 @@
 import os
 import pathlib
-import yaml
 import launch
 
 from ament_index_python.packages import get_package_share_directory
@@ -10,7 +9,6 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-
     package_dir = get_package_share_directory('spesbot_webots')
 
     controller_params = os.path.join(get_package_share_directory('spesbot_hardware'),
@@ -41,16 +39,26 @@ def generate_launch_description():
         additional_env={'WEBOTS_CONTROLLER_URL': 'spesbot'},
     )
 
-    ros2virtualcam = Node(
-        package='spesbot_webots',
-        executable='ros2virtualcam',
-        output='screen',
-    )
-
     virtual_controller = Node(
         package='spesbot_webots',
         executable='visual_controller',
         output='screen',
+        parameters=[{
+            'use_sim_time': True,
+        }],
+    )
+
+    move_command = Node(
+        package='spes_move',
+        executable='move',
+        output='screen',
+        parameters=[{
+            'use_sim_time': True,
+            'angular.max_acceleration' : 0.5,
+            'angular.max_velocity' : 1.2,
+            'linear.max_acceleration' : 0.8,
+            'linear.max_velocity' : 0.3
+        }],
     )
 
     diffdrive_controller_spawner = Node(
@@ -70,8 +78,8 @@ def generate_launch_description():
         webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
-        ros2virtualcam,
         virtual_controller,
+        move_command,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(
             target_action=webots,
