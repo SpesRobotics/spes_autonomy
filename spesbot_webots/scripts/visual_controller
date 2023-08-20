@@ -14,12 +14,13 @@ UDP_IP = '127.0.0.1'
 UDP_PORT = 5000
 ALLOWED_CLASSES = [41] # 41 for cup, None for all
 TRACKING_DEBOUNCE_TIME = 2.0
-P_LINEAR = 0.1
-P_ANGULAR = 0.2
+P_LINEAR = 0.2
+P_ANGULAR = 0.6
 X_THRESHOLD = 0.001
 Y_THRESHOLD = 0.005
 TARGET_X = 0.5
-TARGET_Y = 0.8
+TARGET_Y = 0.95
+TARGET_MOVE_FORWARD = 0.1
 
 
 class VisualControllerState:
@@ -180,7 +181,7 @@ class VisualController(Node):
 
     def __on_detection_callback(self, detections):
         if len(detections) == 0:
-            returnR
+            return
 
         self.__update_tracking_instance(detections)
         self.__regulate_robot()
@@ -198,7 +199,7 @@ class VisualController(Node):
         error_y = TARGET_Y - (
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
-        print(error_x, error_y)
+        # print(error_x, error_y)
 
         if self.__state == VisualControllerState.REGULATE_Y:
             self.state_regulate_y(error_x, error_y)
@@ -231,6 +232,7 @@ class VisualController(Node):
 
         if abs(error_x) < X_THRESHOLD:
             self.__state = VisualControllerState.REGULATE_Y
+            return
 
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
@@ -246,7 +248,9 @@ class VisualController(Node):
             move_command.header.frame_id = 'base_link'
             move_command.rotate_towards_goal = False
             move_command.rotate_at_goal = False
+            move_command.target.x = TARGET_MOVE_FORWARD
             self.__publisher.publish(move_command)
+            return
 
         if self.__move_state.state == MoveState.IDLE:
             self.__state = VisualControllerState.IDLE
