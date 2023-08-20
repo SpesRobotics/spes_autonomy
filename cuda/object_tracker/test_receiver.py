@@ -27,7 +27,7 @@ def main():
         num_detections = struct.unpack(">H", data[:2])[0]
         data = data[2:]
         for i in range(num_detections):
-            tokens = struct.unpack(PACK_STRING, data)
+            tokens = struct.unpack(PACK_STRING, data[:pack_string_size])
             data = data[pack_string_size:]
 
             class_ = tokens[0]

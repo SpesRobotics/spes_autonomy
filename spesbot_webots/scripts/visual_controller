@@ -12,12 +12,14 @@ import time
 
 UDP_IP = '127.0.0.1'
 UDP_PORT = 5000
-ALLOWED_CLASSES = None
+ALLOWED_CLASSES = [41] # 41 for cup, None for all
 TRACKING_DEBOUNCE_TIME = 2.0
-P_LINEAR = 0.5
-P_ANGULAR = 0.5
-X_THRESHOLD = 0.05
-Y_THRESHOLD = 0.05
+P_LINEAR = 0.1
+P_ANGULAR = 0.2
+X_THRESHOLD = 0.001
+Y_THRESHOLD = 0.005
+TARGET_X = 0.5
+TARGET_Y = 0.8
 
 
 class VisualControllerState:
@@ -42,6 +44,8 @@ class UDPStreamer:
             self.precision = 0
             self.timestamp_sec = 0
             self.timestamp_nsec = 0
+            self.image_width = 0
+            self.image_height = 0
 
         def timestamp(self):
             return self.timestamp_sec + self.timestamp_nsec / 1e9
@@ -64,7 +68,7 @@ class UDPStreamer:
         pack_string_size = struct.calcsize(self.PACK_STRING)
         data = data[2:]
         for _ in range(num_detections):
-            tokens = struct.unpack(self.PACK_STRING, data)
+            tokens = struct.unpack(self.PACK_STRING, data[:pack_string_size])
             data = data[pack_string_size:]
 
             detection = self.Detection()
@@ -77,6 +81,8 @@ class UDPStreamer:
             detection.precision = tokens[6]
             detection.timestamp_sec = tokens[7]
             detection.timestamp_nsec = tokens[8]
+            detection.image_width = tokens[9]
+            detection.image_height = tokens[10]
             detections.append(detection)
         return detections
 
@@ -120,9 +126,9 @@ def find_detection_with_max_conf(detections):
     return max_detection
 
 
-def find_detection_by_instance(detections, instance):
+def find_detection_by_instance_index(detections, instance_index):
     for detection in detections:
-        if detection.instance == instance:
+        if detection.instance == instance_index:
             return detection
     return None
 
@@ -168,9 +174,13 @@ class VisualController(Node):
             print('Switching tracking instance')
             self.__tracking_instance = find_detection_with_max_conf(detections)
 
+        # Update the current instance
+        if self.__tracking_instance is not None:
+            self.__tracking_instance = find_detection_by_instance_index(detections, self.__tracking_instance.instance)
+
     def __on_detection_callback(self, detections):
         if len(detections) == 0:
-            return
+            returnR
 
         self.__update_tracking_instance(detections)
         self.__regulate_robot()
@@ -180,14 +190,15 @@ class VisualController(Node):
             return
 
         if self.__state == VisualControllerState.IDLE:
-            self.__state = VisualControllerState.REGULATE_Y
+            self.__state = VisualControllerState.REGULATE_X
 
-        error_x = 0.5 - (
-            self.__tracking_instance.center_x - self.__tracking_instance.image_width
+        error_x = TARGET_X - (
+            self.__tracking_instance.center_x / self.__tracking_instance.image_width
         )
-        error_y = 0.5 - (
-            self.__tracking_instance.center_y - self.__tracking_instance.image_height
+        error_y = TARGET_Y - (
+            self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
+        print(error_x, error_y)
 
         if self.__state == VisualControllerState.REGULATE_Y:
             self.state_regulate_y(error_x, error_y)
