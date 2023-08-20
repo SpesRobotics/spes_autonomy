@@ -13,7 +13,6 @@ install(
 
 # Python scripts
 install(PROGRAMS
-  scripts/ros2virtualcam
   scripts/visual_controller
   scripts/test_latency_compensation
   DESTINATION lib/${PROJECT_NAME}

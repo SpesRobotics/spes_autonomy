@@ -26,7 +26,7 @@ def generate_launch_description():
         emulate_tty=True,  # debugging
         parameters=[
             {
-                'use_sim_time': False,
+                'use_sim_time': True,
                 'robot_description': robot_description
             },
             controller_params
@@ -39,16 +39,13 @@ def generate_launch_description():
         additional_env={'WEBOTS_CONTROLLER_URL': 'spesbot'},
     )
 
-    ros2virtualcam = Node(
-        package='spesbot_webots',
-        executable='ros2virtualcam',
-        output='screen',
-    )
-
     virtual_controller = Node(
         package='spesbot_webots',
         executable='visual_controller',
         output='screen',
+        parameters=[{
+            'use_sim_time': True,
+        }],
     )
 
     move_command = Node(
@@ -56,7 +53,7 @@ def generate_launch_description():
         executable='move',
         output='screen',
         parameters=[{
-            'use_sim_time': False,
+            'use_sim_time': True,
             'angular.max_acceleration' : 0.5,
             'angular.max_velocity' : 1.2,
             'linear.max_acceleration' : 0.8,
@@ -81,7 +78,6 @@ def generate_launch_description():
         webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
-        ros2virtualcam,
         virtual_controller,
         move_command,
         launch.actions.

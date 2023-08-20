@@ -19,8 +19,8 @@ P_ANGULAR = 0.6
 X_THRESHOLD = 0.001
 Y_THRESHOLD = 0.005
 TARGET_X = 0.5
-TARGET_Y = 0.95
-TARGET_MOVE_FORWARD = 0.1
+TARGET_Y = 0.72
+TARGET_MOVE_FORWARD = 0.3
 
 
 class VisualControllerState:
@@ -153,8 +153,8 @@ class VisualController(Node):
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
 
         self.__tracking_instance = None
-        self.__state = VisualControllerState.IDLE
-        self.__previous_state = VisualControllerState.IDLE
+        self.__state = VisualControllerState.REGULATE_X
+        self.__previous_state = VisualControllerState.REGULATE_X
         self.__move_state = MoveState()
 
     def __on_move_state(self, move_state):
@@ -190,16 +190,13 @@ class VisualController(Node):
         if self.__tracking_instance is None:
             return
 
-        if self.__state == VisualControllerState.IDLE:
-            self.__state = VisualControllerState.REGULATE_X
-
         error_x = TARGET_X - (
             self.__tracking_instance.center_x / self.__tracking_instance.image_width
         )
         error_y = TARGET_Y - (
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
-        # print(error_x, error_y)
+        self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
 
         if self.__state == VisualControllerState.REGULATE_Y:
             self.state_regulate_y(error_x, error_y)
@@ -209,7 +206,7 @@ class VisualController(Node):
             self.state_forward()
 
         if self.__state != self.__previous_state:
-            print(f'State changed from {self.__previous_state} to {self.__state}')
+            self.get_logger().info(f'State changed from {self.__previous_state} to {self.__state}')
             self.__previous_state = self.__state
 
     def state_regulate_y(self, error_x, error_y):
@@ -243,17 +240,13 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
     def state_forward(self):
-        if self.__previous_state != VisualControllerState.FORWARD:
-            move_command = MoveCommand()
-            move_command.header.frame_id = 'base_link'
-            move_command.rotate_towards_goal = False
-            move_command.rotate_at_goal = False
-            move_command.target.x = TARGET_MOVE_FORWARD
-            self.__publisher.publish(move_command)
-            return
-
-        if self.__move_state.state == MoveState.IDLE:
-            self.__state = VisualControllerState.IDLE
+        move_command = MoveCommand()
+        move_command.header.frame_id = 'base_link'
+        move_command.rotate_towards_goal = False
+        move_command.rotate_at_goal = False
+        move_command.target.x = TARGET_MOVE_FORWARD
+        self.__publisher.publish(move_command)
+        self.__state = VisualControllerState.IDLE
 
 
 def main(args=None):

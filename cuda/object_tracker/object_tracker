@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 from ultralytics import YOLO
 from collections import defaultdict
 import cv2
@@ -15,7 +17,7 @@ class UDPStreamer:
 
     def __init__(self, port):
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.__sock.bind(("0.0.0.0", port))
+        self.__sock.bind(('0.0.0.0', port))
         self.__client = None
 
         self.__thread = threading.Thread(target=self.__listen)
@@ -27,7 +29,7 @@ class UDPStreamer:
             _, client = self.__sock.recvfrom(1024)
             if self.__client != client:
                 self.__client = client
-                print("Client connected")
+                print('Client connected')
 
     def send(self, data):
         if self.__client is None:
@@ -41,19 +43,19 @@ class UDPStreamer:
         confs = results[0].boxes.conf.cpu().tolist()
         image_height, image_width = results[0].orig_img.shape[:2]
 
-        message = struct.pack(">H", len(boxes))
+        message = struct.pack('>H', len(boxes))
 
         for box, track_id, class_, conf in zip(boxes, track_ids, classes, confs):
             x, y, w, h = box
             class_ = int(class_)
             instance = int(class_ * 1e6) + int(track_id)
-            center_x = int(x + w / 2)
-            center_y = int(y + h / 2)
+            center_x = int(x)
+            center_y = int(y)
             width = int(w)
             height = int(h)
             conf = int(conf * 100)
             message += struct.pack(
-                ">HIHHHHBqqHH",
+                '>HIHHHHBqqHH',
                 class_,
                 instance,
                 center_x,
@@ -68,7 +70,7 @@ class UDPStreamer:
             )
 
             print(
-                f"Detected {results[0].names[class_]}[{instance}] at ({center_x}, {center_y})"
+                f'Detected {results[0].names[class_]}[{instance}] at ({center_x}, {center_y})'
             )
 
         self.send(message)
@@ -103,18 +105,72 @@ def get_annotated_frame(results, track_history):
     return annotated_frame
 
 
+class OpencvCameraReader:
+    def __init__(self, source):
+        self.__capture = cv2.VideoCapture(source)
+
+    def is_open(self):
+        return self.__capture.isOpened()
+
+    def read(self):
+        timestamp = time.time()
+        timestamp_sec = int(time.time())
+        timestamp_nsec = int((timestamp - timestamp_sec) * 1e9)
+        success, image = self.__capture.read()
+        return success, image, (timestamp_sec, timestamp_nsec)
+
+    def close(self):
+        self.__capture.release()
+
+
+class ROSCameraReader:
+    def __init__(self) -> None:
+        import rclpy
+        from sensor_msgs.msg import Image
+        from cv_bridge import CvBridge
+
+        rclpy.init()
+        self.__node = rclpy.create_node('ros_camera_reader')
+        self.__bridge = CvBridge()
+        self.__message = None
+        self.__subscriber = self.__node.create_subscription(
+            Image, '/camera/image_color', self.__callback, 1
+        )
+        self.__thread = threading.Thread(
+            target=rclpy.spin, args=(self.__node,))
+        self.__thread.start()
+
+    def __callback(self, msg):
+        self.__message = msg
+
+    def is_open(self):
+        return True
+
+    def read(self):
+        while self.__message is None:
+            time.sleep(0.01)
+        image = self.__bridge.imgmsg_to_cv2(self.__message, 'bgr8')
+        timestamp = self.__message.header.stamp
+        self.__message = None
+        return True, image, (timestamp.sec, timestamp.nanosec)
+
+    def close(self):
+        self.__thread.join()
+        self.__node.destroy_node()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--model", type=str, default="yolov8n.pt", help="Path to a model"
+        '--model', type=str, default='yolov8n.pt', help='Path to a model'
     )
-    parser.add_argument("--source", type=int, default=0, help="Camera index")
+    parser.add_argument('--source', type=str, default='0', help='Camera index')
     parser.add_argument(
-        "--show-detections", type=bool, default=False, help="Show detections"
+        '--show-detections', type=bool, default=False, help='Show detections'
     )
-    parser.add_argument("--port", type=int, default=5000, help="UDP port")
-    parser.add_argument("--verbose", type=bool, default=False, help="Verbose")
-    args = parser.parse_args()
+    parser.add_argument('--port', type=int, default=5000, help='UDP port')
+    parser.add_argument('--verbose', type=bool, default=False, help='Verbose')
+    args, _ = parser.parse_known_args()
 
     track_history = defaultdict(lambda: [])
 
@@ -122,17 +178,14 @@ def main():
 
     streamer = UDPStreamer(args.port)
 
-    capture = cv2.VideoCapture(args.source)
-    if not capture.isOpened():
-        print("Unable to open camera")
+    image_reader = OpencvCameraReader(
+        int(args.source)) if args.source != 'ros' else ROSCameraReader()
+    if not image_reader.is_open():
+        print('Unable to open camera')
         exit(1)
 
     while True:
-        timestamp = time.time()
-        timestamp_sec = int(time.time())
-        timestamp_nsec = int((timestamp - timestamp_sec) * 1e9)
-
-        success, image = capture.read()
+        success, image, (timestamp_sec, timestamp_nsec) = image_reader.read()
         if not success:
             break
 
@@ -141,7 +194,7 @@ def main():
             persist=True,
             verbose=args.verbose,
             tracker=os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "tracker.yaml"
+                os.path.dirname(os.path.realpath(__file__)), 'tracker.yaml'
             ),
         )
         if results[0].boxes.id is None:
@@ -155,16 +208,16 @@ def main():
 
         if args.show_detections:
             annotated_frame = get_annotated_frame(results, track_history)
-            cv2.imshow("image", annotated_frame)
-            if cv2.waitKey(1) == ord("q"):
+            cv2.imshow('image', annotated_frame)
+            if cv2.waitKey(1) == ord('q'):
                 break
 
-    capture.release()
+    image_reader.close()
     streamer.close()
 
     if args.show_detections:
         cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
