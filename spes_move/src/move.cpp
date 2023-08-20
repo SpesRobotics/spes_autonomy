@@ -13,6 +13,9 @@ namespace spes_move
       return;
     }
 
+    command_->target = msg->target;
+    command_->header.stamp = msg->header.stamp;
+
     update_odom_target_tf();
   }
 
@@ -347,7 +350,8 @@ namespace spes_move
   void Move::regulate_rotation(geometry_msgs::msg::Twist *cmd_vel, double diff_yaw)
   {
     if (target_updated_) {
-      // TODO: This will produce minor jitter when a goal is updated.
+      // TODO: This will produce minor jerk when a goal is updated.
+      double prev = rotation_ruckig_input_.current_position[0];
       rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
       target_updated_ = false;
     }
@@ -383,8 +387,11 @@ namespace spes_move
   void Move::regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y)
   {
     if (target_updated_) {
-      // TODO: This will produce minor jitter when a goal is updated.
+      // TODO: This will produce minor jerk when a goal is updated.
+      double prev = translation_ruckig_input_.current_position[0];
       translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
+      RCLCPP_INFO(get_logger(), "diff_x: %f, last_error_x_: %f", diff_x, last_error_x_);
+      RCLCPP_INFO(get_logger(), "prev: %f, current: %f", prev, translation_ruckig_input_.current_position[0]);
       target_updated_ = false;
     }
 
