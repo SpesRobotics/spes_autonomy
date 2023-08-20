@@ -15,7 +15,7 @@ class UDPStreamer:
 
     def __init__(self, port):
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.__sock.bind(('0.0.0.0', port))
+        self.__sock.bind(("0.0.0.0", port))
         self.__client = None
 
         self.__thread = threading.Thread(target=self.__listen)
@@ -27,7 +27,7 @@ class UDPStreamer:
             _, client = self.__sock.recvfrom(1024)
             if self.__client != client:
                 self.__client = client
-                print('Client connected')
+                print("Client connected")
 
     def send(self, data):
         if self.__client is None:
@@ -39,8 +39,9 @@ class UDPStreamer:
         track_ids = results[0].boxes.id.int().cpu().tolist()
         classes = results[0].boxes.cls.int().cpu().tolist()
         confs = results[0].boxes.conf.cpu().tolist()
+        image_height, image_width = results[0].orig_img.shape[:2]
 
-        message = struct.pack('>H', len(boxes))
+        message = struct.pack(">H", len(boxes))
 
         for box, track_id, class_, conf in zip(boxes, track_ids, classes, confs):
             x, y, w, h = box
@@ -52,7 +53,7 @@ class UDPStreamer:
             height = int(h)
             conf = int(conf * 100)
             message += struct.pack(
-                '>HIHHHHBqq',
+                ">HIHHHHBqqHH",
                 class_,
                 instance,
                 center_x,
@@ -62,10 +63,12 @@ class UDPStreamer:
                 conf,
                 timestamp_sec,
                 timestamp_nsec,
+                image_width,
+                image_height,
             )
 
             print(
-                f'Detected {results[0].names[class_]}[{instance}] at ({center_x}, {center_y})'
+                f"Detected {results[0].names[class_]}[{instance}] at ({center_x}, {center_y})"
             )
 
         self.send(message)
@@ -103,14 +106,14 @@ def get_annotated_frame(results, track_history):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--model', type=str, default='yolov8n.pt', help='Path to a model'
+        "--model", type=str, default="yolov8n.pt", help="Path to a model"
     )
-    parser.add_argument('--source', type=int, default=0, help='Camera index')
+    parser.add_argument("--source", type=int, default=0, help="Camera index")
     parser.add_argument(
-        '--show-detections', type=bool, default=False, help='Show detections'
+        "--show-detections", type=bool, default=False, help="Show detections"
     )
-    parser.add_argument('--port', type=int, default=5000, help='UDP port')
-    parser.add_argument('--verbose', type=bool, default=False, help='Verbose')
+    parser.add_argument("--port", type=int, default=5000, help="UDP port")
+    parser.add_argument("--verbose", type=bool, default=False, help="Verbose")
     args = parser.parse_args()
 
     track_history = defaultdict(lambda: [])
@@ -121,7 +124,7 @@ def main():
 
     capture = cv2.VideoCapture(args.source)
     if not capture.isOpened():
-        print('Unable to open camera')
+        print("Unable to open camera")
         exit(1)
 
     while True:
@@ -138,7 +141,7 @@ def main():
             persist=True,
             verbose=args.verbose,
             tracker=os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), 'tracker.yaml'
+                os.path.dirname(os.path.realpath(__file__)), "tracker.yaml"
             ),
         )
         if results[0].boxes.id is None:
@@ -152,8 +155,8 @@ def main():
 
         if args.show_detections:
             annotated_frame = get_annotated_frame(results, track_history)
-            cv2.imshow('image', annotated_frame)
-            if cv2.waitKey(1) == ord('q'):
+            cv2.imshow("image", annotated_frame)
+            if cv2.waitKey(1) == ord("q"):
                 break
 
     capture.release()
@@ -163,5 +166,5 @@ def main():
         cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

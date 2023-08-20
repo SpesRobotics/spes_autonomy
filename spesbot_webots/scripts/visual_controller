@@ -1,178 +1,245 @@
 #! /usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
 import socket
 import struct
 import threading
-
-from datetime import datetime, timedelta
-from rclpy.time import Time
 from builtin_interfaces.msg import Time as RosTime
-from enum import Enum
-
-from spes_msgs.msg import MoveCommand
+from spes_msgs.msg import MoveCommand, MoveState
 import time
-from datetime import datetime, timedelta
 
 
+UDP_IP = '127.0.0.1'
+UDP_PORT = 5000
+ALLOWED_CLASSES = None
+TRACKING_DEBOUNCE_TIME = 2.0
+P_LINEAR = 0.5
+P_ANGULAR = 0.5
+X_THRESHOLD = 0.05
+Y_THRESHOLD = 0.05
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 5005
 
-class MoveState(Enum):
-    TRANSLATE = 0,
-    ROTATE = 1,
-    IDLE = 2,
-    FORWARD = 3
+class VisualControllerState:
+    REGULATE_Y = 'REGULATE_Y'
+    REGULATE_X = 'REGULATE_X'
+    IDLE = 'IDLE'
+    FORWARD = 'FORWARD'
+
+
+class UDPStreamer:
+    BUFFER_SIZE = 1024
+    PACK_STRING = '>HIHHHHBqqHH'
+
+    class Detection:
+        def __init__(self):
+            self.class_ = 0
+            self.instance = 0
+            self.center_x = 0
+            self.center_y = 0
+            self.height = 0
+            self.width = 0
+            self.precision = 0
+            self.timestamp_sec = 0
+            self.timestamp_nsec = 0
+
+        def timestamp(self):
+            return self.timestamp_sec + self.timestamp_nsec / 1e9
+
+    def __init__(self, ip, port):
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.__sock.bind(('0.0.0.0', 0))
+        self.__server = (ip, port)
+        self.__sock.settimeout(1.0)
+
+        self.__running = True
+        self.__threading = threading.Thread(target=self.__listener)
+        self.__threading.start()
+
+        self.__on_detection_callback = None
+
+    def __parse_message(self, data):
+        detections = []
+        num_detections = struct.unpack('>H', data[:2])[0]
+        pack_string_size = struct.calcsize(self.PACK_STRING)
+        data = data[2:]
+        for _ in range(num_detections):
+            tokens = struct.unpack(self.PACK_STRING, data)
+            data = data[pack_string_size:]
+
+            detection = self.Detection()
+            detection.class_ = tokens[0]
+            detection.instance = tokens[1]
+            detection.center_x = tokens[2]
+            detection.center_y = tokens[3]
+            detection.height = tokens[4]
+            detection.width = tokens[5]
+            detection.precision = tokens[6]
+            detection.timestamp_sec = tokens[7]
+            detection.timestamp_nsec = tokens[8]
+            detections.append(detection)
+        return detections
+
+    def register_on_detection(self, callback):
+        self.__on_detection_callback = callback
+
+    def __listener(self):
+        while self.__running:
+            data = None
+            self.__sock.sendto(b'1', self.__server)
+            try:
+                data, _ = self.__sock.recvfrom(self.BUFFER_SIZE)
+                if data:
+                    detections = self.__parse_message(data)
+                    if self.__on_detection_callback:
+                        self.__on_detection_callback(detections)
+            except socket.timeout:
+                continue
+
+    def close(self):
+        self.__running = False
+        self.__threading.join()
+        self.__sock.close()
+
+
+def filter_detections_by_classes(detections, classes):
+    filtered_detections = []
+    for detection in detections:
+        if detection.class_ in classes:
+            filtered_detections.append(detection)
+    return filtered_detections
+
+
+def find_detection_with_max_conf(detections):
+    max_conf = 0
+    max_detection = None
+    for detection in detections:
+        if detection.precision > max_conf:
+            max_conf = detection.precision
+            max_detection = detection
+    return max_detection
+
+
+def find_detection_by_instance(detections, instance):
+    for detection in detections:
+        if detection.instance == instance:
+            return detection
+    return None
+
+
+def create_ros_timestamp(detection):
+    ros_time = RosTime()
+    ros_time.sec = detection.timestamp_sec
+    ros_time.nanosec = detection.timestamp_nsec
+    return ros_time
 
 
 class VisualController(Node):
     def __init__(self):
         super().__init__('visual_controller')
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
-        self.sock.bind((UDP_IP, UDP_PORT))
+        self.__udp_streamer = UDPStreamer(UDP_IP, UDP_PORT)
 
-        self._publisher = self.create_publisher(MoveCommand, '/move/command', 1)
+        self.__publisher = self.create_publisher(MoveCommand, '/move/command', 1)
+        self.__subscriber = self.create_subscription(
+            MoveState, '/move/state', self.__on_move_state, 1
+        )
+        self.__udp_streamer.register_on_detection(self.__on_detection_callback)
 
-        self.listener_thread = threading.Thread(target=self.udp_listener)
-        self.listener_thread.start()
-        
-        self.current_instance = -1
-        self.can_change_instance = True
-        self.state = MoveState.IDLE
-        self.is_restart = True
+        self.__tracking_instance = None
+        self.__state = VisualControllerState.IDLE
+        self.__previous_state = VisualControllerState.IDLE
+        self.__move_state = MoveState()
 
-        self.start = datetime.now()
-        self.time_over = datetime.now()
-        
-    
-    def udp_listener(self):
-        while True:
-            data, addr = self.sock.recvfrom(2048)
-            if data:
-                self.process_udp_message(data, addr)
-    
-    def process_udp_message(self, data, addr):
+    def __on_move_state(self, move_state):
+        self.__move_state = move_state
 
-        if len(data) != 35:
+    def __update_tracking_instance(self, detections):
+        if ALLOWED_CLASSES is not None:
+            detections = filter_detections_by_classes(detections, ALLOWED_CLASSES)
+
+        if self.__tracking_instance is None:
+            self.__tracking_instance = find_detection_with_max_conf(detections)
+
+        if (
+            self.__tracking_instance is not None
+            and time.time() - self.__tracking_instance.timestamp()
+            > TRACKING_DEBOUNCE_TIME
+        ):
+            print('Switching tracking instance')
+            self.__tracking_instance = find_detection_with_max_conf(detections)
+
+    def __on_detection_callback(self, detections):
+        if len(detections) == 0:
             return
-        unpacked_data = struct.unpack('>HIHHHHBqqHH', data)
 
-        class_ = unpacked_data[0]
-        instance = unpacked_data[1]
-        center_x = unpacked_data[2]
-        center_y = unpacked_data[3]
-        height = unpacked_data[4]
-        width = unpacked_data[5]
-        precision = unpacked_data[6]
-        timestamp_sec = unpacked_data[7]
-        timestamp_nsec = unpacked_data[8]
-        image_height = unpacked_data[9]
-        image_width = unpacked_data[10]
+        self.__update_tracking_instance(detections)
+        self.__regulate_robot()
 
-        dt = datetime.fromtimestamp(timestamp_sec)
-        dt_with_ns = dt + timedelta(microseconds=timestamp_nsec // 1000)
-        formatted_time = dt_with_ns.strftime("%H:%M:%S.%f")[:-3]
-
-        self.get_logger().info(f"class = {class_}, instance = {instance}, center_x = {center_x}, center_y = {center_y}, height = {height}, width = {width}, precision = {precision/100}, timestamp_sec = {formatted_time}, image_width = {image_width}, image_height = {image_height}")
-        
-        if self.can_change_instance or (datetime.now() - self.time_over)>=timedelta(seconds=6):
-            self.current_instance = instance
-            self.can_change_instance = False
-        
-        self.move_robot(center_x, center_y, instance, image_width, image_height, timestamp_sec, timestamp_nsec)
-
-    def move_robot(self, center_x, center_y, instance, image_width, image_height, timestamp_sec, timestamp_nsec):
-        self.get_logger().info(f'{instance, self.current_instance}')
-        if image_height == 0 and image_width == 0:
-            self.next_state = MoveState.ROTATE #TODO when implement BT wait restart action
-            self.can_change_instance = True
+    def __regulate_robot(self):
+        if self.__tracking_instance is None:
             return
-        
+
+        if self.__state == VisualControllerState.IDLE:
+            self.__state = VisualControllerState.REGULATE_Y
+
+        error_x = 0.5 - (
+            self.__tracking_instance.center_x - self.__tracking_instance.image_width
+        )
+        error_y = 0.5 - (
+            self.__tracking_instance.center_y - self.__tracking_instance.image_height
+        )
+
+        if self.__state == VisualControllerState.REGULATE_Y:
+            self.state_regulate_y(error_x, error_y)
+        elif self.__state == VisualControllerState.REGULATE_X:
+            self.state_regulate_x(error_x, error_y)
+        elif self.__state == VisualControllerState.FORWARD:
+            self.state_forward()
+
+        if self.__state != self.__previous_state:
+            print(f'State changed from {self.__previous_state} to {self.__state}')
+            self.__previous_state = self.__state
+
+    def state_regulate_y(self, error_x, error_y):
+        if abs(error_y) < Y_THRESHOLD:
+            self.__state = VisualControllerState.REGULATE_X
+            return
+
         move_command = MoveCommand()
-        move_command.angular_properties.max_acceleration = 0.4
-        move_command.angular_properties.max_velocity = 0.2
-        move_command.linear_properties.max_acceleration = 0.25
-        move_command.linear_properties.max_velocity = 0.07
-
-        if instance == self.current_instance:
-            self.time_over = datetime.now()
-            ros_time = RosTime()
-            ros_time.sec = timestamp_sec
-            ros_time.nanosec = timestamp_nsec
-
-            P_LINEAR = 0.048 / image_height * 5
-            P_ANGULAR = 0.128 / image_width * 5
-            img_center_x = round(image_width / 2)
-            img_center_y = round(image_height / 2)
-            epsilon_x = round(image_width * 0.03)
-            epsilon_y = round(image_height * 0.04)
-            
-            if self.state == MoveState.IDLE and self.is_restart:
-                self.state = MoveState.ROTATE
-                self.is_restart = False
-
-            if self.state == MoveState.ROTATE:
-                if abs(img_center_x - int(center_x)) > epsilon_x:
-                    #Rotate
-                    self.state_rotate(move_command, P_ANGULAR, img_center_x, center_x, ros_time)
-                else:
-                    self.state = MoveState.TRANSLATE
-            
-            if self.state == MoveState.TRANSLATE:
-                if abs(int(center_y) - img_center_y * 1.4)  > epsilon_y:
-                    #Transale
-                    self.state_transalte(move_command, P_LINEAR, img_center_y, center_y, ros_time)
-                else:
-                    self.state = MoveState.ROTATE
-            
-            if abs(img_center_x - int(center_x)) < epsilon_x and abs(int(center_y) - img_center_y * 1.4)  < epsilon_y:
-                    self.state = MoveState.FORWARD
-                    #FORMWARD
-                    self.state_forward(move_command, ros_time)
-                    self.get_logger().info(f"=======IS CAME========")
-                    self.start = datetime.now()
-            
-            if self.state == MoveState.FORWARD:
-                if (datetime.now() - self.start)>=timedelta(seconds=3): #TODO modify after implement BT and restart action
-                    self.state = MoveState.IDLE
-                    self.is_restart = True
-
-
-
-    def state_rotate(self, move_command, P_ANGULAR, img_center_x, center_x, ros_time):
-        move_command.target.theta = P_ANGULAR * (img_center_x - int(center_x))
-        move_command.rotate_towards_goal = False
-        move_command.translate = False            
         move_command.header.frame_id = 'base_link'
-        move_command.header.stamp = ros_time
-
-        self._publisher.publish(move_command)
-    
-    def state_transalte(self, move_command, P_LINEAR, img_center_y, center_y, ros_time):
-        move_command.target.x = P_LINEAR * (img_center_y * 1.4 - int(center_y))
+        move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
         move_command.rotate_towards_goal = False
-        move_command.translate = True
         move_command.rotate_at_goal = False
+        move_command.target.x = error_y * P_LINEAR
+        self.__publisher.publish(move_command)
+
+    def state_regulate_x(self, error_x, error_y):
+        if abs(error_x) < X_THRESHOLD and abs(error_y) < Y_THRESHOLD:
+            self.__state = VisualControllerState.FORWARD
+            return
+
+        if abs(error_x) < X_THRESHOLD:
+            self.__state = VisualControllerState.REGULATE_Y
+
+        move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
-        move_command.header.stamp = ros_time
+        move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
+        move_command.rotate_towards_goal = False
+        move_command.translate = False
+        move_command.target.theta = P_ANGULAR * error_x
+        self.__publisher.publish(move_command)
 
-        self._publisher.publish(move_command)
+    def state_forward(self):
+        if self.__previous_state != VisualControllerState.FORWARD:
+            move_command = MoveCommand()
+            move_command.header.frame_id = 'base_link'
+            move_command.rotate_towards_goal = False
+            move_command.rotate_at_goal = False
+            self.__publisher.publish(move_command)
 
-    def state_forward(self, move_command, ros_time):
-        move_command.linear_properties.max_acceleration = 0.2
-        move_command.target.theta = 0.0
-        move_command.target.x = 0.3
-        move_command.rotate_towards_goal = True
-        move_command.translate = True 
-        move_command.rotate_at_goal = True
-        move_command.header.frame_id = 'base_link'
-        move_command.header.stamp = ros_time
+        if self.__move_state.state == MoveState.IDLE:
+            self.__state = VisualControllerState.IDLE
 
-        self.can_change_instance = True
-
-        self._publisher.publish(move_command)
-        
 
 def main(args=None):
     rclpy.init(args=args)
@@ -180,6 +247,7 @@ def main(args=None):
     rclpy.spin(visual_controller)
     visual_controller.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
