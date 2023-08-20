@@ -7,7 +7,7 @@ namespace spes_move
 {
   void Move::on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg)
   {
-    if (state_ == spes_msgs::msg::MoveState::IDLE)
+    if (state_ == spes_msgs::msg::MoveState::STATE_IDLE)
     {
       init_move(msg);
       return;
@@ -86,17 +86,17 @@ namespace spes_move
     lock_tf_odom_base_ = false;
     if (command->rotate_towards_goal)
     {
-      state_ = spes_msgs::msg::MoveState::ROTATING_TOWARDS_GOAL;
+      state_ = spes_msgs::msg::MoveState::STATE_ROTATING_TOWARDS_GOAL;
       return true;
     }
     if (command->translate)
     {
-      state_ = spes_msgs::msg::MoveState::TRANSLATING;
+      state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
       return true;
     }
     if (command->rotate_at_goal)
     {
-      state_ = spes_msgs::msg::MoveState::ROTATING_AT_GOAL;
+      state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
       return true;
     }
     RCLCPP_ERROR(get_logger(), "Invalid MoveCommand, at least one of rotate_towards_goal, translate, or rotate_at_goal must be true.");
@@ -147,7 +147,7 @@ namespace spes_move
       if (distance_to_goal < command_->linear_properties.tolerance)
       {
         // In case we are already at the goal we skip rotation towards the goal and translation.
-        state_ = spes_msgs::msg::MoveState::ROTATING_AT_GOAL;
+        state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
         return;
       }
       else
@@ -170,7 +170,7 @@ namespace spes_move
       {
         // stopRobot();
         lock_tf_odom_base_ = false;
-        state_ = spes_msgs::msg::MoveState::TRANSLATING;
+        state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
         debouncing_reset();
       }
       return;
@@ -194,12 +194,12 @@ namespace spes_move
         // stopRobot();
         if (command_->rotate_at_goal)
         {
-          state_ = spes_msgs::msg::MoveState::ROTATING_AT_GOAL;
+          state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
           debouncing_reset();
         }
         else
         {
-          state_ = spes_msgs::msg::MoveState::IDLE;
+          state_ = spes_msgs::msg::MoveState::STATE_IDLE;
           return;
         }
       }
@@ -225,7 +225,7 @@ namespace spes_move
       {
         // stopRobot();
         debouncing_reset();
-        state_ = spes_msgs::msg::MoveState::IDLE;
+        state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       }
       return;
     }
@@ -234,7 +234,7 @@ namespace spes_move
 
   void Move::update()
   {
-    if (state_ == spes_msgs::msg::MoveState::IDLE)
+    if (state_ == spes_msgs::msg::MoveState::STATE_IDLE)
     {
       previous_state_ = state_;
       return;
@@ -250,7 +250,7 @@ namespace spes_move
       RCLCPP_WARN(
           get_logger(),
           "Exceeded time allowance before reaching the Move goal - Exiting Move");
-      state_ = spes_msgs::msg::MoveState::IDLE;
+      state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       return;
     }
 
@@ -261,7 +261,7 @@ namespace spes_move
             transform_tolerance_))
     {
       RCLCPP_ERROR(get_logger(), "Initial odom_frame -> base frame is not available.");
-      state_ = spes_msgs::msg::MoveState::IDLE;
+      state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       return;
     }
     tf2::Transform tf_odom_base;
@@ -277,13 +277,13 @@ namespace spes_move
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
     switch (state_)
     {
-    case spes_msgs::msg::MoveState::ROTATING_TOWARDS_GOAL:
+    case spes_msgs::msg::MoveState::STATE_ROTATING_TOWARDS_GOAL:
       state_rotating_towards_goal(tf_base_target, tf_odom_base, cmd_vel.get());
       break;
-    case spes_msgs::msg::MoveState::TRANSLATING:
+    case spes_msgs::msg::MoveState::STATE_TRANSLATING:
       state_translating(tf_base_target, cmd_vel.get());
       break;
-    case spes_msgs::msg::MoveState::ROTATING_AT_GOAL:
+    case spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL:
       state_rotating_at_goal(tf_base_target, cmd_vel.get());
       break;
     }
@@ -297,7 +297,7 @@ namespace spes_move
     //           transform_tolerance_))
     //   {
     //     RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
-    //     state_ = spes_msgs::msg::MoveState::IDLE;
+    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
     //     return;
     //   }
 
@@ -313,7 +313,7 @@ namespace spes_move
     //   {
     //     // stopRobot();
     //     RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
-    //     state_ = spes_msgs::msg::MoveState::IDLE;
+    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
     //     return;
     //   }
     // }

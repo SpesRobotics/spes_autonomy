@@ -80,8 +80,8 @@ namespace spes_move
     rclcpp::Duration command_timeout_{0, 0};
     rclcpp::Time last_command_received_;
 
-    uint8_t state_{spes_msgs::msg::MoveState::IDLE};
-    uint8_t previous_state_{spes_msgs::msg::MoveState::IDLE};
+    uint8_t state_{spes_msgs::msg::MoveState::STATE_IDLE};
+    uint8_t previous_state_{spes_msgs::msg::MoveState::STATE_IDLE};
 
     // TODO: Remove
     double transform_tolerance_{0.5};
