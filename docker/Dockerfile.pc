@@ -67,5 +67,8 @@ RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
 
 USER ${DOCKERUSER}
 
-RUN  pip3 install --user pyvirtualcam
+RUN  pip3 install --no-warn-script-location --user  ultralytics
+
+RUN export USER=${DOCKERUSER}
+    
 WORKDIR /${DOCKERUSER}/ros2_ws
