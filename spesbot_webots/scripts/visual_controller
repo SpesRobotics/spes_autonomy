@@ -162,13 +162,12 @@ class VisualController(Node):
         self.get_logger().info('Executing goal...' )
         self.__move_type = goal_handle.request.move 
         self.__tolerance = goal_handle.request.tolerance
-        
-
-        goal_handle.succeed()
         self.get_logger().info(f"Motion Type: {move_type}")
         self.get_logger().info(f"Tolerance: {tolerance}")
-        result = BehaviourCommand.Result()
-        return result
+        if self.__move_type == -2:
+            goal_handle.succeed()
+            result = BehaviourCommand.Result()
+            return result
 
     def __on_move_state(self, move_state):
         self.__move_state = move_state
@@ -198,7 +197,7 @@ class VisualController(Node):
         self.__update_tracking_instance(detections)
         self.__regulate_robot()
 
-    def __regulate_robot(self, move_type, tolerance):
+    def __regulate_robot(self):
         if self.__tracking_instance is None:
             return
 
@@ -214,13 +213,13 @@ class VisualController(Node):
         if self.__move_type == 0:
             if error_y > self.__tolerance:
                 self.state_regulate_y(error_x, error_y, self.__tolerance)
-                error_y = TARGET_Y - (self.__tracking_instance.center_y / self.__tracking_instance.image_height)
+            else:
+                self.__move_type = -2
         if self.__move_type == 1:
             if error_x > self.__tolerance:
                 self.state_regulate_x(error_x, error_y, self.__tolerance)
-                error_x = TARGET_X - (self.__tracking_instance.center_x / self.__tracking_instance.image_width)
-        if self.__move_type == 2:
-            self.state_forward()
+            else:
+                self.__move_type = -2
 
         self.get_logger().info(f'ERROR: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
 
@@ -245,14 +244,6 @@ class VisualController(Node):
         move_command.rotate_towards_goal = False
         move_command.translate = False
         move_command.target.theta = P_ANGULAR * error_x
-        self.__publisher.publish(move_command)
-
-    def state_forward(self):
-        move_command = MoveCommand()
-        move_command.header.frame_id = 'base_link'
-        move_command.rotate_towards_goal = False
-        move_command.rotate_at_goal = False
-        move_command.target.x = TARGET_MOVE_FORWARD
         self.__publisher.publish(move_command)
 
 
