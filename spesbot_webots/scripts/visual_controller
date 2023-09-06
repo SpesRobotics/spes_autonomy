@@ -164,14 +164,16 @@ class VisualController(Node):
             self,
             BehaviourCommand,
             'behaviour_command',
-            self.execute_callback)
+            self.regulate_position)
     
-    def execute_callback(self, goal_handle):
+    def regulate_position(self, goal_handle):
         self.get_logger().info('Executing goal...' )
-        move = goal_handle.request.move
+        move_type = goal_handle.request.move 
         tolerance = goal_handle.request.tolerance
+        self.__regulate_robot(move_type, tolerance)
+
         goal_handle.succeed()
-        self.get_logger().info(f"Motion Type: {move}")
+        self.get_logger().info(f"Motion Type: {move_type}")
         self.get_logger().info(f"Tolerance: {tolerance}")
         result = BehaviourCommand.Result()
         return result
@@ -193,7 +195,7 @@ class VisualController(Node):
         ):
             print('Switching tracking instance')
             self.__tracking_instance = find_detection_with_max_conf(detections)
-
+        self.get_logger().info(f"==hhh=={self.__tracking_instance}")
         # Update the current instance
         if self.__tracking_instance is not None:
             self.__tracking_instance = find_detection_by_instance_index(detections, self.__tracking_instance.instance)
@@ -203,9 +205,9 @@ class VisualController(Node):
             return
 
         self.__update_tracking_instance(detections)
-        self.__regulate_robot()
+        # self.__regulate_robot()
 
-    def __regulate_robot(self):
+    def __regulate_robot(self, move_type, tolerance):
         if self.__tracking_instance is None:
             return
 
@@ -216,22 +218,28 @@ class VisualController(Node):
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
-
-
-        if self.__state == VisualControllerState.REGULATE_Y:
-            self.state_regulate_y(error_x, error_y)
-        elif self.__state == VisualControllerState.REGULATE_X:
-            self.state_regulate_x(error_x, error_y)
-        elif self.__state == VisualControllerState.FORWARD:
+        if move_type == 0:
+            self.state_regulate_y(error_x, error_y, tolerance)
+            self.get_logger().info("+++++++++++")
+        elif move_type == 1:
+            self.state_regulate_y(error_x, error_y, tolerance)
+        elif move_type == 2:
             self.state_forward()
+       
+        # if self.__state == VisualControllerState.REGULATE_Y:
+        #     self.state_regulate_y(error_x, error_y)
+        # elif self.__state == VisualControllerState.REGULATE_X:
+        #     self.state_regulate_x(error_x, error_y)
+        # elif self.__state == VisualControllerState.FORWARD:
+        #     self.state_forward()
 
         if self.__state != self.__previous_state:
             self.get_logger().info(f'State changed from {self.__previous_state} to {self.__state}')
             self.__previous_state = self.__state
 
-    def state_regulate_y(self, error_x, error_y):
-        if abs(error_y) < Y_THRESHOLD:
-            self.__state = VisualControllerState.REGULATE_X
+    def state_regulate_y(self, error_x, error_y, tolerance):
+        if abs(error_y) < tolerance:
+            # self.__state = VisualControllerState.REGULATE_X
             return
 
         move_command = MoveCommand()
@@ -242,13 +250,13 @@ class VisualController(Node):
         move_command.target.x = error_y * P_LINEAR
         self.__publisher.publish(move_command)
 
-    def state_regulate_x(self, error_x, error_y):
+    def state_regulate_x(self, error_x, error_y, tolerance):
         if abs(error_x) < X_THRESHOLD and abs(error_y) < Y_THRESHOLD:
             self.__state = VisualControllerState.FORWARD
             return
 
-        if abs(error_x) < X_THRESHOLD:
-            self.__state = VisualControllerState.REGULATE_Y
+        if abs(error_x) < tolerance:
+            # self.__state = VisualControllerState.REGULATE_Y
             return
 
         move_command = MoveCommand()
