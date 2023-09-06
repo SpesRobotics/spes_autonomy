@@ -1,12 +1,14 @@
 #! /usr/bin/env python3
 
 import rclpy
+from rclpy.action import ActionServer
 from rclpy.node import Node
 import socket
 import struct
 import threading
 from builtin_interfaces.msg import Time as RosTime
 from spes_msgs.msg import MoveCommand, MoveState
+from spes_msgs.action import BehaviourCommand
 import time
 
 
@@ -156,6 +158,23 @@ class VisualController(Node):
         self.__state = VisualControllerState.REGULATE_X
         self.__previous_state = VisualControllerState.REGULATE_X
         self.__move_state = MoveState()
+        
+        super().__init__('behaviour_command_server')
+        self._action_server = ActionServer(
+            self,
+            BehaviourCommand,
+            'behaviour_command',
+            self.execute_callback)
+    
+    def execute_callback(self, goal_handle):
+        self.get_logger().info('Executing goal...' )
+        move = goal_handle.request.move
+        tolerance = goal_handle.request.tolerance
+        goal_handle.succeed()
+        self.get_logger().info(f"Motion Type: {move}")
+        self.get_logger().info(f"Tolerance: {tolerance}")
+        result = BehaviourCommand.Result()
+        return result
 
     def __on_move_state(self, move_state):
         self.__move_state = move_state
@@ -197,6 +216,7 @@ class VisualController(Node):
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
+
 
         if self.__state == VisualControllerState.REGULATE_Y:
             self.state_regulate_y(error_x, error_y)
