@@ -218,7 +218,9 @@ class VisualController(Node):
         )
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         if move_type == 0:
-            self.state_regulate_y(error_x, error_y, tolerance)
+            while error_y > tolerance:
+                self.state_regulate_y(error_x, error_y, tolerance)
+                error_y = TARGET_Y - (self.__tracking_instance.center_y / self.__tracking_instance.image_height)
         elif move_type == 1:
             self.state_regulate_y(error_x, error_y, tolerance)
         elif move_type == 2:
@@ -239,7 +241,7 @@ class VisualController(Node):
         if abs(error_y) < tolerance:
             # self.__state = VisualControllerState.REGULATE_X
             return
-
+        self.get_logger().info("************")
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
@@ -249,7 +251,6 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
     def state_regulate_x(self, error_x, error_y, tolerance):
-        while abs(error_x) > tolerance:
             move_command = MoveCommand()
             move_command.header.frame_id = 'base_link'
             move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
