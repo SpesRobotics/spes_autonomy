@@ -259,14 +259,14 @@ class VisualController(Node):
             # if abs(error_x) < tolerance:
             #     return
             
-            self.get_logger().info("f****** LINEAR ******{error_x}")
-            move_command = MoveCommand()
-            move_command.header.frame_id = 'base_link'
-            move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
-            move_command.rotate_towards_goal = False
-            move_command.translate = False
-            move_command.target.theta = P_ANGULAR * error_x
-            self.__publisher.publish(move_command)
+        self.get_logger().info("f****** LINEAR ******{error_x}")
+        move_command = MoveCommand()
+        move_command.header.frame_id = 'base_link'
+        move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
+        move_command.rotate_towards_goal = False
+        move_command.translate = False
+        move_command.target.theta = P_ANGULAR * error_x
+        self.__publisher.publish(move_command)
 
     def state_forward(self):
         move_command = MoveCommand()
