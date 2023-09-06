@@ -146,7 +146,8 @@ class VisualController(Node):
             MoveState, '/move/state', self.__on_move_state, 1
         )
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
-
+        self.__move_type = -1
+        self.__tolerance = -1
         self.__tracking_instance = None
         self.__move_state = MoveState()
         
@@ -155,13 +156,13 @@ class VisualController(Node):
             self,
             BehaviourCommand,
             'behaviour_command',
-            self.regulate_position)
+            self.regulate)
     
-    def regulate_position(self, goal_handle):
+    def regulate(self, goal_handle):
         self.get_logger().info('Executing goal...' )
-        move_type = goal_handle.request.move 
-        tolerance = goal_handle.request.tolerance
-        self.__regulate_robot(move_type, tolerance)
+        self.__move_type = goal_handle.request.move 
+        self.__tolerance = goal_handle.request.tolerance
+        
 
         goal_handle.succeed()
         self.get_logger().info(f"Motion Type: {move_type}")
@@ -195,7 +196,7 @@ class VisualController(Node):
             return
 
         self.__update_tracking_instance(detections)
-        # self.__regulate_robot()
+        self.__regulate_robot()
 
     def __regulate_robot(self, move_type, tolerance):
         if self.__tracking_instance is None:
@@ -210,15 +211,15 @@ class VisualController(Node):
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
-        if move_type == 0:
-            while error_y > tolerance:
-                self.state_regulate_y(error_x, error_y, tolerance)
+        if self.__move_type == 0:
+            if error_y > self.__tolerance:
+                self.state_regulate_y(error_x, error_y, self.__tolerance)
                 error_y = TARGET_Y - (self.__tracking_instance.center_y / self.__tracking_instance.image_height)
-        if move_type == 1:
-            while error_x > tolerance:
-                self.state_regulate_x(error_x, error_y, tolerance)
+        if self.__move_type == 1:
+            if error_x > self.__tolerance:
+                self.state_regulate_x(error_x, error_y, self.__tolerance)
                 error_x = TARGET_X - (self.__tracking_instance.center_x / self.__tracking_instance.image_width)
-        if move_type == 2:
+        if self.__move_type == 2:
             self.state_forward()
 
         self.get_logger().info(f'ERROR: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
