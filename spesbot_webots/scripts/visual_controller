@@ -165,7 +165,7 @@ class VisualController(Node):
         self.get_logger().info(f"Motion Type: {move_type}")
         self.get_logger().info(f"Tolerance: {tolerance}")
         while self.__move_type != -1:
-            result = BehaviourCommand.Result()
+            a=1
         
         goal_handle.succeed()
         result = BehaviourCommand.Result()
