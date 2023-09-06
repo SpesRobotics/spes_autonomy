@@ -155,8 +155,8 @@ class VisualController(Node):
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
 
         self.__tracking_instance = None
-        self.__state = VisualControllerState.REGULATE_X
-        self.__previous_state = VisualControllerState.REGULATE_X
+        # self.__state = VisualControllerState.REGULATE_X
+        # self.__previous_state = VisualControllerState.REGULATE_X
         self.__move_state = MoveState()
         
         super().__init__('behaviour_command_server')
@@ -219,7 +219,6 @@ class VisualController(Node):
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         if move_type == 0:
             self.state_regulate_y(error_x, error_y, tolerance)
-            self.get_logger().info("+++++++++++")
         elif move_type == 1:
             self.state_regulate_y(error_x, error_y, tolerance)
         elif move_type == 2:
@@ -250,21 +249,14 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
     def state_regulate_x(self, error_x, error_y, tolerance):
-        # if abs(error_x) < X_THRESHOLD and abs(error_y) < Y_THRESHOLD:
-        #     self.__state = VisualControllerState.FORWARD
-        #     return
-
-        if abs(error_x) < tolerance:
-            # self.__state = VisualControllerState.REGULATE_Y
-            return
-
-        move_command = MoveCommand()
-        move_command.header.frame_id = 'base_link'
-        move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
-        move_command.rotate_towards_goal = False
-        move_command.translate = False
-        move_command.target.theta = P_ANGULAR * error_x
-        self.__publisher.publish(move_command)
+        while abs(error_x) > tolerance:
+            move_command = MoveCommand()
+            move_command.header.frame_id = 'base_link'
+            move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
+            move_command.rotate_towards_goal = False
+            move_command.translate = False
+            move_command.target.theta = P_ANGULAR * error_x
+            self.__publisher.publish(move_command)
 
     def state_forward(self):
         move_command = MoveCommand()
