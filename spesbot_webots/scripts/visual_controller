@@ -195,7 +195,6 @@ class VisualController(Node):
         ):
             print('Switching tracking instance')
             self.__tracking_instance = find_detection_with_max_conf(detections)
-        self.get_logger().info(f"==hhh=={self.__tracking_instance}")
         # Update the current instance
         if self.__tracking_instance is not None:
             self.__tracking_instance = find_detection_by_instance_index(detections, self.__tracking_instance.instance)
@@ -233,9 +232,9 @@ class VisualController(Node):
         # elif self.__state == VisualControllerState.FORWARD:
         #     self.state_forward()
 
-        if self.__state != self.__previous_state:
-            self.get_logger().info(f'State changed from {self.__previous_state} to {self.__state}')
-            self.__previous_state = self.__state
+        # if self.__state != self.__previous_state:
+        #     self.get_logger().info(f'State changed from {self.__previous_state} to {self.__state}')
+        #     self.__previous_state = self.__state
 
     def state_regulate_y(self, error_x, error_y, tolerance):
         if abs(error_y) < tolerance:
@@ -251,9 +250,9 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
     def state_regulate_x(self, error_x, error_y, tolerance):
-        if abs(error_x) < X_THRESHOLD and abs(error_y) < Y_THRESHOLD:
-            self.__state = VisualControllerState.FORWARD
-            return
+        # if abs(error_x) < X_THRESHOLD and abs(error_y) < Y_THRESHOLD:
+        #     self.__state = VisualControllerState.FORWARD
+        #     return
 
         if abs(error_x) < tolerance:
             # self.__state = VisualControllerState.REGULATE_Y
@@ -274,7 +273,7 @@ class VisualController(Node):
         move_command.rotate_at_goal = False
         move_command.target.x = TARGET_MOVE_FORWARD
         self.__publisher.publish(move_command)
-        self.__state = VisualControllerState.IDLE
+        # self.__state = VisualControllerState.IDLE
 
 
 def main(args=None):
