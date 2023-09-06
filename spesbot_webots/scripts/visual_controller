@@ -210,22 +210,26 @@ class VisualController(Node):
         if self.__tracking_instance is None:
             return
 
-        error_x = TARGET_X - (
-            self.__tracking_instance.center_x / self.__tracking_instance.image_width
-        )
-        error_y = TARGET_Y - (
-            self.__tracking_instance.center_y / self.__tracking_instance.image_height
-        )
+        # error_x = TARGET_X - (
+        #     self.__tracking_instance.center_x / self.__tracking_instance.image_width
+        # )
+        # error_y = TARGET_Y - (
+        #     self.__tracking_instance.center_y / self.__tracking_instance.image_height
+        # )
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
+        
         if move_type == 0:
             while error_y > tolerance:
                 self.state_regulate_y(error_x, error_y, tolerance)
                 error_y = TARGET_Y - (self.__tracking_instance.center_y / self.__tracking_instance.image_height)
         elif move_type == 1:
-            self.state_regulate_y(error_x, error_y, tolerance)
+            while error_x > tolerance:
+                self.state_regulate_x(error_x, error_y, tolerance)
+                error_x = TARGET_X - (self.__tracking_instance.center_x / self.__tracking_instance.image_width)
         elif move_type == 2:
             self.state_forward()
-       
+
+        self.get_logger().info(f'ERROR: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         # if self.__state == VisualControllerState.REGULATE_Y:
         #     self.state_regulate_y(error_x, error_y)
         # elif self.__state == VisualControllerState.REGULATE_X:
@@ -239,9 +243,9 @@ class VisualController(Node):
 
     def state_regulate_y(self, error_x, error_y, tolerance):
         if abs(error_y) < tolerance:
-            # self.__state = VisualControllerState.REGULATE_X
             return
-        self.get_logger().info("************")
+            
+        self.get_logger().info("****** ANGULAR ******")
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
@@ -251,6 +255,10 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
     def state_regulate_x(self, error_x, error_y, tolerance):
+            if abs(error_x) < tolerance:
+                return
+            
+            self.get_logger().info("****** LINEAR ******")
             move_command = MoveCommand()
             move_command.header.frame_id = 'base_link'
             move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
