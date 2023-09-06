@@ -166,8 +166,8 @@ class VisualController(Node):
         self.get_logger().info(f"Tolerance: {tolerance}")
         if self.__move_type == -2:
             goal_handle.succeed()
-            result = BehaviourCommand.Result()
-            return result
+        result = BehaviourCommand.Result()
+        return result
 
     def __on_move_state(self, move_state):
         self.__move_state = move_state
