@@ -164,10 +164,10 @@ class VisualController(Node):
         self.__tolerance = goal_handle.request.tolerance
         self.get_logger().info(f"Motion Type: {move_type}")
         self.get_logger().info(f"Tolerance: {tolerance}")
-        while self.__move_type != -1:
-            a=1
-        
-        goal_handle.succeed()
+        while rclpy.ok() and self.__move_type != -1:
+            pass
+        if rclpy.ok():
+            goal_handle.succeed()
         result = BehaviourCommand.Result()
         return result
 
