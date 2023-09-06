@@ -25,13 +25,6 @@ TARGET_Y = 0.72
 TARGET_MOVE_FORWARD = 0.3
 
 
-class VisualControllerState:
-    REGULATE_Y = 'REGULATE_Y'
-    REGULATE_X = 'REGULATE_X'
-    IDLE = 'IDLE'
-    FORWARD = 'FORWARD'
-
-
 class UDPStreamer:
     BUFFER_SIZE = 1024
     PACK_STRING = '>HIHHHHBqqHH'
@@ -155,8 +148,6 @@ class VisualController(Node):
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
 
         self.__tracking_instance = None
-        # self.__state = VisualControllerState.REGULATE_X
-        # self.__previous_state = VisualControllerState.REGULATE_X
         self.__move_state = MoveState()
         
         super().__init__('behaviour_command_server')
@@ -231,20 +222,9 @@ class VisualController(Node):
             self.state_forward()
 
         self.get_logger().info(f'ERROR: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
-        # if self.__state == VisualControllerState.REGULATE_Y:
-        #     self.state_regulate_y(error_x, error_y)
-        # elif self.__state == VisualControllerState.REGULATE_X:
-        #     self.state_regulate_x(error_x, error_y)
-        # elif self.__state == VisualControllerState.FORWARD:
-        #     self.state_forward()
 
-        # if self.__state != self.__previous_state:
-        #     self.get_logger().info(f'State changed from {self.__previous_state} to {self.__state}')
-        #     self.__previous_state = self.__state
 
     def state_regulate_y(self, error_x, error_y, tolerance):
-        # if abs(error_y) < tolerance:
-        #     return
 
         self.get_logger().info(f"****** ANGULAR ******{error_y}")
         move_command = MoveCommand()
@@ -256,9 +236,7 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
     def state_regulate_x(self, error_x, error_y, tolerance):
-            # if abs(error_x) < tolerance:
-            #     return
-            
+
         self.get_logger().info("f****** LINEAR ******{error_x}")
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
@@ -275,7 +253,6 @@ class VisualController(Node):
         move_command.rotate_at_goal = False
         move_command.target.x = TARGET_MOVE_FORWARD
         self.__publisher.publish(move_command)
-        # self.__state = VisualControllerState.IDLE
 
 
 def main(args=None):
