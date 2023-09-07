@@ -152,22 +152,22 @@ class VisualController(Node):
         self.__move_state = MoveState()
         
         super().__init__('behaviour_command_server')
-        self._action_server = ActionServer(
+        self._action_server = SimpleActionServer(
             self,
             BehaviourCommand,
             'behaviour_command',
-            self.regulate)
+            self.__on_behaviour_command_callback)
     
-    def regulate(self, goal_handle):
+    def __on_behaviour_command_callback(self, goal_handle):
         self.get_logger().info('Executing goal...' )
-        self.__move_type = goal_handle.request.move 
-        self.__tolerance = goal_handle.request.tolerance
-        while rclpy.ok() and self.__move_type != -1:
-            pass
-        if rclpy.ok():
-            goal_handle.succeed()
-            self.get_logger().info(f"Motion Type: {move_type}")
-            self.get_logger().info(f"Tolerance: {tolerance}")
+        self.get_logger().info(f'{goal_handle}')
+        self.__move_type = goal_handle.move 
+        self.__tolerance = goal_handle.tolerance
+        self.get_logger().info(f"Motion Type: {self.__move_type}")
+        self.get_logger().info(f"Tolerance: {self.__tolerance}")
+        while self.__move_type!= -1:
+            rclpy.spin_once(self, timeout_sec=0.01)
+        
         result = BehaviourCommand.Result()
         return result
 
@@ -249,6 +249,65 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
 
+#Reference https://github.com/DLu/simple_actions/blob/main/simple_actions/simple_server.py
+class SimpleActionServer:
+    """
+    Simple wrapper around rclpy action server for "easier" usage. Assumes only one action at a time.
+
+    The Execute callback should return a Result if successful. Otherwise it will be unsuccessful.
+    """
+
+    def __init__(self, node, action_type, action_namespace, execute_callback):
+        self.logger = node.get_logger()
+        self.action_type = action_type
+        self.execute_callback = execute_callback
+        self.info_string = f'{action_namespace}/{self.get_action_name(action_type)}'
+        self.action_server = ActionServer(node, action_type, action_namespace, self._execute_callback)
+        self.goal_handle = None
+        self.logger.info(f'{self} initialized')
+
+    def publish_feedback(self, feedback):
+        """Publish feedback on the active action."""
+        self.goal_handle.publish_feedback(feedback)
+        self.logger.debug(f'{self} published feedback')
+
+    def is_active(self):
+        return self.goal_handle and self.goal_handle.is_active
+
+    def is_cancel_requested(self):
+        return self.goal_handle and self.goal_handle.is_cancel_requested
+
+    def is_executing(self):
+        return self.goal_handle and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
+
+    def _execute_callback(self, goal_handle):
+        self.logger.debug(f'{self} is beginning execution')
+        self.goal_handle = goal_handle
+        try:
+            result = self.execute_callback(self.goal_handle.request)
+        except Exception as e:
+            result = None
+            self.logger.error(
+                f'An uncaught exception has occurred while trying to execute the action {self.info_string}: {e}')
+
+        if result:
+            self.goal_handle.succeed()
+            return result
+        else:
+            self.goal_handle.abort()
+            return self.action_type.Result()
+
+    def __repr__(self):
+        return f'SimpleActionServer({self.info_string})'
+    
+    def get_action_name(self, action_type):
+        """Return a cleaned up version of the action type."""
+        # Mildly hacky, but works for now
+        class_name_str = str(action_type)  # e.g. <class 'action_tutorials_interfaces.action._fibonacci.Fibonacci'>
+        class_name = class_name_str.split("'")[1]  # e.g. action_tutorials_interfaces.action._fibonacci.Fibonacci
+        parts = class_name.split('.')
+        return '.'.join([parts[0], parts[1], parts[-1]]) 
+    
 def main(args=None):
     rclpy.init(args=args)
     visual_controller = VisualController()
