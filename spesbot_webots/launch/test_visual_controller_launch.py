@@ -78,7 +78,7 @@ def generate_launch_description():
         webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
-        virtual_controller,
+        # virtual_controller,
         move_command,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(

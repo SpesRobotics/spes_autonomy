@@ -146,8 +146,8 @@ class VisualController(Node):
             MoveState, '/move/state', self.__on_move_state, 1
         )
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
-        self.__move_type = -1
-        self.__tolerance = -1
+        self.__move_type = -10
+        self.__tolerance = -10
         self.__tracking_instance = None
         self.__move_state = MoveState()
         
@@ -166,7 +166,7 @@ class VisualController(Node):
         self.get_logger().info(f"Motion Type: {self.__move_type}")
         self.get_logger().info(f"Tolerance: {self.__tolerance}")
         while self.__move_type!= -1:
-            rclpy.spin_once(self, timeout_sec=0.01)
+            rclpy.spin_once(self, timeout_sec=0.001)
         
         result = BehaviourCommand.Result()
         return result
