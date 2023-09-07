@@ -228,7 +228,7 @@ class VisualController(Node):
 
     def state_regulate_y(self, error_x, error_y, tolerance):
 
-        self.get_logger().info(f"****** ANGULAR ******{error_y}")
+        self.get_logger().info(f"****** LINEAR ******{error_y}")
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
@@ -239,7 +239,7 @@ class VisualController(Node):
 
     def state_regulate_x(self, error_x, error_y, tolerance):
 
-        self.get_logger().info("f****** LINEAR ******{error_x}")
+        self.get_logger().info("f****** ANGULAR ******{error_x}")
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
@@ -264,7 +264,7 @@ class SimpleActionServer:
         self.info_string = f'{action_namespace}/{self.get_action_name(action_type)}'
         self.action_server = ActionServer(node, action_type, action_namespace, self._execute_callback)
         self.goal_handle = None
-        self.logger.info(f'{self} initialized')
+        self.logger.debug(f'{self} initialized')
 
     def publish_feedback(self, feedback):
         """Publish feedback on the active action."""
