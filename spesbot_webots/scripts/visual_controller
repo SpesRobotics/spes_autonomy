@@ -146,8 +146,8 @@ class VisualController(Node):
             MoveState, '/move/state', self.__on_move_state, 1
         )
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
-        self.__move_type = -10
-        self.__tolerance = -10
+        self.__move_type = None
+        self.__tolerance = None
         self.__tracking_instance = None
         self.__move_state = MoveState()
         
@@ -214,17 +214,17 @@ class VisualController(Node):
         
         if self.__move_type == 0:
             if abs(error_y) > self.__tolerance:
-                self.state_regulate_y(error_x, error_y, self.__tolerance)
+                self.regulate_y(error_x, error_y, self.__tolerance)
             else:
                 self.__move_type = -1
         if self.__move_type == 1:
             if abs(error_x) > self.__tolerance:
-                self.state_regulate_x(error_x, error_y, self.__tolerance)
+                self.regulate_x(error_x, error_y, self.__tolerance)
             else:
                 self.__move_type = -1
 
 
-    def state_regulate_y(self, error_x, error_y, tolerance):
+    def regulate_y(self, error_x, error_y, tolerance):
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
@@ -233,7 +233,7 @@ class VisualController(Node):
         move_command.target.x = error_y * P_LINEAR
         self.__publisher.publish(move_command)
 
-    def state_regulate_x(self, error_x, error_y, tolerance):
+    def regulate_x(self, error_x, error_y, tolerance):
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
@@ -243,7 +243,7 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
 
-#Reference https://github.com/DLu/simple_actions/blob/main/simple_actions/simple_server.py
+# Reference https://github.com/DLu/simple_actions/blob/main/simple_actions/simple_server.py
 class SimpleActionServer:
     """
     Simple wrapper around rclpy action server for "easier" usage. Assumes only one action at a time.
@@ -301,6 +301,7 @@ class SimpleActionServer:
         class_name = class_name_str.split("'")[1]  # e.g. action_tutorials_interfaces.action._fibonacci.Fibonacci
         parts = class_name.split('.')
         return '.'.join([parts[0], parts[1], parts[-1]]) 
+
     
 def main(args=None):
     rclpy.init(args=args)
