@@ -1,7 +1,10 @@
 #ifndef SPES_MOVE__MOVE_HPP_
 #define SPES_MOVE__MOVE_HPP_
 
-#include "nav2_behaviors/timed_behavior.hpp"
+#include "nav2_costmap_2d/footprint_collision_checker.hpp"
+#include "nav2_costmap_2d/costmap_2d_ros.hpp"
+#include "nav2_util/execution_timer.hpp"
+
 #include "spes_msgs/msg/move_command.hpp"
 #include "spes_msgs/msg/move_properties.hpp"
 #include "spes_msgs/msg/move_state.hpp"
