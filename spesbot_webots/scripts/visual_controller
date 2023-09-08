@@ -166,7 +166,6 @@ class VisualController(Node):
         self.get_logger().info(f"Motion Type: {self.__move_type}")
         self.get_logger().info(f"Tolerance: {self.__tolerance}")
         while self.__move_type!= -1:
-            # rclpy.spin_once(self, timeout_sec=0.001)
             time.sleep(0.01)
         
         result = BehaviourCommand.Result()
@@ -216,7 +215,6 @@ class VisualController(Node):
         if self.__move_type == 0:
             if abs(error_y) > self.__tolerance:
                 self.state_regulate_y(error_x, error_y, self.__tolerance)
-                self.get_logger().info(f'***************aaaaaaa')
             else:
                 self.__move_type = -1
         if self.__move_type == 1:
@@ -225,12 +223,8 @@ class VisualController(Node):
             else:
                 self.__move_type = -1
 
-        self.get_logger().info(f'ERROR: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
-
 
     def state_regulate_y(self, error_x, error_y, tolerance):
-
-        self.get_logger().info(f"****** LINEAR ******{error_y}")
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
@@ -240,8 +234,6 @@ class VisualController(Node):
         self.__publisher.publish(move_command)
 
     def state_regulate_x(self, error_x, error_y, tolerance):
-
-        self.get_logger().info("f****** ANGULAR ******{error_x}")
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
