@@ -10,6 +10,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MoveProperties.msg"
   "msg/MoveState.msg"
   "action/Move.action"
+  "action/BehaviourCommand.action"
   DEPENDENCIES geometry_msgs
 )
 ament_export_dependencies(rosidl_default_runtime)
