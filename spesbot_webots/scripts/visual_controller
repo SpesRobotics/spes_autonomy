@@ -200,6 +200,9 @@ class VisualController(Node):
         if self.__tracking_instance is None:
             return
 
+        if self.__image_segment is None:
+            return
+        
         error_x = self.__image_segment - (
             self.__tracking_instance.center_x / self.__tracking_instance.image_width
         )
