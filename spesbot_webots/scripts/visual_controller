@@ -214,13 +214,13 @@ class VisualController(Node):
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
         if self.__move_type == 0:
-            if error_y > self.__tolerance:
+            if abs(error_y) > self.__tolerance:
                 self.state_regulate_y(error_x, error_y, self.__tolerance)
                 self.get_logger().info(f'***************aaaaaaa')
             else:
                 self.__move_type = -1
         if self.__move_type == 1:
-            if error_x > self.__tolerance:
+            if abs(error_x) > self.__tolerance:
                 self.state_regulate_x(error_x, error_y, self.__tolerance)
             else:
                 self.__move_type = -1
