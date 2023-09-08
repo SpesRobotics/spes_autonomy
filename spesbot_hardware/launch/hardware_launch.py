@@ -83,7 +83,6 @@ def generate_launch_description():
     executable='move',
     output='screen',
     parameters=[{
-        'use_sim_time': True,
         'angular.max_acceleration' : 0.5,
         'angular.max_velocity' : 1.2,
         'linear.max_acceleration' : 0.8,
