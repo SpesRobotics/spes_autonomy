@@ -18,11 +18,6 @@ ALLOWED_CLASSES = [41] # 41 for cup, None for all
 TRACKING_DEBOUNCE_TIME = 2.0
 P_LINEAR = 0.2
 P_ANGULAR = 0.6
-X_THRESHOLD = 0.001
-Y_THRESHOLD = 0.005
-TARGET_X = 0.5
-TARGET_Y = 0.72
-TARGET_MOVE_FORWARD = 0.3
 
 
 class UDPStreamer:
@@ -148,6 +143,7 @@ class VisualController(Node):
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
         self.__move_type = None
         self.__tolerance = None
+        self.__image_segment = None
         self.__tracking_instance = None
         self.__move_state = MoveState()
         
@@ -163,6 +159,7 @@ class VisualController(Node):
         self.get_logger().info(f'{goal_handle}')
         self.__move_type = goal_handle.move 
         self.__tolerance = goal_handle.tolerance
+        self.__image_segment = goal_handle.image_segment
         self.get_logger().info(f"Motion Type: {self.__move_type}")
         self.get_logger().info(f"Tolerance: {self.__tolerance}")
         while self.__move_type!= -1:
@@ -203,10 +200,10 @@ class VisualController(Node):
         if self.__tracking_instance is None:
             return
 
-        error_x = TARGET_X - (
+        error_x = self.__image_segment - (
             self.__tracking_instance.center_x / self.__tracking_instance.image_width
         )
-        error_y = TARGET_Y - (
+        error_y = self.__image_segment - (
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
 
