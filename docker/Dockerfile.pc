@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
     ros-humble-hls-lfcd-lds-driver \
     ros-humble-v4l2-camera \
     ros-humble-urdf-tutorial \
+    dialog apt-utils \
     nano \
     alsa \
     libxshmfence1 \
@@ -37,6 +38,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
     python3-pip \
     gdb
 
+RUN apt-get remove -y ros-humble-behaviortree-cpp-v3 && \
+    apt-get install -y ros-humble-behaviortree-cpp
+    
 # Webots
 RUN curl -L -o /tmp/webots.deb \
         'https://github.com/cyberbotics/webots/releases/download/R2023b/webots_2023b_amd64.deb' && \
@@ -67,7 +71,7 @@ RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
 
 USER ${DOCKERUSER}
 
-RUN  pip3 install --no-warn-script-location --user  ultralytics
+RUN pip3 install --no-warn-script-location --user ultralytics
 
     
 WORKDIR /${DOCKERUSER}/ros2_ws
