@@ -166,7 +166,8 @@ class VisualController(Node):
         self.get_logger().info(f"Motion Type: {self.__move_type}")
         self.get_logger().info(f"Tolerance: {self.__tolerance}")
         while self.__move_type!= -1:
-            rclpy.spin_once(self, timeout_sec=0.001)
+            # rclpy.spin_once(self, timeout_sec=0.001)
+            time.sleep(0.01)
         
         result = BehaviourCommand.Result()
         return result
@@ -215,6 +216,7 @@ class VisualController(Node):
         if self.__move_type == 0:
             if error_y > self.__tolerance:
                 self.state_regulate_y(error_x, error_y, self.__tolerance)
+                self.get_logger().info(f'***************aaaaaaa')
             else:
                 self.__move_type = -1
         if self.__move_type == 1:
