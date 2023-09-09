@@ -24,6 +24,7 @@ int main(int argc, char **argv)
     factory.registerNodeType<TranslateAction>("Translate", params);
 
     params.default_port_value = "image_x_yaw_regulator/regulate";
+    factory.registerNodeType<ImageXYawRegulatorAction>("ImageXYawRegulator", params);
 
     using std::filesystem::directory_iterator;
     for (auto const &entry : directory_iterator(BEHAVIOR_DIRECTORY))

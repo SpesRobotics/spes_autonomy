@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
+  <BehaviorTree ID="test_image_x_yaw_regulator">
+    <Sequence>
+      <ImageXYawRegulator mode="0"
+                          tolerance="0.03"/>
+    </Sequence>
+  </BehaviorTree>
+
   <BehaviorTree ID="test_translate">
     <Sequence>
       <AlwaysSuccess/>
@@ -10,6 +17,13 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
+    <Action ID="ImageXYawRegulator"
+            editable="true">
+      <input_port name="mode"
+                  default="0">0 - Y in image, 1 - X in image</input_port>
+      <input_port name="tolerance"
+                  default="0.03">As ration of the image size [0, 1]</input_port>
+    </Action>
     <Action ID="Translate"
             editable="true">
       <input_port name="frame_id"

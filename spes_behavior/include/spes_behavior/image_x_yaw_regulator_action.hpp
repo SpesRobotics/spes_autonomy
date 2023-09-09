@@ -9,8 +9,8 @@ class ImageXYawRegulatorAction : public RosActionNode<spes_msgs::action::ImageXY
 {
 public:
     ImageXYawRegulatorAction(const std::string &name,
-                    const NodeConfig &conf,
-                    const RosNodeParams &params)
+                             const NodeConfig &conf,
+                             const RosNodeParams &params)
         : RosActionNode<spes_msgs::action::ImageXYawRegulate>(name, conf, params)
     {
     }
@@ -18,13 +18,17 @@ public:
     static BT::PortsList providedPorts()
     {
         return providedBasicPorts({
-            InputPort<uint8_t>("mode"),
+            InputPort<int>("mode"),
             InputPort<double>("tolerance"),
         });
     }
 
-    bool setGoal(Goal &goal) override {
-        getInput<uint8_t>("mode", goal.mode);
+    bool setGoal(Goal &goal) override
+    {
+        int mode;
+
+        getInput<int>("mode", mode);
+        goal.mode = (uint8_t)mode;
         getInput<double>("tolerance", goal.tolerance);
 
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
