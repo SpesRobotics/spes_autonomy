@@ -71,9 +71,13 @@ ENV DOCKERUSER=${DOCKERUSER}
 COPY bashrc /tmp/bashrc
 RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
 
+RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-1.1.1-linux-installer.run -O /usr/bin/groot2 && \
+    chmod +x /usr/bin/groot2
+
 USER ${DOCKERUSER}
 
-RUN  pip3 install --no-warn-script-location --user  ultralytics
+# RUN pip3 install --no-warn-script-location --user  ultralytics
+
 
     
 WORKDIR /${DOCKERUSER}/ros2_ws

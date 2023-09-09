@@ -1,5 +1,5 @@
 float64 tolerance
-uint8 move
+uint8 type
 ---
 
 ---
