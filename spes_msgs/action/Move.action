@@ -7,6 +7,10 @@ uint8 RESULT_TIMEOUT = 1
 uint8 RESULT_STUCK = 2
 uint8 RESULT_ERROR = 3
 
+uint8 TYPE_ROTATE_TOWARDS_GOAL = 4
+uint8 TYPE_TRANSLATE = 2
+uint8 TYPE_ROTATE_AT_GOAL = 1
+
 std_msgs/Header header
 string odom_frame
 
