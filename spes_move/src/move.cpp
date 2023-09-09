@@ -33,6 +33,7 @@ namespace spes_move
     msg->ignore_obstacles = action_server_->get_current_goal()->ignore_obstacles;
     msg->timeout = action_server_->get_current_goal()->timeout;
     msg->reversing = action_server_->get_current_goal()->reversing;
+    msg->mode = action_server_->get_current_goal()->mode;
 
     init_move(msg);
 
@@ -106,17 +107,17 @@ namespace spes_move
 
     // Kickoff FSM
     lock_tf_odom_base_ = false;
-    if (command->rotate_towards_goal)
+    if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_TOWARDS_GOAL)
     {
       state_ = spes_msgs::msg::MoveState::STATE_ROTATING_TOWARDS_GOAL;
       return true;
     }
-    if (command->translate)
+    if (command_->mode & spes_msgs::msg::MoveCommand::MODE_TRANSLATE)
     {
       state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
       return true;
     }
-    if (command->rotate_at_goal)
+    if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
     {
       state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
       return true;
@@ -214,7 +215,7 @@ namespace spes_move
       if (now() >= debouncing_end_)
       {
         // stopRobot();
-        if (command_->rotate_at_goal)
+        if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
         {
           state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
           debouncing_reset();
