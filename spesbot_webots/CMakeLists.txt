@@ -11,11 +11,4 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-# Python scripts
-install(PROGRAMS
-  scripts/visual_controller
-  scripts/test_latency_compensation
-  DESTINATION lib/${PROJECT_NAME}
-)
-
 ament_package()

@@ -26,7 +26,7 @@ make -f $HOME/spes_autonomy/docker/Makefile exec
 
 Visual servoing with latency compensation:
 ```bash
-ros2 launch spesbot_webots test_latency_compensation_launch.py
+ros2 launch spes_tests test_move_latency_compensation_launch.py
 ```
 
 SLAM & Navigation:

@@ -1,0 +1,305 @@
+#! /usr/bin/env python3
+
+import rclpy
+from rclpy.action import ActionServer
+from rclpy.node import Node
+import socket
+import struct
+import threading
+from builtin_interfaces.msg import Time as RosTime
+from spes_msgs.msg import MoveCommand
+from spes_msgs.action import ImageXYawRegulate
+import time
+
+
+UDP_IP = '127.0.0.1'
+UDP_PORT = 5000
+ALLOWED_CLASSES = [41] # 41 for cup, None for all
+TRACKING_DEBOUNCE_TIME = 2.0
+P_LINEAR = 0.2
+P_ANGULAR = 0.6
+X_THRESHOLD = 0.001
+Y_THRESHOLD = 0.005
+TARGET_X = 0.5
+TARGET_Y = 0.72
+TARGET_MOVE_FORWARD = 0.3
+
+
+class UDPStreamer:
+    BUFFER_SIZE = 1024
+    PACK_STRING = '>HIHHHHBqqHH'
+
+    class Detection:
+        def __init__(self):
+            self.class_ = 0
+            self.instance = 0
+            self.center_x = 0
+            self.center_y = 0
+            self.height = 0
+            self.width = 0
+            self.precision = 0
+            self.timestamp_sec = 0
+            self.timestamp_nsec = 0
+            self.image_width = 0
+            self.image_height = 0
+
+        def timestamp(self):
+            return self.timestamp_sec + self.timestamp_nsec / 1e9
+
+    def __init__(self, ip, port):
+        self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.__sock.bind(('0.0.0.0', 0))
+        self.__server = (ip, port)
+        self.__sock.settimeout(1.0)
+
+        self.__running = True
+        self.__threading = threading.Thread(target=self.__listener)
+        self.__threading.start()
+
+        self.__on_detection_callback = None
+
+    def __parse_message(self, data):
+        detections = []
+        num_detections = struct.unpack('>H', data[:2])[0]
+        pack_string_size = struct.calcsize(self.PACK_STRING)
+        data = data[2:]
+        for _ in range(num_detections):
+            tokens = struct.unpack(self.PACK_STRING, data[:pack_string_size])
+            data = data[pack_string_size:]
+
+            detection = self.Detection()
+            detection.class_ = tokens[0]
+            detection.instance = tokens[1]
+            detection.center_x = tokens[2]
+            detection.center_y = tokens[3]
+            detection.height = tokens[4]
+            detection.width = tokens[5]
+            detection.precision = tokens[6]
+            detection.timestamp_sec = tokens[7]
+            detection.timestamp_nsec = tokens[8]
+            detection.image_width = tokens[9]
+            detection.image_height = tokens[10]
+            detections.append(detection)
+        return detections
+
+    def register_on_detection(self, callback):
+        self.__on_detection_callback = callback
+
+    def __listener(self):
+        while self.__running:
+            data = None
+            self.__sock.sendto(b'1', self.__server)
+            try:
+                data, _ = self.__sock.recvfrom(self.BUFFER_SIZE)
+                if data:
+                    detections = self.__parse_message(data)
+                    if self.__on_detection_callback:
+                        self.__on_detection_callback(detections)
+            except socket.timeout:
+                continue
+
+    def close(self):
+        self.__running = False
+        self.__threading.join()
+        self.__sock.close()
+
+
+def filter_detections_by_classes(detections, classes):
+    filtered_detections = []
+    for detection in detections:
+        if detection.class_ in classes:
+            filtered_detections.append(detection)
+    return filtered_detections
+
+
+def find_detection_with_max_conf(detections):
+    max_conf = 0
+    max_detection = None
+    for detection in detections:
+        if detection.precision > max_conf:
+            max_conf = detection.precision
+            max_detection = detection
+    return max_detection
+
+
+def find_detection_by_instance_index(detections, instance_index):
+    for detection in detections:
+        if detection.instance == instance_index:
+            return detection
+    return None
+
+
+def create_ros_timestamp(detection):
+    ros_time = RosTime()
+    ros_time.sec = detection.timestamp_sec
+    ros_time.nanosec = detection.timestamp_nsec
+    return ros_time
+
+
+class ImageXYawRegulator(Node):
+    def __init__(self):
+        super().__init__('image_x_yaw_regulator')
+        self.__udp_streamer = UDPStreamer(UDP_IP, UDP_PORT)
+
+        self.__publisher = self.create_publisher(MoveCommand, '/move/command', 1)
+        self.__udp_streamer.register_on_detection(self.__on_detection_callback)
+        self.__move_type = None
+        self.__tolerance = None
+        self.__tracking_instance = None
+        
+        self._action_server = SimpleActionServer(
+            self,
+            ImageXYawRegulate,
+            '~/regulate',
+            self.__on_regulate_callback)
+    
+    def __on_regulate_callback(self, goal_handle):
+        self.get_logger().info('Executing goal...' )
+        self.get_logger().info(f'{goal_handle}')
+        self.__move_type = goal_handle.mode 
+        self.__tolerance = goal_handle.tolerance
+        self.get_logger().info(f"Motion Type: {self.__move_type}")
+        self.get_logger().info(f"Tolerance: {self.__tolerance}")
+        while self.__move_type!= -1:
+            time.sleep(0.01)
+        
+        result = ImageXYawRegulate.Result()
+        return result
+
+    def __update_tracking_instance(self, detections):
+        if ALLOWED_CLASSES is not None:
+            detections = filter_detections_by_classes(detections, ALLOWED_CLASSES)
+
+        if self.__tracking_instance is None:
+            self.__tracking_instance = find_detection_with_max_conf(detections)
+
+        if (
+            self.__tracking_instance is not None
+            and time.time() - self.__tracking_instance.timestamp()
+            > TRACKING_DEBOUNCE_TIME
+        ):
+            print('Switching tracking instance')
+            self.__tracking_instance = find_detection_with_max_conf(detections)
+        # Update the current instance
+        if self.__tracking_instance is not None:
+            self.__tracking_instance = find_detection_by_instance_index(detections, self.__tracking_instance.instance)
+
+    def __on_detection_callback(self, detections):
+        if len(detections) == 0:
+            return
+
+        self.__update_tracking_instance(detections)
+        self.__regulate_robot()
+
+    def __regulate_robot(self):
+        if self.__tracking_instance is None:
+            return
+
+        error_x = TARGET_X - (
+            self.__tracking_instance.center_x / self.__tracking_instance.image_width
+        )
+        error_y = TARGET_Y - (
+            self.__tracking_instance.center_y / self.__tracking_instance.image_height
+        )
+
+        self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
+        
+        if self.__move_type == ImageXYawRegulate.Goal.MODE_Y:
+            if abs(error_y) > self.__tolerance:
+                self.regulate_y(error_x, error_y, self.__tolerance)
+            else:
+                self.__move_type = -1
+        if self.__move_type == ImageXYawRegulate.Goal.MODE_X:
+            if abs(error_x) > self.__tolerance:
+                self.regulate_x(error_x, error_y, self.__tolerance)
+            else:
+                self.__move_type = -1
+
+
+    def regulate_y(self, error_x, error_y, tolerance):
+        move_command = MoveCommand()
+        move_command.header.frame_id = 'base_link'
+        move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
+        move_command.mode = MoveCommand.MODE_TRANSLATE
+        move_command.target.x = error_y * P_LINEAR
+        self.__publisher.publish(move_command)
+
+    def regulate_x(self, error_x, error_y, tolerance):
+        move_command = MoveCommand()
+        move_command.header.frame_id = 'base_link'
+        move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
+        move_command.mode = MoveCommand.MODE_ROTATE_AT_GOAL
+        move_command.target.theta = P_ANGULAR * error_x
+        self.__publisher.publish(move_command)
+
+
+# Reference https://github.com/DLu/simple_actions/blob/main/simple_actions/simple_server.py
+class SimpleActionServer:
+    """
+    Simple wrapper around rclpy action server for "easier" usage. Assumes only one action at a time.
+
+    The Execute callback should return a Result if successful. Otherwise it will be unsuccessful.
+    """
+
+    def __init__(self, node, action_type, action_namespace, execute_callback):
+        self.logger = node.get_logger()
+        self.action_type = action_type
+        self.execute_callback = execute_callback
+        self.info_string = f'{action_namespace}/{self.get_action_name(action_type)}'
+        self.action_server = ActionServer(node, action_type, action_namespace, self._execute_callback)
+        self.goal_handle = None
+        self.logger.debug(f'{self} initialized')
+
+    def publish_feedback(self, feedback):
+        """Publish feedback on the active action."""
+        self.goal_handle.publish_feedback(feedback)
+        self.logger.debug(f'{self} published feedback')
+
+    def is_active(self):
+        return self.goal_handle and self.goal_handle.is_active
+
+    def is_cancel_requested(self):
+        return self.goal_handle and self.goal_handle.is_cancel_requested
+
+    def is_executing(self):
+        return self.goal_handle and self.goal_handle.status == GoalStatus.STATUS_EXECUTING
+
+    def _execute_callback(self, goal_handle):
+        self.logger.debug(f'{self} is beginning execution')
+        self.goal_handle = goal_handle
+        try:
+            result = self.execute_callback(self.goal_handle.request)
+        except Exception as e:
+            result = None
+            self.logger.error(
+                f'An uncaught exception has occurred while trying to execute the action {self.info_string}: {e}')
+
+        if result:
+            self.goal_handle.succeed()
+            return result
+        else:
+            self.goal_handle.abort()
+            return self.action_type.Result()
+
+    def __repr__(self):
+        return f'SimpleActionServer({self.info_string})'
+    
+    def get_action_name(self, action_type):
+        """Return a cleaned up version of the action type."""
+        # Mildly hacky, but works for now
+        class_name_str = str(action_type)  # e.g. <class 'action_tutorials_interfaces.action._fibonacci.Fibonacci'>
+        class_name = class_name_str.split("'")[1]  # e.g. action_tutorials_interfaces.action._fibonacci.Fibonacci
+        parts = class_name.split('.')
+        return '.'.join([parts[0], parts[1], parts[-1]]) 
+
+    
+def main(args=None):
+    rclpy.init(args=args)
+    image_x_yaw_regulator = ImageXYawRegulator()
+    rclpy.spin(image_x_yaw_regulator)
+    image_x_yaw_regulator.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
