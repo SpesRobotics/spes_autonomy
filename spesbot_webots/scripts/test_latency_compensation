@@ -48,8 +48,7 @@ class Move(Node):
 
                 move_command = MoveCommand()
                 move_command.target.theta = -error_x * 0.3
-                move_command.rotate_towards_goal = False
-                move_command.translate = False
+                move_command.mode = MoveCommand.MODE_ROTATE_AT_GOAL
                 
                 # The `Move` node uses the timestamp of the image message to compensate for the latency.
                 move_command.header.stamp = msg.header.stamp

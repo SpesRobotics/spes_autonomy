@@ -14,17 +14,16 @@ Main features:
 - **Obstacle detection (WIP).** Integrates Nav2 costmaps to detect obstacles on a simulated path.
 - **Stuck detection. (WIP)** Implements a robust stuck detection algorithm.
 
-Published topics:
-- `cmd_vel` (geometry_msgs/msg/Twist): velocity commands.
-- `~/state` (spes_msgs/msg/MoveState): move status.
+## Interface
 
-Subscribed topics:
-- `~/command` (spes_msgs/msg/MoveCommand): position commands.
-- `/tf` (tf2_msgs/msg/TFMessage): TF2 transforms.
-- `/costmap` (optional, nav2_msgs/msg/Costmap): costmap updates (WIP).
-
-Action servers:
-- `~/move` (spes_msgs/action/Move): move to the target pose (WIP).
+| Name        | Direction     | Type                                                                                              | Description                                                       |
+|-------------|---------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| `cmd_vel`   | publishes     | [`geometry_msgs/msg/Twist`](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Twist.html) | Robot's velocity command                                          |
+| `~/state`   | publishes     | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveState.msg)                                    | Move state details                                                |
+| `~/command` | subscribes    | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveCommand.msg)                                  | Moves a robot to the target pose, can be continuous               |
+| `/tf`       | subscribes    | [`tf2_msgs/msg/TFMessage`](http://docs.ros.org/en/melodic/api/tf2_msgs/html/msg/TFMessage.html)                                                                            | Uses the TF tree to resolve odom, global, target, and base frames |
+| `/costmap`  | subscribes    | [`nav2_msgs/msg/Costmap`](https://github.com/ros-planning/navigation2/blob/main/nav2_msgs/msg/Costmap.msg)                                                                             | (WIP) Costmap for obstacles avoidance                             |
+| `~/move`    | action server | [`spes_msgs/action/Move`](../spes_msgs/action/Move.action)                                          | Moves a robot to the target pose                                  |
 
 ## Frames
 
@@ -76,22 +75,27 @@ Some ideas on how to utilize the move behavior.
 
 Move 20cm forward and stop:
 ```bash
-ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.2 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
+ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.2 }, "mode": 2 }'
 ```
 
 Keep moving forward until canceled:
 ```bash
-ros2 topic pub -r1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.5 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
+ros2 topic pub -r1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.5 }, "mode": 2 }'
 ```
 
 Rotate in place for 90 degrees:
 ```bash
-ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "theta": 1.507 }, "rotate_towards_goal": false, "translate": false }'
+ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "theta": 1.507 }, "mode": 1 }'
 ```
 
 Move to pose (-0.5, -0.5):
 ```bash
 ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
+```
+
+Move to pose (-0.5, -0.5) using action:
+```bash
+ros2 action send_goal move/move spes_msgs/action/Move '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
 ```
 
 ## Usage Examples

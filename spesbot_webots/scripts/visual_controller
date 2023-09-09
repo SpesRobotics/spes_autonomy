@@ -228,8 +228,7 @@ class VisualController(Node):
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
-        move_command.rotate_towards_goal = False
-        move_command.rotate_at_goal = False
+        move_command.mode = MoveCommand.MODE_TRANSLATE
         move_command.target.x = error_y * P_LINEAR
         self.__publisher.publish(move_command)
 
@@ -237,8 +236,7 @@ class VisualController(Node):
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
-        move_command.rotate_towards_goal = False
-        move_command.translate = False
+        move_command.mode = MoveCommand.MODE_ROTATE_AT_GOAL
         move_command.target.theta = P_ANGULAR * error_x
         self.__publisher.publish(move_command)
 

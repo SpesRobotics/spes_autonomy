@@ -1,0 +1,13 @@
+repositories:
+  odrive_ros2_control:
+    type: git
+    url: https://github.com/Factor-Robotics/odrive_ros2_control.git
+    version: humble-fw-v0.5.1
+  cartesian_controllers:
+    type: git
+    url: https://github.com/fzi-forschungszentrum-informatik/cartesian_controllers.git
+    version: ros2
+  behaviortree_ros2:
+    type: git
+    url: https://github.com/BehaviorTree/BehaviorTree.ROS2.git
+    version: humble

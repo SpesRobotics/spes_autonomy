@@ -1,13 +1,10 @@
 #include "spes_move/move.hpp"
 
-#define sign(x) (((x) > 0) - ((x) < 0))
-#define min(x, y) (((x) < (y)) ? (x) : (y))
-
 namespace spes_move
 {
   void Move::on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg)
   {
-    if (state_ == spes_msgs::msg::MoveState::IDLE)
+    if (state_ == spes_msgs::msg::MoveState::STATE_IDLE)
     {
       init_move(msg);
       return;
@@ -17,6 +14,38 @@ namespace spes_move
     command_->header.stamp = msg->header.stamp;
 
     update_odom_target_tf();
+  }
+
+  void Move::on_action()
+  {
+    auto result = std::make_shared<spes_msgs::action::Move::Result>();
+    auto goal = action_server_->get_current_goal();
+
+    if (state_ != spes_msgs::msg::MoveState::STATE_IDLE)
+    {
+      action_server_->terminate_current(result);
+      return;
+    }
+
+    spes_msgs::msg::MoveCommand::SharedPtr msg = std::make_shared<spes_msgs::msg::MoveCommand>();
+    msg->header = goal->header;
+    msg->odom_frame = goal->odom_frame;
+    msg->target = goal->target;
+    msg->linear_properties = goal->linear_properties;
+    msg->angular_properties = goal->angular_properties;
+    msg->ignore_obstacles = goal->ignore_obstacles;
+    msg->timeout = goal->timeout;
+    msg->reversing = goal->reversing;
+    msg->mode = goal->mode;
+
+    init_move(msg);
+
+    while (rclcpp::ok() && state_ != spes_msgs::msg::MoveState::STATE_IDLE)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    action_server_->succeeded_current(result);
   }
 
   bool Move::update_odom_target_tf()
@@ -84,19 +113,19 @@ namespace spes_move
 
     // Kickoff FSM
     lock_tf_odom_base_ = false;
-    if (command->rotate_towards_goal)
+    if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_TOWARDS_GOAL)
     {
-      state_ = spes_msgs::msg::MoveState::ROTATING_TOWARDS_GOAL;
+      state_ = spes_msgs::msg::MoveState::STATE_ROTATING_TOWARDS_GOAL;
       return true;
     }
-    if (command->translate)
+    if (command_->mode & spes_msgs::msg::MoveCommand::MODE_TRANSLATE)
     {
-      state_ = spes_msgs::msg::MoveState::TRANSLATING;
+      state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
       return true;
     }
-    if (command->rotate_at_goal)
+    if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
     {
-      state_ = spes_msgs::msg::MoveState::ROTATING_AT_GOAL;
+      state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
       return true;
     }
     RCLCPP_ERROR(get_logger(), "Invalid MoveCommand, at least one of rotate_towards_goal, translate, or rotate_at_goal must be true.");
@@ -147,7 +176,7 @@ namespace spes_move
       if (distance_to_goal < command_->linear_properties.tolerance)
       {
         // In case we are already at the goal we skip rotation towards the goal and translation.
-        state_ = spes_msgs::msg::MoveState::ROTATING_AT_GOAL;
+        state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
         return;
       }
       else
@@ -170,7 +199,7 @@ namespace spes_move
       {
         // stopRobot();
         lock_tf_odom_base_ = false;
-        state_ = spes_msgs::msg::MoveState::TRANSLATING;
+        state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
         debouncing_reset();
       }
       return;
@@ -181,7 +210,8 @@ namespace spes_move
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
   {
     const bool should_init = (state_ != previous_state_);
-    if (should_init) {
+    if (should_init)
+    {
       debouncing_reset();
       init_translation(tf_base_target.getOrigin().x(), tf_base_target.getOrigin().y());
     }
@@ -192,14 +222,14 @@ namespace spes_move
       if (now() >= debouncing_end_)
       {
         // stopRobot();
-        if (command_->rotate_at_goal)
+        if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
         {
-          state_ = spes_msgs::msg::MoveState::ROTATING_AT_GOAL;
+          state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
           debouncing_reset();
         }
         else
         {
-          state_ = spes_msgs::msg::MoveState::IDLE;
+          state_ = spes_msgs::msg::MoveState::STATE_IDLE;
           return;
         }
       }
@@ -213,7 +243,8 @@ namespace spes_move
     const bool should_init = (state_ != previous_state_);
     const double final_yaw = get_diff_final_orientation(tf_base_target);
 
-    if (should_init) {
+    if (should_init)
+    {
       debouncing_reset();
       init_rotation(final_yaw);
     }
@@ -225,7 +256,7 @@ namespace spes_move
       {
         // stopRobot();
         debouncing_reset();
-        state_ = spes_msgs::msg::MoveState::IDLE;
+        state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       }
       return;
     }
@@ -234,7 +265,7 @@ namespace spes_move
 
   void Move::update()
   {
-    if (state_ == spes_msgs::msg::MoveState::IDLE)
+    if (state_ == spes_msgs::msg::MoveState::STATE_IDLE)
     {
       previous_state_ = state_;
       return;
@@ -250,7 +281,7 @@ namespace spes_move
       RCLCPP_WARN(
           get_logger(),
           "Exceeded time allowance before reaching the Move goal - Exiting Move");
-      state_ = spes_msgs::msg::MoveState::IDLE;
+      state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       return;
     }
 
@@ -261,7 +292,7 @@ namespace spes_move
             transform_tolerance_))
     {
       RCLCPP_ERROR(get_logger(), "Initial odom_frame -> base frame is not available.");
-      state_ = spes_msgs::msg::MoveState::IDLE;
+      state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       return;
     }
     tf2::Transform tf_odom_base;
@@ -277,13 +308,13 @@ namespace spes_move
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
     switch (state_)
     {
-    case spes_msgs::msg::MoveState::ROTATING_TOWARDS_GOAL:
+    case spes_msgs::msg::MoveState::STATE_ROTATING_TOWARDS_GOAL:
       state_rotating_towards_goal(tf_base_target, tf_odom_base, cmd_vel.get());
       break;
-    case spes_msgs::msg::MoveState::TRANSLATING:
+    case spes_msgs::msg::MoveState::STATE_TRANSLATING:
       state_translating(tf_base_target, cmd_vel.get());
       break;
-    case spes_msgs::msg::MoveState::ROTATING_AT_GOAL:
+    case spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL:
       state_rotating_at_goal(tf_base_target, cmd_vel.get());
       break;
     }
@@ -297,7 +328,7 @@ namespace spes_move
     //           transform_tolerance_))
     //   {
     //     RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
-    //     state_ = spes_msgs::msg::MoveState::IDLE;
+    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
     //     return;
     //   }
 
@@ -313,7 +344,7 @@ namespace spes_move
     //   {
     //     // stopRobot();
     //     RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
-    //     state_ = spes_msgs::msg::MoveState::IDLE;
+    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
     //     return;
     //   }
     // }
@@ -349,7 +380,8 @@ namespace spes_move
 
   void Move::regulate_rotation(geometry_msgs::msg::Twist *cmd_vel, double diff_yaw)
   {
-    if (target_updated_) {
+    if (target_updated_)
+    {
       // TODO: This will produce minor jerk when a goal is updated.
       double prev = rotation_ruckig_input_.current_position[0];
       rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
@@ -361,7 +393,7 @@ namespace spes_move
     last_error_yaw_ = diff_yaw - rotation_ruckig_output_.new_position[0];
     const double d_input = rotation_ruckig_output_.new_position[0] - previous_input;
     cmd_vel->angular.z = command_->angular_properties.kp * last_error_yaw_ - command_->angular_properties.kd * d_input;
-  
+
     if (!is_trajectory_finished)
       rotation_ruckig_output_.pass_to_input(rotation_ruckig_input_);
   }
@@ -386,7 +418,8 @@ namespace spes_move
 
   void Move::regulate_translation(geometry_msgs::msg::Twist *cmd_vel, double diff_x, double diff_y)
   {
-    if (target_updated_) {
+    if (target_updated_)
+    {
       // TODO: This will produce minor jerk when a goal is updated.
       double prev = translation_ruckig_input_.current_position[0];
       translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
@@ -414,9 +447,12 @@ namespace spes_move
     command_sub_ = create_subscription<spes_msgs::msg::MoveCommand>(
         "~/command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
     state_pub_ = create_publisher<spes_msgs::msg::MoveState>("~/state", 1);
+    action_server_ = std::make_shared<nav2_util::SimpleActionServer<spes_msgs::action::Move>>(
+        this, "~/move", std::bind(&Move::on_action, this));
+    action_server_->activate();
 
     tf_ =
-       std::make_unique<tf2_ros::Buffer>(get_clock());
+        std::make_unique<tf2_ros::Buffer>(get_clock());
     tf_listener_ =
         std::make_shared<tf2_ros::TransformListener>(*tf_);
 

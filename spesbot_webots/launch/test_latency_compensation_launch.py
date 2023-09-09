@@ -60,7 +60,7 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'angular.max_velocity': 0.3,
             'angular.max_acceleration': 0.3,
-            'angular.tolerance': 0.0,
+            'angular.tolerance': 0.001,
             'update_rate': 100,
         }],
     )
