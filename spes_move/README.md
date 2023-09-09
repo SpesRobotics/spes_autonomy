@@ -14,17 +14,16 @@ Main features:
 - **Obstacle detection (WIP).** Integrates Nav2 costmaps to detect obstacles on a simulated path.
 - **Stuck detection. (WIP)** Implements a robust stuck detection algorithm.
 
-Published topics:
-- `cmd_vel` (geometry_msgs/msg/Twist): velocity commands.
-- `~/state` (spes_msgs/msg/MoveState): move status.
+## Interface
 
-Subscribed topics:
-- `~/command` (spes_msgs/msg/MoveCommand): position commands.
-- `/tf` (tf2_msgs/msg/TFMessage): TF2 transforms.
-- `/costmap` (optional, nav2_msgs/msg/Costmap): costmap updates (WIP).
-
-Action servers:
-- `~/move` (spes_msgs/action/Move): move to the target pose (WIP).
+| Name        | Direction     | Type                                                                                              | Description                                                       |
+|-------------|---------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| `cmd_vel`   | publishes     | [`geometry_msgs/msg/Twist`](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Twist.html) | Robot's velocity command                                          |
+| `~/state`   | publishes     | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveState.msg)                                    | Move state details                                                |
+| `~/command` | subscribes    | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveCommand.msg)                                  | Moves a robot to the target pose, can be continuous               |
+| `/tf`       | subscribes    | [`tf2_msgs/msg/TFMessage`](http://docs.ros.org/en/melodic/api/tf2_msgs/html/msg/TFMessage.html)                                                                            | Uses the TF tree to resolve odom, global, target, and base frames |
+| `/costmap`  | subscribes    | [`nav2_msgs/msg/Costmap`](https://github.com/ros-planning/navigation2/blob/main/nav2_msgs/msg/Costmap.msg)                                                                             | (WIP) Costmap for obstacles avoidance                             |
+| `~/move`    | action server | [`spes_msgs/action/Move`](../spes_msgs/action/Move.action)                                          | Moves a robot to the target pose                                  |
 
 ## Frames
 
