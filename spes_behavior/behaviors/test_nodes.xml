@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
-  <BehaviorTree ID="test_move">
+  <BehaviorTree ID="test_translate">
     <Sequence>
       <AlwaysSuccess/>
       <Translate frame_id="base_link"

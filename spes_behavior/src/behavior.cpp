@@ -5,6 +5,7 @@
 
 #include "behaviortree_ros2/plugins.hpp"
 #include "spes_behavior/move_action.hpp"
+#include "spes_behavior/image_x_yaw_regulator_action.hpp"
 
 int main(int argc, char **argv)
 {
@@ -21,6 +22,8 @@ int main(int argc, char **argv)
 
     params.default_port_value = "move/move";
     factory.registerNodeType<TranslateAction>("Translate", params);
+
+    params.default_port_value = "image_x_yaw_regulator/regulate";
 
     using std::filesystem::directory_iterator;
     for (auto const &entry : directory_iterator(BEHAVIOR_DIRECTORY))

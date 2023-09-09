@@ -1,38 +1,35 @@
 #include <string>
 
 #include "behaviortree_ros2/bt_action_node.hpp"
-#include "spes_msgs/action/move.hpp"
-#include "spes_msgs/msg/move_command.hpp"
+#include "spes_msgs/action/image_x_yaw_regulate.hpp"
 
 using namespace BT;
 
-class TranslateAction : public RosActionNode<spes_msgs::action::Move>
+class ImageXYawRegulatorAction : public RosActionNode<spes_msgs::action::ImageXYawRegulate>
 {
 public:
-    TranslateAction(const std::string &name,
+    ImageXYawRegulatorAction(const std::string &name,
                     const NodeConfig &conf,
                     const RosNodeParams &params)
-        : RosActionNode<spes_msgs::action::Move>(name, conf, params)
+        : RosActionNode<spes_msgs::action::ImageXYawRegulate>(name, conf, params)
     {
     }
 
     static BT::PortsList providedPorts()
     {
         return providedBasicPorts({
-            InputPort<double>("x"),
-            InputPort<std::string>("frame_id"),
+            InputPort<uint8_t>("mode"),
+            InputPort<double>("tolerance"),
         });
     }
 
     bool setGoal(Goal &goal) override {
-        getInput<double>("x", goal.target.x);
-        getInput<std::string>("frame_id", goal.header.frame_id);
+        getInput<uint8_t>("mode", goal.mode);
+        getInput<double>("tolerance", goal.tolerance);
 
-        std::cout << "TranslateAction: setGoal" << std::endl;
-        std::cout << "  x: " << goal.target.x << std::endl;
-        std::cout << "  frame_id: " << goal.header.frame_id << std::endl;
-
-        goal.mode = spes_msgs::msg::MoveCommand::MODE_TRANSLATE;
+        std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
+        std::cout << "  mode: " << goal.mode << std::endl;
+        std::cout << "  tolerance: " << goal.tolerance << std::endl;
 
         return true;
     }

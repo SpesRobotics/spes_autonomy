@@ -1,16 +1,17 @@
-#VRML_SIM R2023a utf8
+#VRML_SIM R2023b utf8
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "../protos/SpesBot.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/drinks/protos/Can.proto"
 
 WorldInfo {
   basicTimeStep 20
 }
 Viewpoint {
-  orientation -0.1627388975038373 0.1517302040702072 0.9749328163581577 1.6660989935649566
-  position 0.3812817744623527 -2.474115500930047 1.0602236265948284
+  orientation -0.28715850400100057 0.5647569324654038 0.7736857248341698 1.16284574545601
+  position -0.9326140836979332 -1.9060885078177001 2.29669281348387
 }
 RectangleArena {
   floorSize 3 3
@@ -20,7 +21,7 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 DEF BALL Solid {
-  translation 0.89 0 0.11
+  translation 0.53 0 0.11
   children [
     Shape {
       appearance PBRAppearance {
@@ -36,6 +37,9 @@ DEF BALL Solid {
       }
     }
   ]
+}
+Can {
+  translation 0.51 -0.31 0.06
 }
 SpesBot {
   translation 0 0 0.09

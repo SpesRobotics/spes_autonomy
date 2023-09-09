@@ -1,7 +1,0 @@
-*.cache
-.clang-format
-*.mtl
-*.bak
-RobotArmMemristor.proto
-RobotMemristor.proto
-Pogon.proto

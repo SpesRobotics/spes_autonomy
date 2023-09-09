@@ -1,7 +1,0 @@
-*orig/
-*unaligned/
-*.bak
-hands/*
-robot/*
-robot_arm_memristor/*
-robot_arm_rcva/*

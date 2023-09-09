@@ -9,9 +9,9 @@ import cv2
 import time
 
 
-class Move(Node):
+class TestMoveLatencyCompensation(Node):
     def __init__(self):
-        super().__init__('move')
+        super().__init__('test_move_latency_compensation')
         self.cv_bridge = CvBridge()
         self._publisher = self.create_publisher(MoveCommand, '/move/command', 1)
         self._subscriber = self.create_subscription(
@@ -59,7 +59,7 @@ class Move(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    move = Move()
+    move = TestMoveLatencyCompensation()
     rclpy.spin(move)
     move.destroy_node()
     rclpy.shutdown()

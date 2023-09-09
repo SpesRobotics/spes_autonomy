@@ -7,8 +7,8 @@ import socket
 import struct
 import threading
 from builtin_interfaces.msg import Time as RosTime
-from spes_msgs.msg import MoveCommand, MoveState
-from spes_msgs.action import Regulate
+from spes_msgs.msg import MoveCommand
+from spes_msgs.action import ImageXYawRegulate
 import time
 
 
@@ -136,43 +136,35 @@ def create_ros_timestamp(detection):
     return ros_time
 
 
-class VisualController(Node):
+class ImageXYawRegulator(Node):
     def __init__(self):
-        super().__init__('visual_controller')
+        super().__init__('image_x_yaw_regulator')
         self.__udp_streamer = UDPStreamer(UDP_IP, UDP_PORT)
 
         self.__publisher = self.create_publisher(MoveCommand, '/move/command', 1)
-        self.__subscriber = self.create_subscription(
-            MoveState, '/move/state', self.__on_move_state, 1
-        )
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
         self.__move_type = None
         self.__tolerance = None
         self.__tracking_instance = None
-        self.__move_state = MoveState()
         
-        super().__init__('behaviour_command_server')
         self._action_server = SimpleActionServer(
             self,
-            Regulate,
-            'behaviour_command',
-            self.__on_behaviour_command_callback)
+            ImageXYawRegulate,
+            '~/regulate',
+            self.__on_regulate_callback)
     
-    def __on_behaviour_command_callback(self, goal_handle):
+    def __on_regulate_callback(self, goal_handle):
         self.get_logger().info('Executing goal...' )
         self.get_logger().info(f'{goal_handle}')
-        self.__move_type = goal_handle.type 
+        self.__move_type = goal_handle.mode 
         self.__tolerance = goal_handle.tolerance
         self.get_logger().info(f"Motion Type: {self.__move_type}")
         self.get_logger().info(f"Tolerance: {self.__tolerance}")
         while self.__move_type!= -1:
             time.sleep(0.01)
         
-        result = Regulate.Result()
+        result = ImageXYawRegulate.Result()
         return result
-
-    def __on_move_state(self, move_state):
-        self.__move_state = move_state
 
     def __update_tracking_instance(self, detections):
         if ALLOWED_CLASSES is not None:
@@ -212,12 +204,12 @@ class VisualController(Node):
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
-        if self.__move_type == 0:
+        if self.__move_type == ImageXYawRegulate.Goal.MODE_Y:
             if abs(error_y) > self.__tolerance:
                 self.regulate_y(error_x, error_y, self.__tolerance)
             else:
                 self.__move_type = -1
-        if self.__move_type == 1:
+        if self.__move_type == ImageXYawRegulate.Goal.MODE_X:
             if abs(error_x) > self.__tolerance:
                 self.regulate_x(error_x, error_y, self.__tolerance)
             else:
@@ -303,9 +295,9 @@ class SimpleActionServer:
     
 def main(args=None):
     rclpy.init(args=args)
-    visual_controller = VisualController()
-    rclpy.spin(visual_controller)
-    visual_controller.destroy_node()
+    image_x_yaw_regulator = ImageXYawRegulator()
+    rclpy.spin(image_x_yaw_regulator)
+    image_x_yaw_regulator.destroy_node()
     rclpy.shutdown()
 
 

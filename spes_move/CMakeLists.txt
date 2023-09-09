@@ -10,6 +10,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(ruckig REQUIRED)
 find_package(spes_msgs REQUIRED)
 
+# Move
 add_executable(
   move
   src/move.cpp
@@ -34,5 +35,12 @@ install(
 )
 target_link_libraries(move ruckig::ruckig)
 install(TARGETS move DESTINATION lib/${PROJECT_NAME})
+
+# Scripts
+install(PROGRAMS
+  scripts/image_x_yaw_regulator
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 ament_package()
