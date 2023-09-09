@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="test_move">
+    <Sequence>
+      <AlwaysSuccess/>
+      <Translate frame_id="base_link"
+                 x="0.2"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="Translate"
+            editable="true">
+      <input_port name="frame_id"
+                  default="base_link">Frame of the the target</input_port>
+      <input_port name="x"
+                  default="0">Target in x direction</input_port>
+    </Action>
+  </TreeNodesModel>
+
+</root>
