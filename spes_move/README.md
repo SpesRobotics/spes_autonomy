@@ -75,22 +75,27 @@ Some ideas on how to utilize the move behavior.
 
 Move 20cm forward and stop:
 ```bash
-ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.2 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
+ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.2 }, "mode": 2 }'
 ```
 
 Keep moving forward until canceled:
 ```bash
-ros2 topic pub -r1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.5 }, "rotate_towards_goal": false, "rotate_at_goal": false }'
+ros2 topic pub -r1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "x": 0.5 }, "mode": 2 }'
 ```
 
 Rotate in place for 90 degrees:
 ```bash
-ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "theta": 1.507 }, "rotate_towards_goal": false, "translate": false }'
+ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": { "frame_id": "base_link" }, "odom_frame": "odom", "target": { "theta": 1.507 }, "mode": 1 }'
 ```
 
 Move to pose (-0.5, -0.5):
 ```bash
 ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
+```
+
+Move to pose (-0.5, -0.5) using action:
+```bash
+ros2 action send_goal move/move spes_msgs/action/Move '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
 ```
 
 ## Usage Examples
