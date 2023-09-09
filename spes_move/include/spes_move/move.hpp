@@ -1,10 +1,14 @@
 #ifndef SPES_MOVE__MOVE_HPP_
 #define SPES_MOVE__MOVE_HPP_
 
-#include "nav2_behaviors/timed_behavior.hpp"
+#include "nav2_costmap_2d/footprint_collision_checker.hpp"
+#include "nav2_costmap_2d/costmap_2d_ros.hpp"
+#include "nav2_util/execution_timer.hpp"
+#include "nav2_util/simple_action_server.hpp"
 #include "spes_msgs/msg/move_command.hpp"
 #include "spes_msgs/msg/move_properties.hpp"
 #include "spes_msgs/msg/move_state.hpp"
+#include "spes_msgs/action/move.hpp"
 #include "ruckig/ruckig.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -18,6 +22,7 @@ namespace spes_move
     int get_update_rate() { return update_rate_; };
 
   private:
+    void on_action();
     void on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg);
 
     bool init_move(const spes_msgs::msg::MoveCommand::SharedPtr msg);
@@ -42,6 +47,7 @@ namespace spes_move
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Subscription<spes_msgs::msg::MoveCommand>::SharedPtr command_sub_;
     rclcpp::Publisher<spes_msgs::msg::MoveState>::SharedPtr state_pub_;
+    std::shared_ptr<nav2_util::SimpleActionServer<spes_msgs::action::Move>> action_server_;
 
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_;

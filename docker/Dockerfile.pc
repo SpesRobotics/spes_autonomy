@@ -13,7 +13,13 @@ RUN useradd -d /${DOCKERUSER} -m \
     usermod -a -G video ${DOCKERUSER} && \
     usermod -a -G dialout ${DOCKERUSER}
 
-RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
+# HOTFIX: RViz black screen
+RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository -y ppa:kisak/kisak-mesa && \
+    apt update -y && \
+    apt upgrade -y
+
+RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-overwrite" \
+    apt-utils \
     ros-humble-navigation2 \
     ros-humble-nav2-bringup \
     ros-humble-rmw-cyclonedds-cpp \
@@ -27,15 +33,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils \
     ros-humble-hls-lfcd-lds-driver \
     ros-humble-v4l2-camera \
     ros-humble-urdf-tutorial \
+    ros-humble-behaviortree-cpp \
     nano \
     alsa \
     libxshmfence1 \
     libgtk-3-dev \ 
     libopencv-dev \
-    software-properties-common \
     vim \
     python3-pip \
-    gdb
+    gdb \
+    wget
 
 # Webots
 RUN curl -L -o /tmp/webots.deb \
@@ -45,17 +52,16 @@ RUN curl -L -o /tmp/webots.deb \
     mkdir -p /${DOCKERUSER}/.config/Cyberbotics
 COPY ./Webots-R2023b.conf /${DOCKERUSER}/.config/Cyberbotics/Webots-R2023b.conf
 
+COPY ./spes.repos /spes.repos
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
-    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
-    git clone --depth=1 --branch=ros2 https://github.com/fzi-forschungszentrum-informatik/cartesian_controllers.git /${DOCKERUSER}/ros2_libs_ws/src/cartesian_controllers && \
     cd /${DOCKERUSER}/ros2_libs_ws && \
+    vcs import src < /spes.repos && \
     . /opt/ros/humble/setup.sh && \
-    colcon build --symlink-install --packages-up-to cartesian_motion_controller cartesian_controller_handles odrive_hardware_interface
-
-# HOTFIX: RViz black screen
-RUN add-apt-repository -y ppa:kisak/kisak-mesa && \
-    apt update -y && \
-    apt upgrade -y
+    colcon build --symlink-install --packages-up-to \
+        cartesian_motion_controller \
+        cartesian_controller_handles \
+        odrive_hardware_interface \
+        behaviortree_ros2
 
 COPY cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp

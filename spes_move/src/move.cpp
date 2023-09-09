@@ -1,7 +1,5 @@
 #include "spes_move/move.hpp"
 
-#define sign(x) (((x) > 0) - ((x) < 0))
-#define min(x, y) (((x) < (y)) ? (x) : (y))
 
 namespace spes_move
 {
@@ -17,6 +15,10 @@ namespace spes_move
     command_->header.stamp = msg->header.stamp;
 
     update_odom_target_tf();
+  }
+
+  void Move::on_action() {
+   
   }
 
   bool Move::update_odom_target_tf()
@@ -414,6 +416,8 @@ namespace spes_move
     command_sub_ = create_subscription<spes_msgs::msg::MoveCommand>(
         "~/command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
     state_pub_ = create_publisher<spes_msgs::msg::MoveState>("~/state", 1);
+    action_server_ = std::make_shared<nav2_util::SimpleActionServer<spes_msgs::action::Move>>(
+        this, "~/move", std::bind(&Move::on_action, this));
 
     tf_ =
        std::make_unique<tf2_ros::Buffer>(get_clock());
