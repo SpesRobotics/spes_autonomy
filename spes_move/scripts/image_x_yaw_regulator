@@ -17,7 +17,7 @@ UDP_PORT = 5000
 ALLOWED_CLASSES = [41] # 41 for cup, None for all
 TRACKING_DEBOUNCE_TIME = 2.0
 P_LINEAR = 0.2
-P_ANGULAR = 0.6
+P_ANGULAR = 0.5
 
 
 class UDPStreamer:

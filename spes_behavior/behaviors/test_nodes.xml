@@ -1,10 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="test_image_x_yaw_regulator">
-    <Sequence>
-      <ImageXYawRegulator mode="0"
-                          tolerance="0.03"/>
-    </Sequence>
+    <ForceSuccess>
+      <Sequence>
+        <Sleep msec="4000"/>
+        <ForceSuccess>
+          <RetryUntilSuccessful num_attempts="2">
+            <ImageXYawRegulator image_segment="0.5"
+                                mode="1"
+                                overshoot_value="0"
+                                tolerance="0.01"
+                                overshoot_type="=="/>
+          </RetryUntilSuccessful>
+        </ForceSuccess>
+        <RetryUntilSuccessful num_attempts="2">
+          <ImageXYawRegulator image_segment="0.8"
+                              mode="0"
+                              overshoot_value="0"
+                              tolerance="0.01"
+                              overshoot_type="=="/>
+        </RetryUntilSuccessful>
+        <ForceSuccess>
+          <ImageXYawRegulator image_segment="0.5"
+                              mode="1"
+                              overshoot_value="0"
+                              tolerance="0.01"
+                              overshoot_type="=="/>
+        </ForceSuccess>
+        <Sleep msec="1000"/>
+        <Translate frame_id="base_link"
+                   x="0.2"/>
+      </Sequence>
+    </ForceSuccess>
   </BehaviorTree>
 
   <BehaviorTree ID="test_translate">
@@ -19,10 +46,16 @@
   <TreeNodesModel>
     <Action ID="ImageXYawRegulator"
             editable="true">
+      <input_port name="image_segment"
+                  default="0.5">Represents the image segment relative to which the robot's position will be regulated.</input_port>
       <input_port name="mode"
                   default="0">0 - Y in image, 1 - X in image</input_port>
+      <input_port name="overshoot_value"
+                  default="0.1"/>
       <input_port name="tolerance"
                   default="0.03">As ration of the image size [0, 1]</input_port>
+      <inout_port name="overshoot_type"
+                  default="==">It can take values "&lt;=", "&gt;=", "==".</inout_port>
     </Action>
     <Action ID="Translate"
             editable="true">
