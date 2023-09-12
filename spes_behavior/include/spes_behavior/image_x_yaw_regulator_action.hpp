@@ -20,6 +20,9 @@ public:
         return providedBasicPorts({
             InputPort<int>("mode"),
             InputPort<double>("tolerance"),
+            InputPort<double>("overshoot_value"),
+            InputPort<double>("image_segment"),
+            InputPort<std::string>("overshoot_type"),
         });
     }
 
