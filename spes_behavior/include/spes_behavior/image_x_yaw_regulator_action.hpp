@@ -38,7 +38,7 @@ public:
         getInput<std::string>("overshoot_type", goal.overshoot_type);
 
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
-        std::cout << "  mode: " << goal.mode << std::endl;
+        std::cout << "  mode: " << std::to_string(goal.mode) << std::endl;
         std::cout << "  tolerance: " << goal.tolerance << std::endl;
         std::cout << "  overshoot_value: " << goal.overshoot_value << std::endl;
         std::cout << "  overshoot_type: " << goal.overshoot_type << std::endl;
