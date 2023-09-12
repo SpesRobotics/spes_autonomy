@@ -30,10 +30,16 @@ public:
         getInput<int>("mode", mode);
         goal.mode = (uint8_t)mode;
         getInput<double>("tolerance", goal.tolerance);
+        getInput<double>("overshoot_value", goal.overshoot_value);
+        getInput<double>("image_segment", goal.image_segment);
+        getInput<std::string>("overshoot_type", goal.overshoot_type);
 
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
         std::cout << "  mode: " << goal.mode << std::endl;
         std::cout << "  tolerance: " << goal.tolerance << std::endl;
+        std::cout << "  overshoot_value: " << goal.overshoot_value << std::endl;
+        std::cout << "  overshoot_type: " << goal.overshoot_type << std::endl;
+        std::cout << "  image_segment: " << goal.image_segment << std::endl;
 
         return true;
     }
