@@ -211,7 +211,7 @@ class ImageXYawRegulator(Node):
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
 
-        if error_x < self.__overshoot_value and self.__overshoot_type == ">=":
+        if self.__overshoot_type == ">=":
             backward_move = False
 
 
