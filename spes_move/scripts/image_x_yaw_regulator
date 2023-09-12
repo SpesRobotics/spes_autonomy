@@ -192,14 +192,6 @@ class ImageXYawRegulator(Node):
 
         self.__update_tracking_instance(detections)
         self.__regulate_robot()
-    
-    def __hendle_overshoot_command(self):
-        if self.__overshoot_type == "==":
-            return 0
-        if self.__overshoot_type == ">=":
-            return self.__overshoot_value
-        if self.__overshoot_type == "<=":
-            return -self.__overshoot_value
 
     def __regulate_robot(self):
         if self.__tracking_instance is None:
@@ -215,14 +207,12 @@ class ImageXYawRegulator(Node):
             "<=": -self.__overshoot_value
         }
 
-        allowable_overshoot = overshoot_values.get(self.__overshoot_type, self.__overshoot_value)
-
         error_x = self.__image_segment - (
             self.__tracking_instance.center_x / self.__tracking_instance.image_width
-        ) + allowable_overshoot
+        )
         error_y = self.__image_segment - (
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
-        ) + allowable_overshoot
+        )
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
