@@ -1,11 +1,20 @@
 uint8 MODE_Y = 0
 uint8 MODE_X = 1
 
-
+# - This parameter represents the tolerance for position regulation. Value between 0 and 1.
 float64 tolerance
+
+# - Value 0 for regulating the linear position.
+# - Value 1 for regulating the angular position.
 uint8 mode
+
+#This parameter determines the type of overshoot behavior. It can take values "<=", ">=", "==".
 string overshoot_type
+
+#This parameter represents the overshoot value used in the action. Allowed value between 0 and 1.
 float64 overshoot_value
+
+# This parameter represents the image segment relative to which the robot's position will be regulated.
 float64 image_segment
 ---
 uint8 result
