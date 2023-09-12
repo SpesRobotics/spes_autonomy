@@ -213,7 +213,8 @@ class ImageXYawRegulator(Node):
 
         if self.__overshoot_type == ">=":
             backward_move = False
-
+        if self.__overshoot_type == "<=":
+            self.__tolerance+=self.__overshoot_value
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
