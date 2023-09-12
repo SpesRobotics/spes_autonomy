@@ -201,11 +201,10 @@ class ImageXYawRegulator(Node):
         if self.__overshoot_type is None or self.__overshoot_value is None:
             return
 
-        overshoot_values = {
-            "==": 0,
-            ">=": self.__overshoot_value,
-            "<=": -self.__overshoot_value
-        }
+        backward_move = True
+        if self.__overshoot_type != "":
+            self.__tolerance+=self.__overshoot_value
+            backward_move = False
 
         error_x = self.__image_segment - (
             self.__tracking_instance.center_x / self.__tracking_instance.image_width
@@ -214,13 +213,20 @@ class ImageXYawRegulator(Node):
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
 
+
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
         if self.__move_type == ImageXYawRegulate.Goal.MODE_Y:
-            if abs(error_y) > self.__tolerance:
-                self.regulate_y(error_x, error_y, self.__tolerance)
+            if backward_move:
+                if abs(error_y) > self.__tolerance:
+                    self.regulate_y(error_x, error_y, self.__tolerance)
+                else:
+                    self.__move_type = -1
             else:
-                self.__move_type = -1
+                if error_y > self.__tolerance:
+                    self.regulate_y(error_x, error_y, self.__tolerance)
+                else:
+                    self.__move_type = -1
         if self.__move_type == ImageXYawRegulate.Goal.MODE_X:
             if abs(error_x) > self.__tolerance:
                 self.regulate_x(error_x, error_y, self.__tolerance)
