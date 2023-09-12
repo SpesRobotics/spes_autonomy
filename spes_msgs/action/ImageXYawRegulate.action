@@ -4,6 +4,9 @@ uint8 MODE_X = 1
 
 float64 tolerance
 uint8 mode
+string overshoot_type
+float64 overshoot_value
+float64 image_segment
 ---
 uint8 result
 ---

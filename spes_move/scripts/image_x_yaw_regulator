@@ -18,11 +18,6 @@ ALLOWED_CLASSES = [41] # 41 for cup, None for all
 TRACKING_DEBOUNCE_TIME = 2.0
 P_LINEAR = 0.2
 P_ANGULAR = 0.6
-X_THRESHOLD = 0.001
-Y_THRESHOLD = 0.005
-TARGET_X = 0.5
-TARGET_Y = 0.72
-TARGET_MOVE_FORWARD = 0.3
 
 
 class UDPStreamer:
@@ -146,6 +141,9 @@ class ImageXYawRegulator(Node):
         self.__move_type = None
         self.__tolerance = None
         self.__tracking_instance = None
+        self.__image_segment = None
+        self.__overshoot_type = None
+        self.__overshoot_value = None
         
         self._action_server = SimpleActionServer(
             self,
@@ -158,8 +156,12 @@ class ImageXYawRegulator(Node):
         self.get_logger().info(f'{goal_handle}')
         self.__move_type = goal_handle.mode 
         self.__tolerance = goal_handle.tolerance
-        self.get_logger().info(f"Motion Type: {self.__move_type}")
-        self.get_logger().info(f"Tolerance: {self.__tolerance}")
+        self.__overshoot_type = goal_handle.overshoot_type
+        self.__overshoot_value = goal_handle.overshoot_value
+        self.__image_segment = goal_handle.image_segment
+        self.get_logger().info(f" //\
+        Move type: {self.__move_type}, Tolerance: {self.__tolerance},   Imege segemnt: {self.__image_segment}//\
+        Overshoot type: {self.__overshoot_type}, Overshoot value: {self.__overshoot_value}")
         while self.__move_type!= -1:
             time.sleep(0.01)
         
@@ -190,17 +192,37 @@ class ImageXYawRegulator(Node):
 
         self.__update_tracking_instance(detections)
         self.__regulate_robot()
+    
+    def __hendle_overshoot_command(self):
+        if self.__overshoot_type == "==":
+            return 0
+        if self.__overshoot_type == ">=":
+            return self.__overshoot_value
+        if self.__overshoot_type == "<=":
+            return -self.__overshoot_value
 
     def __regulate_robot(self):
         if self.__tracking_instance is None:
             return
+        if self.__image_segment is None:
+            return
+        if self.__overshoot_type is None or self.__overshoot_value is None:
+            return
 
-        error_x = TARGET_X - (
+        overshoot_values = {
+            "==": 0,
+            ">=": self.__overshoot_value,
+            "<=": -self.__overshoot_value
+        }
+
+        allowable_overshoot = overshoot_values.get(self.__overshoot_type, self.__overshoot_value)
+
+        error_x = self.__image_segment - (
             self.__tracking_instance.center_x / self.__tracking_instance.image_width
-        )
-        error_y = TARGET_Y - (
+        ) + allowable_overshoot
+        error_y = self.__image_segment - (
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
-        )
+        ) + allowable_overshoot
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
