@@ -159,8 +159,8 @@ class ImageXYawRegulator(Node):
         self.__overshoot_type = goal_handle.overshoot_type
         self.__overshoot_value = goal_handle.overshoot_value
         self.__image_segment = goal_handle.image_segment
-        self.get_logger().info(f" //\
-        Move type: {self.__move_type}, Tolerance: {self.__tolerance},   Imege segemnt: {self.__image_segment}//\
+        self.get_logger().info(f" \
+        Move type: {self.__move_type}, Tolerance: {self.__tolerance},   Imege segemnt: {self.__image_segment} \
         Overshoot type: {self.__overshoot_type}, Overshoot value: {self.__overshoot_value}")
         while self.__move_type!= -1:
             time.sleep(0.01)
