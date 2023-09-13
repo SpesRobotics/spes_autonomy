@@ -30,6 +30,25 @@
         <Sleep msec="1000"/>
         <Translate frame_id="base_link"
                    x="0.2"/>
+        <Sleep msec="3000"/>
+        <ImageXYawRegulator image_segment="0.5"
+                            mode="1"
+                            overshoot_value="0"
+                            tolerance="0.01"
+                            overshoot_type="=="/>
+        <ImageXYawRegulator image_segment="0.8"
+                            mode="0"
+                            overshoot_value="0"
+                            tolerance="0.01"
+                            overshoot_type="=="/>
+        <ImageXYawRegulator image_segment="0.5"
+                            mode="1"
+                            overshoot_value="0"
+                            tolerance="0.01"
+                            overshoot_type="=="/>
+        <Sleep msec="1000"/>
+        <Translate frame_id="base_link"
+                   x="0.2"/>
       </Sequence>
     </ForceSuccess>
   </BehaviorTree>
