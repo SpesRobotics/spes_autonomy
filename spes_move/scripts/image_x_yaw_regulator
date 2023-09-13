@@ -241,6 +241,7 @@ class ImageXYawRegulator(Node):
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
         move_command.mode = MoveCommand.MODE_TRANSLATE
+        move_command.linear_properties.tolerance = self.__tolerance
         move_command.target.x = error_y * P_LINEAR
         self.__publisher.publish(move_command)
 
@@ -249,6 +250,7 @@ class ImageXYawRegulator(Node):
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
         move_command.mode = MoveCommand.MODE_ROTATE_AT_GOAL
+        move_command.angular_properties.tolerance = self.__tolerance
         move_command.target.theta = P_ANGULAR * error_x
         self.__publisher.publish(move_command)
 
