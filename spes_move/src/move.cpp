@@ -1,5 +1,7 @@
 #include "spes_move/move.hpp"
 
+#define sign(x) (((x) > 0) - ((x) < 0))
+
 namespace spes_move
 {
   void Move::on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg)
@@ -197,7 +199,7 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        // stopRobot();
+        stop_robot();
         lock_tf_odom_base_ = false;
         state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
         debouncing_reset();
@@ -205,6 +207,12 @@ namespace spes_move
       return;
     }
     debouncing_reset();
+  }
+
+  void Move::stop_robot()
+  {
+    geometry_msgs::msg::Twist cmd_vel;
+    cmd_vel_pub_->publish(cmd_vel);
   }
 
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
@@ -221,7 +229,7 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        // stopRobot();
+        stop_robot();
         if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
         {
           state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
@@ -254,7 +262,7 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        // stopRobot();
+        stop_robot();
         debouncing_reset();
         state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       }
@@ -277,7 +285,7 @@ namespace spes_move
     rclcpp::Duration time_remaining = end_time_ - now();
     if (time_remaining.seconds() < 0.0 && rclcpp::Duration(command_->timeout).seconds() > 0.0)
     {
-      // stopRobot();
+      stop_robot();
       RCLCPP_WARN(
           get_logger(),
           "Exceeded time allowance before reaching the Move goal - Exiting Move");
@@ -320,34 +328,35 @@ namespace spes_move
     }
 
     // Stop if there is a collision
-    // if (!command_->ignore_obstacles)
-    // {
-    //   geometry_msgs::msg::PoseStamped current_pose;
-    //   if (!nav2_util::getCurrentPose(
-    //           current_pose, *tf_, command_->header.frame_id, robot_frame_,
-    //           transform_tolerance_))
-    //   {
-    //     RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
-    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
-    //     return;
-    //   }
+    if (!command_->ignore_obstacles)
+    {
+      geometry_msgs::msg::PoseStamped current_pose;
+      if (!nav2_util::getCurrentPose(
+              current_pose, *tf_, command_->header.frame_id, robot_frame_,
+              transform_tolerance_))
+      {
+        RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
+        state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+        return;
+      }
 
-    //   geometry_msgs::msg::Pose2D pose2d;
-    //   pose2d.x = current_pose.pose.position.x;
-    //   pose2d.y = current_pose.pose.position.y;
-    //   pose2d.theta = tf2::getYaw(current_pose.pose.orientation);
+      geometry_msgs::msg::Pose2D pose2d;
+      pose2d.x = current_pose.pose.position.x;
+      pose2d.y = current_pose.pose.position.y;
+      pose2d.theta = tf2::getYaw(current_pose.pose.orientation);
 
-    //   const double sim_position_change = sign(cmd_vel->linear.x) * simulate_ahead_distance_;
-    //   pose2d.x += sim_position_change * cos(pose2d.theta);
-    //   pose2d.y += sim_position_change * sin(pose2d.theta);
-    //   if (!collision_checker_->isCollisionFree(pose2d))
-    //   {
-    //     // stopRobot();
-    //     RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
-    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
-    //     return;
-    //   }
-    // }
+      const double stopping_distance = stopping_distance_factor_ * (cmd_vel->linear.x * cmd_vel->linear.x) / (2 * command_->linear_properties.max_acceleration);
+      const double sim_position_change = sign(cmd_vel->linear.x) * stopping_distance;
+      pose2d.x += sim_position_change * cos(pose2d.theta);
+      pose2d.y += sim_position_change * sin(pose2d.theta);
+      if (!collision_checker_->isCollisionFree(pose2d))
+      {
+        stop_robot();
+        RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
+        state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+        return;
+      }
+    }
 
     cmd_vel_pub_->publish(std::move(cmd_vel));
 
@@ -382,7 +391,6 @@ namespace spes_move
   {
     if (target_updated_)
     {
-      // TODO: This will produce minor jerk when a goal is updated.
       double prev = rotation_ruckig_input_.current_position[0];
       rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
       target_updated_ = false;
@@ -420,7 +428,6 @@ namespace spes_move
   {
     if (target_updated_)
     {
-      // TODO: This will produce minor jerk when a goal is updated.
       double prev = translation_ruckig_input_.current_position[0];
       translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
       RCLCPP_INFO(get_logger(), "diff_x: %f, last_error_x_: %f", diff_x, last_error_x_);
@@ -456,6 +463,14 @@ namespace spes_move
     tf_listener_ =
         std::make_shared<tf2_ros::TransformListener>(*tf_);
 
+    costmap_sub_ = std::make_shared<nav2_costmap_2d::CostmapSubscriber>(
+        shared_from_this(), costmap_topic_);
+    footprint_sub_ = std::make_shared<nav2_costmap_2d::FootprintSubscriber>(
+        shared_from_this(), footprint_topic_, *tf_, robot_frame_, transform_tolerance_);
+    collision_checker_ =
+        std::make_shared<nav2_costmap_2d::CostmapTopicCollisionChecker>(
+            *costmap_sub_, *footprint_sub_, get_name());
+
     // Read parameters
     declare_parameter("update_rate", rclcpp::ParameterValue(50));
     get_parameter("update_rate", update_rate_);
@@ -469,6 +484,18 @@ namespace spes_move
     declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.05));
     get_parameter("debouncing_duration", debouncing_duration);
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
+
+    declare_parameter("stopping_distance_factor", rclcpp::ParameterValue(1.5));
+    get_parameter("stopping_distance_factor", stopping_distance_factor_);
+
+    declare_parameter("costmap_topic", rclcpp::ParameterValue("local_costmap/costmap_raw"));
+    get_parameter("costmap_topic", costmap_topic_);
+
+    declare_parameter("footprint_topic", rclcpp::ParameterValue("local_costmap/published_footprint"));
+    get_parameter("footprint_topic", footprint_topic_);
+
+    declare_parameter("transform_tolerance", rclcpp::ParameterValue(0.5));
+    get_parameter("transform_tolerance", transform_tolerance_);
 
     // Linear
     declare_parameter("linear.kp", rclcpp::ParameterValue(3.0));
