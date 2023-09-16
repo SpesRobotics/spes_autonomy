@@ -45,9 +45,12 @@ namespace spes_move
     bool update_odom_target_tf();
 
     void stop_robot();
+    void update_state_msg(tf2::Transform &tf_base_target);
 
     int update_rate_;
     double stopping_distance_factor_;
+
+    spes_msgs::msg::MoveState state_msg_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Subscription<spes_msgs::msg::MoveCommand>::SharedPtr command_sub_;

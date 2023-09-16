@@ -39,8 +39,8 @@ public:
 
     BT::NodeStatus onResultReceived(const WrappedResult &wr) override
     {
-        RCLCPP_INFO(node_->get_logger(), "%s: onResultReceived %d", name().c_str(), wr.result->result);
-        return wr.result->result ? NodeStatus::FAILURE : NodeStatus::SUCCESS;
+        RCLCPP_INFO(node_->get_logger(), "%s: onResultReceived %d", name().c_str(), wr.result->error);
+        return wr.result->error ? NodeStatus::FAILURE : NodeStatus::SUCCESS;
     }
 
     virtual BT::NodeStatus onFailure(ActionNodeErrorCode error) override

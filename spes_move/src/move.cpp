@@ -47,7 +47,11 @@ namespace spes_move
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    action_server_->succeeded_current(result);
+    result->error = state_msg_.error;
+    if (state_msg_.error == spes_msgs::msg::MoveState::ERROR_NONE)
+      action_server_->succeeded_current(result);
+    else
+      action_server_->terminate_current(result);
   }
 
   bool Move::update_odom_target_tf()
@@ -217,6 +221,7 @@ namespace spes_move
 
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
   {
+    state_msg_.error = spes_msgs::msg::MoveState::ERROR_NONE;
     const bool should_init = (state_ != previous_state_);
     if (should_init)
     {
@@ -310,7 +315,7 @@ namespace spes_move
       tf_odom_base.getOrigin().setX(locked_tf_odom_base_.getOrigin().x());
       tf_odom_base.getOrigin().setY(locked_tf_odom_base_.getOrigin().y());
     }
-    const tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
+    tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
 
     // FSM
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
@@ -353,21 +358,30 @@ namespace spes_move
       {
         stop_robot();
         RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
+
+        state_msg_.error = spes_msgs::msg::MoveState::ERROR_OBSTACLE;
+
         state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+        update_state_msg(tf_base_target);
+        state_pub_->publish(state_msg_);
         return;
       }
     }
 
     cmd_vel_pub_->publish(std::move(cmd_vel));
 
-    spes_msgs::msg::MoveState state_msg;
-    state_msg.state = state_;
-    state_msg.distance_xy = get_distance(tf_base_target);
-    state_msg.distance_x = tf_base_target.getOrigin().x();
-    state_msg.distance_yaw = get_diff_final_orientation(tf_base_target);
-    state_pub_->publish(state_msg);
+    update_state_msg(tf_base_target);
+    state_pub_->publish(state_msg_);
 
     previous_state_ = previous_state;
+  }
+
+  void Move::update_state_msg(tf2::Transform &tf_base_target)
+  {
+    state_msg_.state = state_;
+    state_msg_.distance_xy = get_distance(tf_base_target);
+    state_msg_.distance_x = tf_base_target.getOrigin().x();
+    state_msg_.distance_yaw = get_diff_final_orientation(tf_base_target);
   }
 
   void Move::init_rotation(double diff_yaw)
