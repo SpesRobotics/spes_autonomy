@@ -12,6 +12,16 @@
                 <frameName>camera0</frameName>
             </ros>
         </device>
+
+        <device reference="LDS-01" type="Lidar">
+            <ros>
+                <enabled>true</enabled>
+                <updateRate>5</updateRate>
+                <topicName>/scan</topicName>
+                <alwaysOn>false</alwaysOn>
+                <frameName>laser</frameName>
+            </ros>
+        </device>
     </webots>
     <ros2_control name="JointControl" type="system">
         <hardware>

@@ -21,16 +21,20 @@ public:
         return providedBasicPorts({
             InputPort<double>("x"),
             InputPort<std::string>("frame_id"),
+            InputPort<bool>("ignore_obstacles"),
+            OutputPort<int>("error"),
         });
     }
 
     bool setGoal(Goal &goal) override {
         getInput<double>("x", goal.target.x);
         getInput<std::string>("frame_id", goal.header.frame_id);
+        getInput<bool>("ignore_obstacles", goal.ignore_obstacles);
 
         std::cout << "TranslateAction: setGoal" << std::endl;
         std::cout << "  x: " << goal.target.x << std::endl;
         std::cout << "  frame_id: " << goal.header.frame_id << std::endl;
+        std::cout << "  ignore_obstacles: " << goal.ignore_obstacles << std::endl;
 
         goal.mode = spes_msgs::msg::MoveCommand::MODE_TRANSLATE;
 
@@ -40,6 +44,9 @@ public:
     BT::NodeStatus onResultReceived(const WrappedResult &wr) override
     {
         RCLCPP_INFO(node_->get_logger(), "%s: onResultReceived %d", name().c_str(), wr.result->error);
+        
+        setOutput<int>("error", wr.result->error);
+
         return wr.result->error ? NodeStatus::FAILURE : NodeStatus::SUCCESS;
     }
 
