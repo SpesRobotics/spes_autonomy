@@ -57,8 +57,6 @@ namespace spes_move
     rclcpp::Publisher<spes_msgs::msg::MoveState>::SharedPtr state_pub_;
     std::shared_ptr<nav2_util::SimpleActionServer<spes_msgs::action::Move>> action_server_;
 
-    std::string costmap_topic_;
-    std::string footprint_topic_;
     std::shared_ptr<nav2_costmap_2d::CostmapSubscriber> costmap_sub_;
     std::shared_ptr<nav2_costmap_2d::FootprintSubscriber> footprint_sub_;
     std::shared_ptr<nav2_costmap_2d::CostmapTopicCollisionChecker> collision_checker_;

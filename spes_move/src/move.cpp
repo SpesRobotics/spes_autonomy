@@ -478,9 +478,9 @@ namespace spes_move
         std::make_shared<tf2_ros::TransformListener>(*tf_);
 
     costmap_sub_ = std::make_shared<nav2_costmap_2d::CostmapSubscriber>(
-        shared_from_this(), costmap_topic_);
+        shared_from_this(), "local_costmap/costmap_raw");
     footprint_sub_ = std::make_shared<nav2_costmap_2d::FootprintSubscriber>(
-        shared_from_this(), footprint_topic_, *tf_, robot_frame_, transform_tolerance_);
+        shared_from_this(), "local_costmap/published_footprint", *tf_, robot_frame_, transform_tolerance_);
     collision_checker_ =
         std::make_shared<nav2_costmap_2d::CostmapTopicCollisionChecker>(
             *costmap_sub_, *footprint_sub_, get_name());
@@ -501,12 +501,6 @@ namespace spes_move
 
     declare_parameter("stopping_distance_factor", rclcpp::ParameterValue(1.5));
     get_parameter("stopping_distance_factor", stopping_distance_factor_);
-
-    declare_parameter("costmap_topic", rclcpp::ParameterValue("local_costmap/costmap_raw"));
-    get_parameter("costmap_topic", costmap_topic_);
-
-    declare_parameter("footprint_topic", rclcpp::ParameterValue("local_costmap/published_footprint"));
-    get_parameter("footprint_topic", footprint_topic_);
 
     declare_parameter("transform_tolerance", rclcpp::ParameterValue(0.5));
     get_parameter("transform_tolerance", transform_tolerance_);
