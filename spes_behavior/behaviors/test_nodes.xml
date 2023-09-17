@@ -20,7 +20,7 @@
   <BehaviorTree ID="test_translate_obstacle">
     <Translate frame_id="base_link"
                ignore_obstacles="false"
-               x="1.0"
+               x="1.5"
                error="error"/>
   </BehaviorTree>
 

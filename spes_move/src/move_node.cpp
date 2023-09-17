@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     std::shared_ptr<rclcpp::Executor> executor =
         std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
     auto move = std::make_shared<spes_move::Move>("move");
+    move->init();
 
     RCLCPP_INFO(move->get_logger(), "update rate is %d Hz", move->get_update_rate());
 

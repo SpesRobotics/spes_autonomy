@@ -350,7 +350,7 @@ namespace spes_move
       pose2d.y = current_pose.pose.position.y;
       pose2d.theta = tf2::getYaw(current_pose.pose.orientation);
 
-      const double stopping_distance = stopping_distance_factor_ * (cmd_vel->linear.x * cmd_vel->linear.x) / (2 * command_->linear_properties.max_acceleration);
+      const double stopping_distance = stopping_distance_ + (cmd_vel->linear.x * cmd_vel->linear.x) / (2 * command_->linear_properties.max_acceleration);
       const double sim_position_change = sign(cmd_vel->linear.x) * stopping_distance;
       pose2d.x += sim_position_change * cos(pose2d.theta);
       pose2d.y += sim_position_change * sin(pose2d.theta);
@@ -462,8 +462,7 @@ namespace spes_move
       translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
   }
 
-  Move::Move(std::string name) : Node(name)
-  {
+  void Move::init() {
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     command_sub_ = create_subscription<spes_msgs::msg::MoveCommand>(
         "~/command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
@@ -484,7 +483,10 @@ namespace spes_move
     collision_checker_ =
         std::make_shared<nav2_costmap_2d::CostmapTopicCollisionChecker>(
             *costmap_sub_, *footprint_sub_, get_name());
+  }
 
+  Move::Move(std::string name) : Node(name)
+  {
     // Read parameters
     declare_parameter("update_rate", rclcpp::ParameterValue(50));
     get_parameter("update_rate", update_rate_);
@@ -499,8 +501,8 @@ namespace spes_move
     get_parameter("debouncing_duration", debouncing_duration);
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
 
-    declare_parameter("stopping_distance_factor", rclcpp::ParameterValue(1.5));
-    get_parameter("stopping_distance_factor", stopping_distance_factor_);
+    declare_parameter("stopping_distance", rclcpp::ParameterValue(0.2));
+    get_parameter("stopping_distance", stopping_distance_);
 
     declare_parameter("transform_tolerance", rclcpp::ParameterValue(0.5));
     get_parameter("transform_tolerance", transform_tolerance_);

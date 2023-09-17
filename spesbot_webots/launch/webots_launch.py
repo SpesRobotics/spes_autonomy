@@ -52,12 +52,48 @@ def generate_launch_description():
             '50'
         ]
     )
+
+    tf_lidar = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        output='screen',
+        emulate_tty=True,
+        arguments=[
+            '--frame-id', 'base_link',
+            '--child-frame-id', 'laser'
+        ]
+    )
+
+    tf_base_footprint = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        output='screen',
+        emulate_tty=True,
+        arguments=[
+            '--frame-id', 'odom',
+            '--child-frame-id', 'base_footprint'
+        ]
+    )
     
+    tf_map = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        output='screen',
+        emulate_tty=True,
+        arguments=[
+            '--frame-id', 'map',
+            '--child-frame-id', 'odom'
+        ]
+    )
+
     return launch.LaunchDescription([
         webots,
         webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
+        tf_lidar,
+        tf_base_footprint,
+        tf_map,
         launch.actions.
         RegisterEventHandler(event_handler=launch.event_handlers.OnProcessExit(
             target_action=webots,

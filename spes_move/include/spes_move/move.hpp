@@ -20,6 +20,7 @@ namespace spes_move
   {
   public:
     Move(std::string name);
+    void init();
     void update();
     int get_update_rate() { return update_rate_; };
 
@@ -48,7 +49,7 @@ namespace spes_move
     void update_state_msg(tf2::Transform &tf_base_target);
 
     int update_rate_;
-    double stopping_distance_factor_;
+    double stopping_distance_;
 
     spes_msgs::msg::MoveState state_msg_;
 

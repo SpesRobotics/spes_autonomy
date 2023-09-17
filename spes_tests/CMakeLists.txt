@@ -9,6 +9,12 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+# Resources
+install(DIRECTORY
+  resource
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # Scripts
 install(PROGRAMS
   scripts/test_move_latency_compensation
