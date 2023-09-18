@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Option
     ros-humble-urdf-tutorial \
     ros-humble-behaviortree-cpp \
     ros-humble-realsense2-camera \
+    ros-humble-apriltag-ros \
     nano \
     alsa \
     libxshmfence1 \

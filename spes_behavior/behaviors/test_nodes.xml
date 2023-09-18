@@ -7,6 +7,18 @@
     </Sequence>
   </BehaviorTree>
 
+  <BehaviorTree ID="test_move_marker">
+    <Sequence>
+      <Move frame_id="target_frame"
+            ignore_obstacles="false"
+            mode="3"
+            x="0.3"
+            y="0"
+            yaw="0"
+            error="error"/>
+    </Sequence>
+  </BehaviorTree>
+
   <BehaviorTree ID="test_translate">
     <Sequence>
       <AlwaysSuccess/>
@@ -32,6 +44,23 @@
                   default="0">0 - Y in image, 1 - X in image</input_port>
       <input_port name="tolerance"
                   default="0.03">As ration of the image size [0, 1]</input_port>
+    </Action>
+    <Action ID="Move"
+            editable="true">
+      <input_port name="frame_id"
+                  default="map"/>
+      <input_port name="ignore_obstacles"
+                  default="false"/>
+      <input_port name="mode"
+                  default="7"/>
+      <input_port name="x"
+                  default="0"/>
+      <input_port name="y"
+                  default="0"/>
+      <input_port name="yaw"
+                  default="0"/>
+      <output_port name="error"
+                   default="error"/>
     </Action>
     <Action ID="Translate"
             editable="true">

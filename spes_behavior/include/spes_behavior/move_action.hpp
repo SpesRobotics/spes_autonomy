@@ -73,6 +73,7 @@ public:
         return providedBasicPorts({
             InputPort<double>("x"),
             InputPort<double>("y"),
+            InputPort<double>("yaw"),
             InputPort<int>("mode"),
             InputPort<std::string>("frame_id"),
             InputPort<bool>("ignore_obstacles"),
@@ -85,6 +86,9 @@ public:
 
         getInput<double>("x", goal.target.x);
         getInput<double>("y", goal.target.y);
+        getInput<double>("yaw", goal.target.y);
+        goal.target.yaw = goal.target.yaw * M_PI / 180.0;
+
         getInput<int>("mode", mode);
         getInput<std::string>("frame_id", goal.header.frame_id);
         getInput<bool>("ignore_obstacles", goal.ignore_obstacles);

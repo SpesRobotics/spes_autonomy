@@ -32,7 +32,8 @@ RUN apt-get update && apt-get install -y \
     ros-humble-xacro \
     ros-humble-ruckig \
     ros-humble-teleop-twist-keyboard \
-    ros-humble-realsense2-camera
+    ros-humble-realsense2-camera \
+    ros-humble-apriltag-ros
 
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
     git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
