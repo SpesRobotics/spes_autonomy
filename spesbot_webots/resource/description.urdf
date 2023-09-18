@@ -7,9 +7,9 @@
             <ros>
                 <enabled>true</enabled>
                 <updateRate>20</updateRate>
-                <topicName>/camera</topicName>
+                <topicName>/camera_raw</topicName>
                 <alwaysOn>true</alwaysOn>
-                <frameName>camera0</frameName>
+                <frameName>camera</frameName>
             </ros>
         </device>
 
