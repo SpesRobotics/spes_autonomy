@@ -10,6 +10,45 @@ import threading
 import struct
 import time
 import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from queue import Queue
+
+
+class MJPEGStreamHandler(BaseHTTPRequestHandler):
+    def __init__(self, request, client_address, server, frame_queue):
+        self.frame_queue = frame_queue
+        self.streaming_started = False  # Flag to track streaming start
+        super().__init__(request, client_address, server)
+
+    def do_GET(self):
+        if self.path == '/stream':
+            if not self.streaming_started:
+                # Start streaming only on the first request
+                self.start_streaming()
+            self.send_response(200)
+            self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=frame')
+            self.end_headers()
+
+            while True:
+                frame = self.frame_queue.get()
+
+                _, img_encoded = cv2.imencode('.jpg', frame)
+                frame_bytes = img_encoded.tobytes()
+
+                # Send the frame to the browser
+                self.send_header('Content-type', 'image/jpeg')
+                self.send_header('Content-length', len(frame_bytes))
+                self.end_headers()
+                self.wfile.write(frame_bytes)
+                self.wfile.write(b'\r\n--frame\r\n')
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b'Not Found')
+
+    def start_streaming(self):
+        self.streaming_started = True
+
 
 
 class UDPStreamer:
@@ -122,6 +161,11 @@ class OpencvCameraReader:
     def close(self):
         self.__capture.release()
 
+def start_stream_server(frame_queue):
+    server = HTTPServer(('localhost', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
+    print(f'Starting streaming server on http://localhost:8080/stream')
+    server.serve_forever()
+
 
 class ROSCameraReader:
     def __init__(self) -> None:
@@ -183,12 +227,18 @@ def main():
     if not image_reader.is_open():
         print('Unable to open camera')
         exit(1)
+    
+    frame_queue = Queue(maxsize=1)
+    # Create a separate thread for the HTTP server
+    
+    server_thread = threading.Thread(target=start_stream_server, args=(frame_queue,))
+    server_thread.daemon = True
+    server_thread.start()
 
     while True:
         success, image, (timestamp_sec, timestamp_nsec) = image_reader.read()
         if not success:
             break
-
         results = model.track(
             image,
             persist=True,
@@ -205,7 +255,9 @@ def main():
             timestamp_sec=timestamp_sec,
             timestamp_nsec=timestamp_nsec,
         )
-
+        
+        frame_queue.put(get_annotated_frame(results, track_history))
+        
         if args.show_detections:
             annotated_frame = get_annotated_frame(results, track_history)
             cv2.imshow('image', annotated_frame)
