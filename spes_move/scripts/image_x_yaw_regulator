@@ -154,7 +154,7 @@ class ImageXYawRegulator(Node):
     def __on_regulate_callback(self, goal_handle):
         self.get_logger().info('Executing goal...' )
         self.get_logger().info(f'{goal_handle}')
-        self.__move_type = goal_handle.mode 
+        self.__move_type = goal_handle.direction 
         self.__tolerance = goal_handle.tolerance
         self.__overshoot_type = goal_handle.overshoot_type
         self.__overshoot_value = goal_handle.overshoot_value
@@ -211,9 +211,9 @@ class ImageXYawRegulator(Node):
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
 
-        if self.__overshoot_type == ">=":
+        if self.__overshoot_type == ">":
             backward_move = False
-        if self.__overshoot_type == "<=":
+        if self.__overshoot_type == "<":
             self.__tolerance+=self.__overshoot_value
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')

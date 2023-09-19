@@ -162,8 +162,8 @@ class OpencvCameraReader:
         self.__capture.release()
 
 def start_stream_server(frame_queue):
-    server = HTTPServer(('localhost', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
-    print(f'Starting streaming server on http://localhost:8080/stream')
+    server = HTTPServer(('0.0.0.0', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
+    print(f'Starting streaming server on http://0.0.0.0:8080/stream')
     server.serve_forever()
 
 
