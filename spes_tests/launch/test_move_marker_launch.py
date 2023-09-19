@@ -22,6 +22,9 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('spesbot_hardware'), 'launch', 'hardware_launch.py')
         ),
         condition=launch.conditions.UnlessCondition(use_sim_time),
+        launch_arguments={
+            'camera': 'realsense',
+        }.items()
     )
 
     move = Node(

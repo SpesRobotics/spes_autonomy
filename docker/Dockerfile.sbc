@@ -15,7 +15,7 @@ RUN useradd -d /${DOCKERUSER} -m \
     usermod -a -G video ${DOCKERUSER} && \
     usermod -a -G dialout ${DOCKERUSER}
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-overwrite" \
     python3-pip \
     libusb-1.0-0-dev \
     v4l-utils \
@@ -33,13 +33,19 @@ RUN apt-get update && apt-get install -y \
     ros-humble-ruckig \
     ros-humble-teleop-twist-keyboard \
     ros-humble-realsense2-camera \
+    ros-humble-behaviortree-cpp \
     ros-humble-apriltag-ros
 
+COPY ./spes.repos /spes.repos
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
-    git clone --depth=1 --branch='humble-fw-v0.5.1' https://github.com/Factor-Robotics/odrive_ros2_control.git /${DOCKERUSER}/ros2_libs_ws/src/odrive_ros2_control && \
     cd /${DOCKERUSER}/ros2_libs_ws && \
+    vcs import src < /spes.repos && \
     . /opt/ros/humble/setup.sh && \
-    colcon build --symlink-install
+    colcon build --symlink-install --packages-up-to \
+        cartesian_motion_controller \
+        cartesian_controller_handles \
+        odrive_hardware_interface \
+        behaviortree_ros2
 
 COPY cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp

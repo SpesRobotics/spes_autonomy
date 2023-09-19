@@ -14,7 +14,7 @@ apriltag:
       sharpening: 0.25
       debug: 0
 
-  tag:
-    ids:    [0]
-    frames: ["target_frame"]
-    sizes:  [0.1]
+    tag:
+      ids:    [0]
+      frames: ["target_frame"]
+      sizes:  [0.1]
