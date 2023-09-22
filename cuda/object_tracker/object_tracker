@@ -156,7 +156,7 @@ class OpencvCameraReader:
         timestamp_sec = int(time.time())
         timestamp_nsec = int((timestamp - timestamp_sec) * 1e9)
         success, image = self.__capture.read()
-        return success, image, (timestamp_sec, timestamp_nsec)
+        return success, image[:, 0:672, :], (timestamp_sec, timestamp_nsec)
 
     def close(self):
         self.__capture.release()
