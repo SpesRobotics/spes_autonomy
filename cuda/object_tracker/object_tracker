@@ -21,7 +21,7 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
         super().__init__(request, client_address, server)
 
     def do_GET(self):
-        if self.path == '/stream':
+        if self.path == '/':
             if not self.streaming_started:
                 # Start streaming only on the first request
                 self.start_streaming()
@@ -162,8 +162,8 @@ class OpencvCameraReader:
         self.__capture.release()
 
 def start_stream_server(frame_queue):
-    server = HTTPServer(('0.0.0.0', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
-    print(f'Starting streaming server on http://0.0.0.0:8080/stream')
+    server = HTTPServer(('192.168.2.146', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
+    print(f'Starting streaming server on http://192.168.2.146:8080/')
     server.serve_forever()
 
 
@@ -239,6 +239,7 @@ def main():
         success, image, (timestamp_sec, timestamp_nsec) = image_reader.read()
         if not success:
             break
+
         results = model.track(
             image,
             persist=True,
