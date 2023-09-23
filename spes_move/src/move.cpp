@@ -132,6 +132,15 @@ namespace spes_move
     if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
     {
       state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
+
+      // Multiturn. We allow multiturn only if the goal is in the base frame.
+      if (command_->mode == spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL && command_->header.frame_id == "base_link") {
+        if (command->target.theta > M_PI)
+          multiturn_n_ = (command->target.theta + M_PI) / (2 * M_PI);
+        else if (command->target.theta < -M_PI)
+          multiturn_n_ = (command->target.theta - M_PI) / (2 * M_PI);
+        use_multiturn_ = true;
+      }
       return true;
     }
     RCLCPP_ERROR(get_logger(), "Invalid MoveCommand, at least one of rotate_towards_goal, translate, or rotate_at_goal must be true.");
