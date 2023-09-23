@@ -346,7 +346,7 @@ namespace spes_move
     {
       geometry_msgs::msg::PoseStamped current_pose;
       if (!nav2_util::getCurrentPose(
-              current_pose, *tf_, command_->header.frame_id, robot_frame_,
+              current_pose, *tf_, odom_frame_, robot_frame_,
               transform_tolerance_))
       {
         RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
@@ -515,6 +515,12 @@ namespace spes_move
 
     declare_parameter("transform_tolerance", rclcpp::ParameterValue(0.5));
     get_parameter("transform_tolerance", transform_tolerance_);
+
+    declare_parameter("robot_frame", rclcpp::ParameterValue(std::string("base_link")));
+    get_parameter("robot_frame", robot_frame_);
+
+    declare_parameter("odom_frame", rclcpp::ParameterValue(std::string("odom")));
+    get_parameter("odom_frame", odom_frame_);
 
     // Linear
     declare_parameter("linear.kp", rclcpp::ParameterValue(3.0));

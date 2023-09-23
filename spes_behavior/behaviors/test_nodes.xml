@@ -10,7 +10,7 @@
   <BehaviorTree ID="test_move_marker">
     <Sequence>
       <Move frame_id="target_frame"
-            ignore_obstacles="false"
+            ignore_obstacles="true"
             mode="3"
             x="0.3"
             y="0"
@@ -30,10 +30,13 @@
   </BehaviorTree>
 
   <BehaviorTree ID="test_translate_obstacle">
-    <Translate frame_id="base_link"
-               ignore_obstacles="false"
-               x="1.5"
-               error="error"/>
+    <Sequence>
+      <Sleep msec="3000"/>
+      <Translate frame_id="base_link"
+                 ignore_obstacles="false"
+                 x="1.5"
+                 error="error"/>
+    </Sequence>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->

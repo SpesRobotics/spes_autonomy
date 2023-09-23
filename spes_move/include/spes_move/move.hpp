@@ -68,7 +68,8 @@ namespace spes_move
     spes_msgs::msg::MoveCommand::SharedPtr command_;
     spes_msgs::msg::MoveCommand::SharedPtr default_command_{new spes_msgs::msg::MoveCommand()};
 
-    std::string robot_frame_{"base_link"};
+    std::string robot_frame_;
+    std::string odom_frame_;
 
     tf2::Transform tf_odom_target_;
     rclcpp::Time end_time_;
