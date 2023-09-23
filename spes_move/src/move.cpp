@@ -69,6 +69,11 @@ namespace spes_move
     catch (const tf2::TransformException &ex)
     {
       RCLCPP_ERROR(get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
+
+      state_msg_.error = spes_msgs::msg::MoveState::ERROR_MISSING_TRANSFORM;
+      state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+      state_pub_->publish(state_msg_);
+
       return false;
     }
 
@@ -115,7 +120,8 @@ namespace spes_move
     if (command_->angular_properties.tolerance == 0.0)
       command_->angular_properties.tolerance = default_command_->angular_properties.tolerance;
 
-    update_odom_target_tf();
+    if (!update_odom_target_tf())
+      return false;
 
     // Kickoff FSM
     lock_tf_odom_base_ = false;
@@ -363,7 +369,17 @@ namespace spes_move
       const double sim_position_change = sign(cmd_vel->linear.x) * stopping_distance;
       pose2d.x += sim_position_change * cos(pose2d.theta);
       pose2d.y += sim_position_change * sin(pose2d.theta);
-      if (!collision_checker_->isCollisionFree(pose2d))
+
+      bool is_collision_ahead = false;
+      try {
+        const double score = collision_checker_->scorePose(pose2d);
+        if (score >= 254)
+          is_collision_ahead = true;
+      } catch (const std::exception& e) {
+        RCLCPP_ERROR_ONCE(get_logger(), "Collision checker failed: %s", e.what());
+      }
+
+      if (is_collision_ahead)
       {
         stop_robot();
         RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
