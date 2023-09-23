@@ -55,11 +55,35 @@
     </RetryUntilSuccessful>
   </BehaviorTree>
 
+  <BehaviorTree ID="test_move_marker">
+    <Sequence>
+      <Move frame_id="target_frame"
+            ignore_obstacles="true"
+            mode="3"
+            x="0.3"
+            y="0"
+            yaw="0"
+            error="error"/>
+    </Sequence>
+  </BehaviorTree>
+
   <BehaviorTree ID="test_translate">
     <Sequence>
       <AlwaysSuccess/>
       <Translate frame_id="base_link"
-                 x="0.2"/>
+                 ignore_obstacles="true"
+                 x="0.2"
+                 error="error"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="test_translate_obstacle">
+    <Sequence>
+      <Sleep msec="3000"/>
+      <Translate frame_id="base_link"
+                 ignore_obstacles="false"
+                 x="1.5"
+                 error="error"/>
     </Sequence>
   </BehaviorTree>
 
@@ -78,12 +102,33 @@
       <inout_port name="overshoot_value"
                   default="0.1"/>
     </Action>
+    <Action ID="Move"
+            editable="true">
+      <input_port name="frame_id"
+                  default="map"/>
+      <input_port name="ignore_obstacles"
+                  default="false"/>
+      <input_port name="mode"
+                  default="7"/>
+      <input_port name="x"
+                  default="0"/>
+      <input_port name="y"
+                  default="0"/>
+      <input_port name="yaw"
+                  default="0"/>
+      <output_port name="error"
+                   default="error"/>
+    </Action>
     <Action ID="Translate"
             editable="true">
       <input_port name="frame_id"
                   default="base_link">Frame of the the target</input_port>
+      <input_port name="ignore_obstacles"
+                  default="false">Whether to stop in front of obstacle</input_port>
       <input_port name="x"
                   default="0">Target in x direction</input_port>
+      <output_port name="error"
+                   default="error">Error code</output_port>
     </Action>
   </TreeNodesModel>
 

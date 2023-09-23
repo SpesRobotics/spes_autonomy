@@ -22,6 +22,7 @@ int main(int argc, char **argv)
 
     params.default_port_value = "move/move";
     factory.registerNodeType<TranslateAction>("Translate", params);
+    factory.registerNodeType<MoveAction>("Move", params);
 
     params.default_port_value = "image_x_yaw_regulator/regulate";
     factory.registerNodeType<ImageXYawRegulatorAction>("ImageXYawRegulator", params);

@@ -1,8 +1,3 @@
-uint8 RESULT_SUCCESS = 0
-uint8 RESULT_TIMEOUT = 1
-uint8 RESULT_STUCK = 2
-uint8 RESULT_ERROR = 3
-
 std_msgs/Header header
 string odom_frame
 
@@ -18,5 +13,5 @@ uint8 mode 7
 # TODO
 float64 translate_yaw_error_tolerance
 ---
-uint8 result
+uint8 error
 ---

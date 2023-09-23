@@ -178,7 +178,7 @@ class ROSCameraReader:
         self.__bridge = CvBridge()
         self.__message = None
         self.__subscriber = self.__node.create_subscription(
-            Image, '/camera/image_color', self.__callback, 1
+            Image, '/image_raw', self.__callback, 1
         )
         self.__thread = threading.Thread(
             target=rclpy.spin, args=(self.__node,))

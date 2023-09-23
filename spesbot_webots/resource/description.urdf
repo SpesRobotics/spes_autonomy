@@ -7,9 +7,19 @@
             <ros>
                 <enabled>true</enabled>
                 <updateRate>20</updateRate>
-                <topicName>/camera</topicName>
+                <topicName>/camera_raw</topicName>
                 <alwaysOn>true</alwaysOn>
-                <frameName>camera0</frameName>
+                <frameName>camera</frameName>
+            </ros>
+        </device>
+
+        <device reference="LDS-01" type="Lidar">
+            <ros>
+                <enabled>true</enabled>
+                <updateRate>5</updateRate>
+                <topicName>/scan</topicName>
+                <alwaysOn>false</alwaysOn>
+                <frameName>laser</frameName>
             </ros>
         </device>
     </webots>

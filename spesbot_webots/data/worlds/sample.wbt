@@ -16,6 +16,7 @@ Viewpoint {
 }
 RectangleArena {
   floorSize 3 3
+  wallHeight 0.3
 }
 TexturedBackground {
 }

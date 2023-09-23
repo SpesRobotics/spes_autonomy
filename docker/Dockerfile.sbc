@@ -31,8 +31,10 @@ RUN apt-get update && apt-get install -y -o Dpkg::Options::="--force-overwrite" 
     ros-humble-nav2-bringup \
     ros-humble-xacro \
     ros-humble-ruckig \
+    ros-humble-teleop-twist-keyboard \
+    ros-humble-realsense2-camera \
     ros-humble-behaviortree-cpp \
-    ros-humble-teleop-twist-keyboard
+    ros-humble-apriltag-ros
 
 COPY ./spes.repos /spes.repos
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \

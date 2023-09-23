@@ -1,5 +1,7 @@
 #include "spes_move/move.hpp"
 
+#define sign(x) (((x) > 0) - ((x) < 0))
+
 namespace spes_move
 {
   void Move::on_command_received(const spes_msgs::msg::MoveCommand::SharedPtr msg)
@@ -45,7 +47,11 @@ namespace spes_move
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    action_server_->succeeded_current(result);
+    result->error = state_msg_.error;
+    if (state_msg_.error == spes_msgs::msg::MoveState::ERROR_NONE)
+      action_server_->succeeded_current(result);
+    else
+      action_server_->terminate_current(result);
   }
 
   bool Move::update_odom_target_tf()
@@ -63,6 +69,11 @@ namespace spes_move
     catch (const tf2::TransformException &ex)
     {
       RCLCPP_ERROR(get_logger(), "Initial global_frame -> command_->odom_frame is not available.");
+
+      state_msg_.error = spes_msgs::msg::MoveState::ERROR_MISSING_TRANSFORM;
+      state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+      state_pub_->publish(state_msg_);
+
       return false;
     }
 
@@ -109,7 +120,8 @@ namespace spes_move
     if (command_->angular_properties.tolerance == 0.0)
       command_->angular_properties.tolerance = default_command_->angular_properties.tolerance;
 
-    update_odom_target_tf();
+    if (!update_odom_target_tf())
+      return false;
 
     // Kickoff FSM
     lock_tf_odom_base_ = false;
@@ -126,6 +138,15 @@ namespace spes_move
     if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
     {
       state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
+
+      // Multiturn. We allow multiturn only if the goal is in the base frame.
+      if (command_->mode == spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL && command_->header.frame_id == "base_link") {
+        if (command->target.theta > M_PI)
+          multiturn_n_ = (command->target.theta + M_PI) / (2 * M_PI);
+        else if (command->target.theta < -M_PI)
+          multiturn_n_ = (command->target.theta - M_PI) / (2 * M_PI);
+        use_multiturn_ = true;
+      }
       return true;
     }
     RCLCPP_ERROR(get_logger(), "Invalid MoveCommand, at least one of rotate_towards_goal, translate, or rotate_at_goal must be true.");
@@ -197,7 +218,7 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        // stopRobot();
+        stop_robot();
         lock_tf_odom_base_ = false;
         state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
         debouncing_reset();
@@ -207,8 +228,15 @@ namespace spes_move
     debouncing_reset();
   }
 
+  void Move::stop_robot()
+  {
+    geometry_msgs::msg::Twist cmd_vel;
+    cmd_vel_pub_->publish(cmd_vel);
+  }
+
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
   {
+    state_msg_.error = spes_msgs::msg::MoveState::ERROR_NONE;
     const bool should_init = (state_ != previous_state_);
     if (should_init)
     {
@@ -221,7 +249,7 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        // stopRobot();
+        stop_robot();
         if (command_->mode & spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL)
         {
           state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
@@ -254,7 +282,7 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        // stopRobot();
+        stop_robot();
         debouncing_reset();
         state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       }
@@ -277,7 +305,7 @@ namespace spes_move
     rclcpp::Duration time_remaining = end_time_ - now();
     if (time_remaining.seconds() < 0.0 && rclcpp::Duration(command_->timeout).seconds() > 0.0)
     {
-      // stopRobot();
+      stop_robot();
       RCLCPP_WARN(
           get_logger(),
           "Exceeded time allowance before reaching the Move goal - Exiting Move");
@@ -302,7 +330,7 @@ namespace spes_move
       tf_odom_base.getOrigin().setX(locked_tf_odom_base_.getOrigin().x());
       tf_odom_base.getOrigin().setY(locked_tf_odom_base_.getOrigin().y());
     }
-    const tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
+    tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
 
     // FSM
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
@@ -320,45 +348,65 @@ namespace spes_move
     }
 
     // Stop if there is a collision
-    // if (!command_->ignore_obstacles)
-    // {
-    //   geometry_msgs::msg::PoseStamped current_pose;
-    //   if (!nav2_util::getCurrentPose(
-    //           current_pose, *tf_, command_->header.frame_id, robot_frame_,
-    //           transform_tolerance_))
-    //   {
-    //     RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
-    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
-    //     return;
-    //   }
+    if (!command_->ignore_obstacles)
+    {
+      geometry_msgs::msg::PoseStamped current_pose;
+      if (!nav2_util::getCurrentPose(
+              current_pose, *tf_, odom_frame_, robot_frame_,
+              transform_tolerance_))
+      {
+        RCLCPP_ERROR(get_logger(), "Current robot pose is not available.");
+        state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+        return;
+      }
 
-    //   geometry_msgs::msg::Pose2D pose2d;
-    //   pose2d.x = current_pose.pose.position.x;
-    //   pose2d.y = current_pose.pose.position.y;
-    //   pose2d.theta = tf2::getYaw(current_pose.pose.orientation);
+      geometry_msgs::msg::Pose2D pose2d;
+      pose2d.x = current_pose.pose.position.x;
+      pose2d.y = current_pose.pose.position.y;
+      pose2d.theta = tf2::getYaw(current_pose.pose.orientation);
 
-    //   const double sim_position_change = sign(cmd_vel->linear.x) * simulate_ahead_distance_;
-    //   pose2d.x += sim_position_change * cos(pose2d.theta);
-    //   pose2d.y += sim_position_change * sin(pose2d.theta);
-    //   if (!collision_checker_->isCollisionFree(pose2d))
-    //   {
-    //     // stopRobot();
-    //     RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
-    //     state_ = spes_msgs::msg::MoveState::STATE_IDLE;
-    //     return;
-    //   }
-    // }
+      const double stopping_distance = stopping_distance_ + (cmd_vel->linear.x * cmd_vel->linear.x) / (2 * command_->linear_properties.max_acceleration);
+      const double sim_position_change = sign(cmd_vel->linear.x) * stopping_distance;
+      pose2d.x += sim_position_change * cos(pose2d.theta);
+      pose2d.y += sim_position_change * sin(pose2d.theta);
+
+      bool is_collision_ahead = false;
+      try {
+        const double score = collision_checker_->scorePose(pose2d);
+        if (score >= 254)
+          is_collision_ahead = true;
+      } catch (const std::exception& e) {
+        RCLCPP_ERROR_ONCE(get_logger(), "Collision checker failed: %s", e.what());
+      }
+
+      if (is_collision_ahead)
+      {
+        stop_robot();
+        RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
+
+        state_msg_.error = spes_msgs::msg::MoveState::ERROR_OBSTACLE;
+
+        state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+        update_state_msg(tf_base_target);
+        state_pub_->publish(state_msg_);
+        return;
+      }
+    }
 
     cmd_vel_pub_->publish(std::move(cmd_vel));
 
-    spes_msgs::msg::MoveState state_msg;
-    state_msg.state = state_;
-    state_msg.distance_xy = get_distance(tf_base_target);
-    state_msg.distance_x = tf_base_target.getOrigin().x();
-    state_msg.distance_yaw = get_diff_final_orientation(tf_base_target);
-    state_pub_->publish(state_msg);
+    update_state_msg(tf_base_target);
+    state_pub_->publish(state_msg_);
 
     previous_state_ = previous_state;
+  }
+
+  void Move::update_state_msg(tf2::Transform &tf_base_target)
+  {
+    state_msg_.state = state_;
+    state_msg_.distance_xy = get_distance(tf_base_target);
+    state_msg_.distance_x = tf_base_target.getOrigin().x();
+    state_msg_.distance_yaw = get_diff_final_orientation(tf_base_target);
   }
 
   void Move::init_rotation(double diff_yaw)
@@ -382,7 +430,6 @@ namespace spes_move
   {
     if (target_updated_)
     {
-      // TODO: This will produce minor jerk when a goal is updated.
       double prev = rotation_ruckig_input_.current_position[0];
       rotation_ruckig_input_.current_position[0] = diff_yaw - last_error_yaw_;
       target_updated_ = false;
@@ -420,7 +467,6 @@ namespace spes_move
   {
     if (target_updated_)
     {
-      // TODO: This will produce minor jerk when a goal is updated.
       double prev = translation_ruckig_input_.current_position[0];
       translation_ruckig_input_.current_position[0] = diff_x - last_error_x_;
       RCLCPP_INFO(get_logger(), "diff_x: %f, last_error_x_: %f", diff_x, last_error_x_);
@@ -441,8 +487,7 @@ namespace spes_move
       translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
   }
 
-  Move::Move(std::string name) : Node(name)
-  {
+  void Move::init() {
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     command_sub_ = create_subscription<spes_msgs::msg::MoveCommand>(
         "~/command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
@@ -456,6 +501,17 @@ namespace spes_move
     tf_listener_ =
         std::make_shared<tf2_ros::TransformListener>(*tf_);
 
+    costmap_sub_ = std::make_shared<nav2_costmap_2d::CostmapSubscriber>(
+        shared_from_this(), "local_costmap/costmap_raw");
+    footprint_sub_ = std::make_shared<nav2_costmap_2d::FootprintSubscriber>(
+        shared_from_this(), "local_costmap/published_footprint", *tf_, robot_frame_, transform_tolerance_);
+    collision_checker_ =
+        std::make_shared<nav2_costmap_2d::CostmapTopicCollisionChecker>(
+            *costmap_sub_, *footprint_sub_, get_name());
+  }
+
+  Move::Move(std::string name) : Node(name)
+  {
     // Read parameters
     declare_parameter("update_rate", rclcpp::ParameterValue(50));
     get_parameter("update_rate", update_rate_);
@@ -469,6 +525,18 @@ namespace spes_move
     declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.05));
     get_parameter("debouncing_duration", debouncing_duration);
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
+
+    declare_parameter("stopping_distance", rclcpp::ParameterValue(0.2));
+    get_parameter("stopping_distance", stopping_distance_);
+
+    declare_parameter("transform_tolerance", rclcpp::ParameterValue(0.5));
+    get_parameter("transform_tolerance", transform_tolerance_);
+
+    declare_parameter("robot_frame", rclcpp::ParameterValue(std::string("base_link")));
+    get_parameter("robot_frame", robot_frame_);
+
+    declare_parameter("odom_frame", rclcpp::ParameterValue(std::string("odom")));
+    get_parameter("odom_frame", odom_frame_);
 
     // Linear
     declare_parameter("linear.kp", rclcpp::ParameterValue(3.0));
