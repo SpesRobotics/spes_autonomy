@@ -11,19 +11,20 @@ Main features:
 - **Position based servoing.** Accepts continuous position commands.
 - **Latency compensation.** Utilizes odometry + TF buffer to compensate for the latency. 
 - **Debouncing.** Regulates position until the robot completely stops.
-- **Obstacle detection (WIP).** Integrates Nav2 costmaps to detect obstacles on a simulated path.
+- **Obstacle detection.** Integrates Nav2 costmaps to detect obstacles on a simulated path.
 - **Stuck detection. (WIP)** Implements a robust stuck detection algorithm.
 
 ## Interface
 
-| Name        | Direction     | Type                                                                                              | Description                                                       |
-|-------------|---------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| `cmd_vel`   | publishes     | [`geometry_msgs/msg/Twist`](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Twist.html) | Robot's velocity command                                          |
-| `~/state`   | publishes     | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveState.msg)                                    | Move state details                                                |
-| `~/command` | subscribes    | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveCommand.msg)                                  | Moves a robot to the target pose, can be continuous               |
-| `/tf`       | subscribes    | [`tf2_msgs/msg/TFMessage`](http://docs.ros.org/en/melodic/api/tf2_msgs/html/msg/TFMessage.html)                                                                            | Uses the TF tree to resolve odom, global, target, and base frames |
-| `/costmap`  | subscribes    | [`nav2_msgs/msg/Costmap`](https://github.com/ros-planning/navigation2/blob/main/nav2_msgs/msg/Costmap.msg)                                                                             | (WIP) Costmap for obstacles avoidance                             |
-| `~/move`    | action server | [`spes_msgs/action/Move`](../spes_msgs/action/Move.action)                                          | Moves a robot to the target pose                                  |
+| Name | Direction | Type | Description |
+|---|---|---|---|
+| `cmd_vel`   | publishes | [`geometry_msgs/msg/Twist`](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Twist.html) | Robot's velocity command |
+| `~/state`   | publishes | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveState.msg) | Move state details |
+| `~/command` | subscribes | [`spes_msgs/msg/MoveState`](../spes_msgs/msg/MoveCommand.msg) | Moves a robot to the target pose, can be continuous |
+| `/tf`       | subscribes | [`tf2_msgs/msg/TFMessage`](http://docs.ros.org/en/melodic/api/tf2_msgs/html/msg/TFMessage.html) | Uses the TF tree to resolve odom, global, target, and base frames |
+| `local_costmap/costmap_raw`  | subscribes (optional) | [`nav2_msgs/msg/Costmap`](https://github.com/ros-planning/navigation2/blob/main/nav2_msgs/msg/Costmap.msg) | Costmap for obstacles avoidance  |
+| `local_costmap/published_footprint` | subscribes (optional) | [`geometry_msgs/msg/PolygonStamped`](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PolygonStamped.html) | Robot footprint |
+| `~/move`    | action server | [`spes_msgs/action/Move`](../spes_msgs/action/Move.action) | Moves a robot to the target pose |
 
 ## Frames
 
@@ -96,11 +97,4 @@ ros2 topic pub -1 move/command spes_msgs/msg/MoveCommand '{ "header": {"frame_id
 Move to pose (-0.5, -0.5) using action:
 ```bash
 ros2 action send_goal move/move spes_msgs/action/Move '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
-```
-
-## Usage Examples
-
-Follow a red ball with 300ms+ latency:
-```bash
-ros2 launch spesbot_webots test_latency_compensation_launch.py
 ```

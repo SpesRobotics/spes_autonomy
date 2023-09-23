@@ -1,8 +1,10 @@
 #ifndef SPES_MOVE__MOVE_HPP_
 #define SPES_MOVE__MOVE_HPP_
 
-#include "nav2_costmap_2d/footprint_collision_checker.hpp"
 #include "nav2_costmap_2d/costmap_2d_ros.hpp"
+#include "nav2_costmap_2d/costmap_subscriber.hpp"
+#include "nav2_costmap_2d/costmap_topic_collision_checker.hpp"
+#include "nav2_costmap_2d/footprint_subscriber.hpp"
 #include "nav2_util/execution_timer.hpp"
 #include "nav2_util/simple_action_server.hpp"
 #include "spes_msgs/msg/move_command.hpp"
@@ -18,6 +20,7 @@ namespace spes_move
   {
   public:
     Move(std::string name);
+    void init();
     void update();
     int get_update_rate() { return update_rate_; };
 
@@ -37,27 +40,37 @@ namespace spes_move
     void state_stopping();
 
     double get_diff_heading(const tf2::Transform &tf_base_target);
-    double get_diff_final_orientation(const tf2::Transform& tf_base_target);
+    double get_diff_final_orientation(const tf2::Transform &tf_base_target);
     double get_distance(const tf2::Transform &tf_base_target);
 
     bool update_odom_target_tf();
 
+    void stop_robot();
+    void update_state_msg(tf2::Transform &tf_base_target);
+
     int update_rate_;
+    double stopping_distance_;
+
+    spes_msgs::msg::MoveState state_msg_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Subscription<spes_msgs::msg::MoveCommand>::SharedPtr command_sub_;
     rclcpp::Publisher<spes_msgs::msg::MoveState>::SharedPtr state_pub_;
     std::shared_ptr<nav2_util::SimpleActionServer<spes_msgs::action::Move>> action_server_;
 
+    std::shared_ptr<nav2_costmap_2d::CostmapSubscriber> costmap_sub_;
+    std::shared_ptr<nav2_costmap_2d::FootprintSubscriber> footprint_sub_;
+    std::shared_ptr<nav2_costmap_2d::CostmapTopicCollisionChecker> collision_checker_;
+
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_;
-    std::shared_ptr<nav2_costmap_2d::FootprintCollisionChecker<nav2_costmap_2d::Costmap2D *>> collision_checker_;
 
     spes_msgs::msg::MoveCommand::SharedPtr command_;
     spes_msgs::msg::MoveCommand::SharedPtr default_command_{new spes_msgs::msg::MoveCommand()};
 
-    std::string robot_frame_{"base_link"};
-  
+    std::string robot_frame_;
+    std::string odom_frame_;
+
     tf2::Transform tf_odom_target_;
     rclcpp::Time end_time_;
     bool target_updated_{false};
