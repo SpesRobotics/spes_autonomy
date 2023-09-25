@@ -63,10 +63,23 @@ def generate_launch_description():
         ],
     )
 
+    tf_target_frame = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        output='screen',
+        arguments=[
+            '--yaw', '1.5708',
+            '--pitch', '1.5708',
+            '--frame-id', 'target_frame_raw',
+            '--child-frame-id', 'target_frame'
+        ],
+    )
+
     return launch.LaunchDescription([
         webots,
         move,
         behavior,
         hardware,
-        apriltag
+        apriltag,
+        tf_target_frame,
     ])

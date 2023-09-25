@@ -64,7 +64,21 @@ def generate_launch_description():
         ],
         parameters=[{
             'base_frame_id': 'camera',
+            'publish_tf': True,
+            'publish_odom_tf': False,
         }],
+        condition=IfCondition(PythonExpression(['"', camera, '" == "realsense"'])),
+    )
+
+    tf_base_realsense_camera = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        output='screen',
+        arguments=[
+            '--x', '0.0',
+            '--frame-id', 'base_link',
+            '--child-frame-id', 'camera_camera'
+        ],
         condition=IfCondition(PythonExpression(['"', camera, '" == "realsense"'])),
     )
 
@@ -105,6 +119,7 @@ def generate_launch_description():
         controller_manager_node,
         # lidar,
         tf_base_link_base_footprint,
+        tf_base_realsense_camera,
         v4l2,
         realsense
     ])
