@@ -46,7 +46,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'use_sim_time': use_sim_time,
-            'behavior': 'test_translate_obstacle',
+            'behavior': 'test_move_marker',
         }],
     )
 
