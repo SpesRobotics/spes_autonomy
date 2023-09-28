@@ -4,52 +4,31 @@
     <RetryUntilSuccessful num_attempts="50">
       <ForceFailure>
         <Sequence>
-          <Sleep msec="10000"/>
+          <Sleep msec="4000"/>
           <ForceSuccess>
             <RetryUntilSuccessful num_attempts="2">
-              <ImageXYawRegulator direction=""
-                                  image_segment="0.5"
+              <ImageXYawRegulator name="TEST"
+                                  direction="1"
+                                  image_segment="0.6"
+                                  overshoot_value="0.0"
                                   tolerance="0.01"
-                                  type="=="
-                                  overshoot_value="0"/>
+                                  type="&lt;"/>
             </RetryUntilSuccessful>
           </ForceSuccess>
           <RetryUntilSuccessful num_attempts="2">
-            <ImageXYawRegulator direction=""
-                                image_segment="0.8"
+            <ImageXYawRegulator direction="0"
+                                image_segment="0.4"
+                                overshoot_value="0"
                                 tolerance="0.01"
-                                type="=="
-                                overshoot_value="0"/>
+                                type="&gt;"/>
           </RetryUntilSuccessful>
           <ForceSuccess>
-            <ImageXYawRegulator direction=""
-                                image_segment="0.5"
+            <ImageXYawRegulator direction="1"
+                                image_segment="0.65"
+                                overshoot_value="0"
                                 tolerance="0.01"
-                                type="=="
-                                overshoot_value="0"/>
+                                type="="/>
           </ForceSuccess>
-          <Sleep msec="1000"/>
-          <Translate frame_id="base_link"
-                     x="0.2"/>
-          <Sleep msec="3000"/>
-          <ImageXYawRegulator direction=""
-                              image_segment="0.5"
-                              tolerance="0.01"
-                              type="=="
-                              overshoot_value="0"/>
-          <ImageXYawRegulator direction=""
-                              image_segment="0.8"
-                              tolerance="0.01"
-                              type="=="
-                              overshoot_value="0"/>
-          <ImageXYawRegulator direction=""
-                              image_segment="0.5"
-                              tolerance="0.01"
-                              type="=="
-                              overshoot_value="0"/>
-          <Sleep msec="1000"/>
-          <Translate frame_id="base_link"
-                     x="0.2"/>
         </Sequence>
       </ForceFailure>
     </RetryUntilSuccessful>
@@ -95,12 +74,12 @@
                   default="0">0 - Y in image, 1 - X in image</input_port>
       <input_port name="image_segment"
                   default="0.5">Represents the image segment relative to which the robot's position will be regulated.</input_port>
+      <input_port name="overshoot_value"
+                  default="0.1"/>
       <input_port name="tolerance"
                   default="0.03">As ration of the image size [0, 1]</input_port>
-      <inout_port name="type"
-                  default="==">It can take values "&lt;=", "&gt;=", "==".</inout_port>
-      <inout_port name="overshoot_value"
-                  default="0.1"/>
+      <input_port name="type"
+                  default="=">It can take values "&lt;=", "&gt;=", "==".</input_port>
     </Action>
     <Action ID="Move"
             editable="true">

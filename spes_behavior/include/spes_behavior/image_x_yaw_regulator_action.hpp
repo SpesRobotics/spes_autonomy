@@ -38,7 +38,7 @@ public:
         getInput<std::string>("type", goal.type);
 
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
-        std::cout << "  direction: " << std::to_string(goal.direction) << std::endl;
+        std::cout << "  direction: " << direction << std::endl;
         std::cout << "  tolerance: " << goal.tolerance << std::endl;
         std::cout << "  overshoot_value: " << goal.overshoot_value << std::endl;
         std::cout << "  type: " << goal.type << std::endl;

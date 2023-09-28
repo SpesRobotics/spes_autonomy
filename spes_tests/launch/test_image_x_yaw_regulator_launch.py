@@ -81,5 +81,5 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription(
-        [webots, move, image_x_yaw_regulator, object_tracker, behavior, hardware]
+        [webots, move, image_x_yaw_regulator, behavior]
     )
