@@ -11,6 +11,8 @@
 
   <depend>spes_msgs</depend>
 
+  <depend>behaviortree_ros2</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
