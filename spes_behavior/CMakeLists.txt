@@ -26,12 +26,18 @@ target_include_directories(behavior PUBLIC
   $<INSTALL_INTERFACE:include>)
 install(TARGETS behavior
   DESTINATION lib/${PROJECT_NAME})
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
 
 # Package
 ament_export_dependencies(
     rclcpp
     rclcpp_action
     spes_msgs
+    behaviortree_cpp
+    behaviortree_ros2
 )
 ament_export_include_directories(
   include
