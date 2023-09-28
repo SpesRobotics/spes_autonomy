@@ -22,7 +22,7 @@ public:
             InputPort<double>("tolerance"),
             InputPort<double>("overshoot_value"),
             InputPort<double>("image_segment"),
-            InputPort<std::string>("overshoot_type"),
+            InputPort<std::string>("type"),
         });
     }
 
@@ -35,13 +35,13 @@ public:
         getInput<double>("tolerance", goal.tolerance);
         getInput<double>("overshoot_value", goal.overshoot_value);
         getInput<double>("image_segment", goal.image_segment);
-        getInput<std::string>("overshoot_type", goal.overshoot_type);
+        getInput<std::string>("type", goal.type);
 
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
         std::cout << "  direction: " << std::to_string(goal.direction) << std::endl;
         std::cout << "  tolerance: " << goal.tolerance << std::endl;
         std::cout << "  overshoot_value: " << goal.overshoot_value << std::endl;
-        std::cout << "  overshoot_type: " << goal.overshoot_type << std::endl;
+        std::cout << "  type: " << goal.type << std::endl;
         std::cout << "  image_segment: " << goal.image_segment << std::endl;
 
         return true;

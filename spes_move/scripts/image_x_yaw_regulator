@@ -142,7 +142,7 @@ class ImageXYawRegulator(Node):
         self.__tolerance = None
         self.__tracking_instance = None
         self.__image_segment = None
-        self.__overshoot_type = None
+        self.__type = None
         self.__overshoot_value = None
         
         self._action_server = SimpleActionServer(
@@ -156,12 +156,12 @@ class ImageXYawRegulator(Node):
         self.get_logger().info(f'{goal_handle}')
         self.__move_type = goal_handle.direction 
         self.__tolerance = goal_handle.tolerance
-        self.__overshoot_type = goal_handle.overshoot_type
+        self.__type = goal_handle.type
         self.__overshoot_value = goal_handle.overshoot_value
         self.__image_segment = goal_handle.image_segment
         self.get_logger().info(f" \
         Move type: {self.__move_type}, Tolerance: {self.__tolerance},   Imege segemnt: {self.__image_segment} \
-        Overshoot type: {self.__overshoot_type}, Overshoot value: {self.__overshoot_value}")
+        Overshoot type: {self.__type}, Overshoot value: {self.__overshoot_value}")
         while self.__move_type!= -1:
             time.sleep(0.01)
         
@@ -198,7 +198,7 @@ class ImageXYawRegulator(Node):
             return
         if self.__image_segment is None:
             return
-        if self.__overshoot_type is None or self.__overshoot_value is None:
+        if self.__type is None or self.__overshoot_value is None:
             return
 
         backward_move = True
@@ -211,9 +211,9 @@ class ImageXYawRegulator(Node):
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
 
-        if self.__overshoot_type == ">":
+        if self.__type == ">":
             backward_move = False
-        if self.__overshoot_type == "<":
+        if self.__type == "<":
             self.__tolerance+=self.__overshoot_value
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
