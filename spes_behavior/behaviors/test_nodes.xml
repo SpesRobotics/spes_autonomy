@@ -38,8 +38,15 @@
     <Sequence>
       <Move frame_id="target_frame"
             ignore_obstacles="true"
-            mode="3"
-            x="0.3"
+            mode="7"
+            x="-0.6"
+            y="0"
+            yaw="0"
+            error="error"/>
+      <Move frame_id="target_frame"
+            ignore_obstacles="true"
+            mode="7"
+            x="-0.4"
             y="0"
             yaw="0"
             error="error"/>
