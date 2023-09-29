@@ -14,7 +14,6 @@ import time
 
 UDP_IP = '127.0.0.1'
 UDP_PORT = 5000
-ALLOWED_CLASSES = [41] # 41 for cup, None for all
 TRACKING_DEBOUNCE_TIME = 2.0
 P_LINEAR = 0.2
 P_ANGULAR = 0.5
@@ -144,6 +143,8 @@ class ImageXYawRegulator(Node):
         self.__image_segment = None
         self.__type = None
         self.__overshoot_value = None
+        self.__kp = None
+        self.__allowed_classes = None
         
         self._action_server = SimpleActionServer(
             self,
@@ -159,9 +160,11 @@ class ImageXYawRegulator(Node):
         self.__type = goal_handle.type
         self.__overshoot_value = goal_handle.overshoot_value
         self.__image_segment = goal_handle.image_segment
+        self.__kp = goal_handle.kp
+        self.__allowed_classes = goal_handle.allowed_classes
         self.get_logger().info(f" \
         Move type: {self.__move_type}, Tolerance: {self.__tolerance},   Imege segemnt: {self.__image_segment} \
-        Overshoot type: {self.__type}, Overshoot value: {self.__overshoot_value}")
+        Overshoot type: {self.__type}, Overshoot value: {self.__overshoot_value}, kp: {self.kp}")
         while self.__move_type!= -1:
             time.sleep(0.01)
         
@@ -169,8 +172,8 @@ class ImageXYawRegulator(Node):
         return result
 
     def __update_tracking_instance(self, detections):
-        if ALLOWED_CLASSES is not None:
-            detections = filter_detections_by_classes(detections, ALLOWED_CLASSES)
+        if self.__allowed_classes is not None:
+            detections = filter_detections_by_classes(detections, self.__allowed_classes)
 
         if self.__tracking_instance is None:
             self.__tracking_instance = find_detection_with_max_conf(detections)
@@ -242,7 +245,7 @@ class ImageXYawRegulator(Node):
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
         move_command.mode = MoveCommand.MODE_TRANSLATE
         move_command.linear_properties.tolerance = self.__tolerance
-        move_command.target.x = error_y * P_LINEAR
+        move_command.target.x = error_y * self.__kp
         self.__publisher.publish(move_command)
 
     def regulate_x(self, error_x, error_y, tolerance):
@@ -251,7 +254,7 @@ class ImageXYawRegulator(Node):
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
         move_command.mode = MoveCommand.MODE_ROTATE_AT_GOAL
         move_command.angular_properties.tolerance = self.__tolerance
-        move_command.target.theta = P_ANGULAR * error_x
+        move_command.target.theta = error_x * self.__kp
         self.__publisher.publish(move_command)
 
 
