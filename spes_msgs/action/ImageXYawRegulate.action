@@ -18,7 +18,7 @@ float64 overshoot_value
 float64 image_segment
 
 float64 kp
-uint8 allowed_classes
+uint8 object_class
 ---
 uint8 result
 ---

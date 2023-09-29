@@ -144,7 +144,7 @@ class ImageXYawRegulator(Node):
         self.__type = None
         self.__overshoot_value = None
         self.__kp = None
-        self.__allowed_classes = None
+        self.__class_ = None
         
         self._action_server = SimpleActionServer(
             self,
@@ -161,10 +161,10 @@ class ImageXYawRegulator(Node):
         self.__overshoot_value = goal_handle.overshoot_value
         self.__image_segment = goal_handle.image_segment
         self.__kp = goal_handle.kp
-        self.__allowed_classes = goal_handle.allowed_classes
+        self.__class_ = goal_handle.object_class
         self.get_logger().info(f" \
         Move type: {self.__move_type}, Tolerance: {self.__tolerance},   Imege segemnt: {self.__image_segment} \
-        Overshoot type: {self.__type}, Overshoot value: {self.__overshoot_value}, kp: {self.kp}")
+        Overshoot type: {self.__type}, Overshoot value: {self.__overshoot_value}, kp: {self.kp}, Class: {self.__class_}")
         while self.__move_type!= -1:
             time.sleep(0.01)
         
@@ -172,8 +172,8 @@ class ImageXYawRegulator(Node):
         return result
 
     def __update_tracking_instance(self, detections):
-        if self.__allowed_classes is not None:
-            detections = filter_detections_by_classes(detections, self.__allowed_classes)
+        if self.__class_ is not None:
+            detections = filter_detections_by_classes(detections, self.__class_)
 
         if self.__tracking_instance is None:
             self.__tracking_instance = find_detection_with_max_conf(detections)

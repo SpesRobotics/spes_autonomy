@@ -23,7 +23,7 @@ public:
             InputPort<double>("overshoot_value"),
             InputPort<double>("image_segment"),
             InputPort<double>("kp"),
-            InputPort<int>("allowed_classes"),
+            InputPort<int>("class_"),
             InputPort<std::string>("type"),
         });
     }
@@ -31,12 +31,12 @@ public:
     bool setGoal(Goal &goal) override
     {
         int direction;
-        int allowed_classes;
+        int class_;
 
         getInput<int>("direction", direction);
         goal.direction = (uint8_t)direction;
-        getInput<int>("allowed_classes", allowed_classes);
-        goal.allowed_classes = (uint8_t)allowed_classes;
+        getInput<int>("class_", class_);
+        goal.object_class = (uint8_t)class_;
 
         getInput<double>("tolerance", goal.tolerance);
         getInput<double>("overshoot_value", goal.overshoot_value);
@@ -50,7 +50,7 @@ public:
         std::cout << "  type: " << goal.type << std::endl;
         std::cout << "  image_segment: " << goal.image_segment << std::endl;
         std::cout << "  kp: " << goal.kp << std::endl;
-        std::cout << "  allowed_classes: " << goal.allowed_classes << std::endl;
+        std::cout << "  class_: " << class_ << std::endl;
 
         return true;
     }
