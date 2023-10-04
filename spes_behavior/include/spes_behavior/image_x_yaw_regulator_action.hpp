@@ -41,6 +41,7 @@ public:
         getInput<double>("tolerance", goal.tolerance);
         getInput<double>("overshoot_value", goal.overshoot_value);
         getInput<double>("image_segment", goal.image_segment);
+        getInput<double>("kp", goal.kp);
         getInput<std::string>("type", goal.type);
 
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
