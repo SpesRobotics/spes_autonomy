@@ -30,17 +30,20 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             while True:
-                frame = self.frame_queue.get()
+                try:
+                    frame = self.frame_queue.get()
 
-                _, img_encoded = cv2.imencode('.jpg', frame)
-                frame_bytes = img_encoded.tobytes()
+                    _, img_encoded = cv2.imencode('.jpg', frame)
+                    frame_bytes = img_encoded.tobytes()
 
-                # Send the frame to the browser
-                self.send_header('Content-type', 'image/jpeg')
-                self.send_header('Content-length', len(frame_bytes))
-                self.end_headers()
-                self.wfile.write(frame_bytes)
-                self.wfile.write(b'\r\n--frame\r\n')
+                    # Send the frame to the browser
+                    self.send_header('Content-type', 'image/jpeg')
+                    self.send_header('Content-length', len(frame_bytes))
+                    self.end_headers()
+                    self.wfile.write(frame_bytes)
+                    self.wfile.write(b'\r\n--frame\r\n')
+                except Exception as e:
+                    print("Exception: ", e)
         else:
             self.send_response(404)
             self.end_headers()
@@ -249,15 +252,15 @@ def main():
             ),
         )
         if results[0].boxes.id is None:
+            frame_queue.put(image)    
             continue
-
+        else:
+            frame_queue.put(get_annotated_frame(results, track_history))
         streamer.send_yolo_detections(
             results,
             timestamp_sec=timestamp_sec,
             timestamp_nsec=timestamp_nsec,
         )
-        
-        frame_queue.put(get_annotated_frame(results, track_history))
         
         if args.show_detections:
             annotated_frame = get_annotated_frame(results, track_history)
