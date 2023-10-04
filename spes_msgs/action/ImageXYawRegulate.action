@@ -11,8 +11,6 @@ uint8 direction
 # Regulation type, "=" for exact regulation, "<" to allow undershoot, and ">" to allow overshoot. 
 string type
 
-# This parameter represents the overshoot value used in the action. Allowed value between 0 and 1.
-float64 overshoot_value
 
 # This parameter represents the image segment relative to which the robot's position will be regulated.
 float64 image_segment

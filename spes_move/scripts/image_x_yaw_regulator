@@ -142,9 +142,8 @@ class ImageXYawRegulator(Node):
         self.__tracking_instance = None
         self.__image_segment = None
         self.__type = None
-        self.__overshoot_value = None
         self.__kp = None
-        self.__class_ = None
+        self.__object_class = None
         
         self._action_server = SimpleActionServer(
             self,
@@ -158,13 +157,12 @@ class ImageXYawRegulator(Node):
         self.__move_type = goal_handle.direction 
         self.__tolerance = goal_handle.tolerance
         self.__type = goal_handle.type
-        self.__overshoot_value = goal_handle.overshoot_value
         self.__image_segment = goal_handle.image_segment
         self.__kp = goal_handle.kp
-        self.__class_ = goal_handle.object_class
+        self.__object_class = goal_handle.object_class
         self.get_logger().info(f" \
         Move type: {self.__move_type}, Tolerance: {self.__tolerance},   Imege segemnt: {self.__image_segment} \
-        Overshoot type: {self.__type}, Overshoot value: {self.__overshoot_value}, kp: {self.__kp}, Class: {self.__class_}")
+        Type: {self.__type},  kp: {self.__kp}, Object class: {self.__object_class}")
         while self.__move_type!= -1:
             time.sleep(0.01)
         
@@ -172,8 +170,8 @@ class ImageXYawRegulator(Node):
         return result
 
     def __update_tracking_instance(self, detections):
-        if self.__class_ is not None:
-            detections = filter_detections_by_classes(detections, [self.__class_])
+        if self.__object_class is not None:
+            detections = filter_detections_by_classes(detections, [self.__object_class])
 
         if self.__tracking_instance is None:
             self.__tracking_instance = find_detection_with_max_conf(detections)
@@ -201,7 +199,7 @@ class ImageXYawRegulator(Node):
             return
         if self.__image_segment is None:
             return
-        if self.__type is None or self.__overshoot_value is None:
+        if self.__type is None:
             return
 
         backward_move = True
@@ -216,9 +214,7 @@ class ImageXYawRegulator(Node):
 
         if self.__type == ">":
             backward_move = False
-        if self.__type == "<":
-            self.__tolerance+=self.__overshoot_value
-
+        
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
         if self.__move_type == ImageXYawRegulate.Goal.MODE_Y:

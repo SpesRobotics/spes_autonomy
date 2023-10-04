@@ -20,10 +20,9 @@ public:
         return providedBasicPorts({
             InputPort<int>("direction"),
             InputPort<double>("tolerance"),
-            InputPort<double>("overshoot_value"),
             InputPort<double>("image_segment"),
             InputPort<double>("kp"),
-            InputPort<int>("class_"),
+            InputPort<int>("object_class"),
             InputPort<std::string>("type"),
         });
     }
@@ -31,15 +30,14 @@ public:
     bool setGoal(Goal &goal) override
     {
         int direction;
-        int class_;
+        int object_class;
 
         getInput<int>("direction", direction);
         goal.direction = (uint8_t)direction;
-        getInput<int>("class_", class_);
-        goal.object_class = (uint8_t)class_;
+        getInput<int>("object_class", object_class);
+        goal.object_class = (uint8_t)object_class;
 
         getInput<double>("tolerance", goal.tolerance);
-        getInput<double>("overshoot_value", goal.overshoot_value);
         getInput<double>("image_segment", goal.image_segment);
         getInput<double>("kp", goal.kp);
         getInput<std::string>("type", goal.type);
@@ -47,11 +45,10 @@ public:
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
         std::cout << "  direction: " << direction << std::endl;
         std::cout << "  tolerance: " << goal.tolerance << std::endl;
-        std::cout << "  overshoot_value: " << goal.overshoot_value << std::endl;
         std::cout << "  type: " << goal.type << std::endl;
         std::cout << "  image_segment: " << goal.image_segment << std::endl;
         std::cout << "  kp: " << goal.kp << std::endl;
-        std::cout << "  class_: " << class_ << std::endl;
+        std::cout << "  object_class: " << object_class << std::endl;
 
         return true;
     }
