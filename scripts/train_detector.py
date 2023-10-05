@@ -46,7 +46,7 @@ def main():
 
     if 'train' in steps:
         model = YOLO("yolov8n.pt")
-        model.train(data=DATA_YAML_FILENAME, epochs=args.epochs, imgsz=1080)
+        model.train(data=DATA_YAML_FILENAME, epochs=int(args.epochs), imgsz=1080)
 
     if 'upload' in steps:
         model_path = glob("**/best.pt", recursive=True)[-1]
