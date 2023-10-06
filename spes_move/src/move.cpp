@@ -522,7 +522,7 @@ namespace spes_move
     command_timeout_ = rclcpp::Duration::from_seconds(command_timeout);
 
     double debouncing_duration;
-    declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.05));
+    declare_parameter("debouncing_duration", rclcpp::ParameterValue(0.3));
     get_parameter("debouncing_duration", debouncing_duration);
     debouncing_duration_ = rclcpp::Duration::from_seconds(debouncing_duration);
 
