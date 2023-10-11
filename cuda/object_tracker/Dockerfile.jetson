@@ -1,0 +1,61 @@
+FROM nvcr.io/nvidia/l4t-base:r34.1
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG UID=1000
+
+USER root
+
+RUN useradd -d /dockeruser -m \
+            -u $UID -U \
+            -s /usr/bin/bash \
+            -G dialout \
+            -c "Dockeruser" dockeruser
+
+RUN apt-get update && apt-get install -y apt-utils 
+RUN usermod -a -G video dockeruser
+
+ENV PATH="${PATH}:/opt/hpcx/ompi/bin"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/hpcx/ompi/lib"
+
+RUN (apt-get autoremove -y; \
+     apt-get autoclean -y)
+
+
+RUN apt-get update && apt-get install -y sudo
+RUN echo "dockeruser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    git \
+    git-lfs \
+    python3-pip \
+    python3-opencv \
+    python3-numpy \
+    python3-pyqt5 \
+    libopenblas-base \
+    libopenmpi-dev \
+    iputils-ping \
+    wget \
+    nano \
+    vim \
+    libopenblas-base \
+    libopenmpi-dev \
+    libomp5
+
+RUN ldconfig
+RUN setcap cap_net_raw+ep $(readlink -f $(which python3))
+
+ENV LD_LIBRARY_PATH=/usr/local/cuda-10.2/targets/aarch64-linux/lib:$LD_LIBRARY_PATH
+ENV CUDA_HOME="/usr/local/cuda-10.2"
+ENV PATH="/usr/local/cuda-10.2/bin:${PATH}"
+
+RUN pip3 install --user \
+    lap \
+    opencv-python \
+    ultralytics
+
+COPY torchvision-0.14.0a05ce4506-cp38-cp38-linux_aarch64.whl /tmp/torchvision-0.14.0a05ce4506-cp38-cp38-linux_aarch64.whl
+RUN wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=FILEID' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1atGTfukinmKHath4fyIJSdfMwD4xrjft" -O /tmp/torch-1.13.0a0+git7c98e70-cp38-cp38-linux_aarch64.whl && rm -rf /tmp/cookies.txt
+RUN pip3 install /tmp/torch-1.13.0a0+git7c98e70-cp38-cp38-linux_aarch64.whl /tmp/torchvision-0.14.0a05ce4506-cp38-cp38-linux_aarch64.whl
+
+ENTRYPOINT ["python3", "/home/object_tracker"]
