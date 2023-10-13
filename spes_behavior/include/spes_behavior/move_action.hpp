@@ -74,6 +74,8 @@ public:
             InputPort<double>("x"),
             InputPort<double>("y"),
             InputPort<double>("yaw"),
+            InputPort<double>("linear_velocity"),
+            InputPort<double>("angular_velocity"),
             InputPort<int>("mode"),
             InputPort<std::string>("frame_id"),
             InputPort<bool>("ignore_obstacles"),
@@ -83,12 +85,14 @@ public:
 
     bool setGoal(Goal &goal) override {
         int mode;
-
+        double yaw_deg;
         getInput<double>("x", goal.target.x);
         getInput<double>("y", goal.target.y);
-        getInput<double>("yaw", goal.target.y);
-        goal.target.theta = goal.target.y * M_PI / 180.0;
+        getInput<double>("yaw", yaw_deg);
+        goal.target.theta = yaw_deg * M_PI / 180.0;
 
+        getInput<double>("linear_velocity", goal.linear_properties.max_velocity);
+        getInput<double>("angular_velocity", goal.angular_properties.max_velocity);
         getInput<int>("mode", mode);
         getInput<std::string>("frame_id", goal.header.frame_id);
         getInput<bool>("ignore_obstacles", goal.ignore_obstacles);
