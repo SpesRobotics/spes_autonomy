@@ -87,7 +87,7 @@ public:
         getInput<double>("x", goal.target.x);
         getInput<double>("y", goal.target.y);
         getInput<double>("yaw", goal.target.y);
-        goal.target.theta = goal.target.theta * M_PI / 180.0;
+        goal.target.theta = goal.target.y * M_PI / 180.0;
 
         getInput<int>("mode", mode);
         getInput<std::string>("frame_id", goal.header.frame_id);
