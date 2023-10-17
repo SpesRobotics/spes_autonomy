@@ -35,18 +35,6 @@ public:
 
     return true;
   }
-
-    // BT::NodeStatus onResultReceived(const WrappedResult &wr) override
-    // {
-    //     RCLCPP_INFO(node_->get_logger(), "%s: onResultReceived %d", name().c_str(), wr.result->result);
-    //     return wr.result->result ? NodeStatus::FAILURE : NodeStatus::SUCCESS;
-    // }
-
-    // virtual BT::NodeStatus onFailure(ActionNodeErrorCode error) override
-    // {
-    //     RCLCPP_ERROR(node_->get_logger(), "%s: onFailure %d", name().c_str(), error);
-    //     return NodeStatus::FAILURE;
-    // }
 };
 
 
