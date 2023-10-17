@@ -27,7 +27,7 @@ public:
 
     std::string data;
     getInput<std::string>("data", data);
-    goal.data.push_back(convertFromString<double>(data));
+    goal.data.push_back(convertFromString<int>(data));
 
     std::cout << "JointAction: setGoal" << std::endl;
     for (int i = 0; i < goal.data.size(); i++)
