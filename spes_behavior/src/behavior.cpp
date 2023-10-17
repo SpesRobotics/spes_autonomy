@@ -6,6 +6,7 @@
 #include "behaviortree_ros2/plugins.hpp"
 #include "spes_behavior/move_action.hpp"
 #include "spes_behavior/image_x_yaw_regulator_action.hpp"
+#include "spes_behavior/joint.hpp"
 
 int main(int argc, char **argv)
 {
@@ -26,6 +27,9 @@ int main(int argc, char **argv)
 
     params.default_port_value = "image_x_yaw_regulator/regulate";
     factory.registerNodeType<ImageXYawRegulatorAction>("ImageXYawRegulator", params);
+
+    params.default_port_value = "removal_velocity_controller/commands";
+    factory.registerNodeType<JointAction>("Joint", params);
 
     using std::filesystem::directory_iterator;
     for (auto const &entry : directory_iterator(BEHAVIOR_DIRECTORY))
