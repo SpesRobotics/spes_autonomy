@@ -19,8 +19,8 @@ public:
 
   NodeStatus onTick(const std::shared_ptr<spes_msgs::msg::MoveState>& last_msg) override
   {
-    return NodeStatus::FAILURE;
-    if(last_msg /*->state == spes_msgs::msg::MoveState::ERROR_OBSTACLE*/) // empty if no new message received, since the last tick
+    
+    if(last_msg && last_msg->state == spes_msgs::msg::MoveState::ERROR_OBSTACLE) // empty if no new message received, since the last tick
     {
       RCLCPP_INFO(logger(), "New message: AKCIJA JE PUKLA"); 
       return NodeStatus::FAILURE;  
