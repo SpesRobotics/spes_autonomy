@@ -21,7 +21,7 @@ public:
   {
 
     if(last_msg == nullptr)
-        return NodeStatus::FAILURE;
+        return NodeStatus::SUCCESS;
     
     if(last_msg->data == true)
       return NodeStatus::FAILURE;  
