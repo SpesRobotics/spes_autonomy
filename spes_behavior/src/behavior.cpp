@@ -9,6 +9,7 @@
 #include "spes_behavior/joint.hpp"
 #include "spes_behavior/move_stream.hpp"
 #include  "spes_behavior/detect_obstacles.hpp"
+#include  "spes_behavior/is_weed_detected.hpp"
 
 int main(int argc, char **argv)
 {
@@ -30,6 +31,9 @@ int main(int argc, char **argv)
 
     params.default_port_value = "move/state";
     factory.registerNodeType<DetectObstacles>("DetectObstacles", params);
+
+    params.default_port_value = "have_detection";
+    factory.registerNodeType<IsWeedDetected>("IsWeedDetected", params);
 
     params.default_port_value = "image_x_yaw_regulator/regulate";
     factory.registerNodeType<ImageXYawRegulatorAction>("ImageXYawRegulator", params);
