@@ -236,7 +236,6 @@ namespace spes_move
 
   void Move::state_translating(const tf2::Transform &tf_base_target, geometry_msgs::msg::Twist *cmd_vel)
   {
-    state_msg_.error = spes_msgs::msg::MoveState::ERROR_NONE;
     const bool should_init = (state_ != previous_state_);
     if (should_init)
     {
@@ -333,6 +332,7 @@ namespace spes_move
     tf2::Transform tf_base_target = tf_odom_base.inverse() * tf_odom_target_;
 
     // FSM
+    state_msg_.error = spes_msgs::msg::MoveState::ERROR_NONE;
     auto cmd_vel = std::make_unique<geometry_msgs::msg::Twist>();
     switch (state_)
     {
