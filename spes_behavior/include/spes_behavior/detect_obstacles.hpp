@@ -21,7 +21,7 @@ public:
   {
 
     if(last_msg == nullptr)
-        return NodeStatus::FAILURE;
+        return NodeStatus::SUCCESS;
     
     if(last_msg->error == spes_msgs::msg::MoveState::ERROR_OBSTACLE)
       return NodeStatus::FAILURE;  
