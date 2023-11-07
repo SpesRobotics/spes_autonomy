@@ -20,14 +20,9 @@ public:
   NodeStatus onTick(const std::shared_ptr<spes_msgs::msg::MoveState>& last_msg) override
   {
 
-    if(last_msg == nullptr)
+    if(last_msg == nullptr || last_msg->error == spes_msgs::msg::MoveState::ERROR_OBSTACLE)
         return NodeStatus::FAILURE;
-    
-    if(last_msg->error == spes_msgs::msg::MoveState::ERROR_OBSTACLE)
-      return NodeStatus::FAILURE;  
 
     return NodeStatus::SUCCESS;  
-    
-
   }
 };

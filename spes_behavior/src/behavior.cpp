@@ -8,7 +8,7 @@
 #include "spes_behavior/image_x_yaw_regulator_action.hpp"
 #include "spes_behavior/joint.hpp"
 #include "spes_behavior/move_stream.hpp"
-#include  "spes_behavior/detect_obstacles.hpp"
+#include  "spes_behavior/is_path_clear.hpp"
 #include  "spes_behavior/is_weed_detected.hpp"
 
 int main(int argc, char **argv)
