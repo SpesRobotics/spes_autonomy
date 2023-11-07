@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     factory.registerNodeType<MoveStream>("MoveStream", params);
 
     params.default_port_value = "move/state";
-    factory.registerNodeType<DetectObstacles>("DetectObstacles", params);
+    factory.registerNodeType<IsPathClear>("IsPathClear", params);
 
     params.default_port_value = "have_detection";
     factory.registerNodeType<IsWeedDetected>("IsWeedDetected", params);

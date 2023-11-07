@@ -3,10 +3,10 @@
 
 using namespace BT;
 
-class DetectObstacles: public RosTopicSubNode<spes_msgs::msg::MoveState>
+class IsPathClear: public RosTopicSubNode<spes_msgs::msg::MoveState>
 {
 public:
-  DetectObstacles(const std::string& name,
+  IsPathClear(const std::string& name,
                 const NodeConfig& conf,
                 const RosNodeParams& params)
     : RosTopicSubNode<spes_msgs::msg::MoveState>(name, conf, params)
