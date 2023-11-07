@@ -23,6 +23,7 @@ public:
             InputPort<double>("image_segment"),
             InputPort<double>("kp"),
             InputPort<int>("object_class"),
+            InputPort<int>("timeout"),
             InputPort<std::string>("type"),
         });
     }
@@ -31,11 +32,14 @@ public:
     {
         int direction;
         int object_class;
+        int timeout;
 
         getInput<int>("direction", direction);
         goal.direction = (uint8_t)direction;
         getInput<int>("object_class", object_class);
         goal.object_class = (uint8_t)object_class;
+        getInput<int>("timeout", timeout);
+        goal.timeout = (uint8_t)timeout;
 
         getInput<double>("tolerance", goal.tolerance);
         getInput<double>("image_segment", goal.image_segment);
@@ -49,6 +53,7 @@ public:
         std::cout << "  image_segment: " << goal.image_segment << std::endl;
         std::cout << "  kp: " << goal.kp << std::endl;
         std::cout << "  object_class: " << object_class << std::endl;
+        std::cout << "  timeout: " << timeout << std::endl;
 
         return true;
     }

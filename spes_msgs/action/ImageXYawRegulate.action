@@ -17,6 +17,7 @@ float64 image_segment
 
 float64 kp
 uint8 object_class
+uint8 timeout
 ---
 uint8 result
 ---
