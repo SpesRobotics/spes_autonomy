@@ -25,6 +25,20 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
             if not self.streaming_started:
                 # Start streaming only on the first request
                 self.start_streaming()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')  # Set content type to text/html
+            self.end_headers()
+
+            # Send the initial HTML content
+            self.wfile.write(b'<html><body>')
+            self.wfile.write(b'<h1>SpesRobotics Strim</h1>')
+            self.wfile.write(b'<div id="video-container"><img id="video-feed" src="/video_stream" /></div>')
+            self.wfile.write(b'<button onclick="resetConnection()">Reset Connection</button>')
+            self.wfile.write(b'<script>document.getElementById("video-feed").src = "/video_stream"; function resetConnection() { var img = document.getElementById("video-feed"); img.src = "/video_stream?" + new Date().getTime(); }</script>')
+            self.wfile.write(b'</body></html>')
+        elif self.path == '/video_stream':
+            # Handle video stream as before
             self.send_response(200)
             self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=frame')
             self.end_headers()
