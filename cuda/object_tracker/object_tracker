@@ -12,7 +12,8 @@ import time
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from queue import Queue
-
+import asyncio
+from threading import Thread
 
 class MJPEGStreamHandler(BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server, frame_queue):
@@ -34,8 +35,33 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'<html><body>')
             self.wfile.write(b'<h1>SpesRobotics Strim</h1>')
             self.wfile.write(b'<div id="video-container"><img id="video-feed" src="/video_stream" /></div>')
-            self.wfile.write(b'<button onclick="resetConnection()">Reset Connection</button>')
-            self.wfile.write(b'<script>document.getElementById("video-feed").src = "/video_stream"; function resetConnection() { var img = document.getElementById("video-feed"); img.src = "/video_stream?" + new Date().getTime(); }</script>')
+            self.wfile.write(b'<button onclick="saveImage()">Save Image</button>')
+            
+            self.wfile.write(b'''<script>
+                                    document.getElementById("video-feed").src = "/video_stream"; 
+                                    function resetConnection() { 
+                                        var img = document.getElementById("video-feed"); 
+                                        img.src = "/video_stream?" + new Date().getTime(); }
+                                    
+                                                                    function saveImage() {
+                                        var xhr = new XMLHttpRequest();
+                                        xhr.open("GET", "/save_image", true);
+                                        console.log("Image 1111111111");
+                                        xhr.onreadystatechange = function() {
+                                            console.log("Image222222222222");
+                                            if (xhr.readyState == 4) {
+                                                if (xhr.status == 200) {
+                                                    console.log("Image saved successfully");
+                                                } else {
+                                                    console.error("Failed to save image");
+                                                }
+                                            }
+                                        };
+                                        xhr.send();
+
+                                    }
+
+                                </script>''')
             self.wfile.write(b'</body></html>')
         elif self.path == '/video_stream':
             # Handle video stream as before
@@ -58,10 +84,29 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
                     self.wfile.write(b'\r\n--frame\r\n')
                 except Exception as e:
                     print("Exception: ", e)
+
+        elif self.path == '/save_image':
+            # self.save_image()
+            Thread(target=self.save_image).start()
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'Image saving started')
+
         else:
             self.send_response(404)
             self.end_headers()
             self.wfile.write(b'Not Found')
+    
+
+    def save_image(self):
+        try:
+            print("Saving image...")
+            frame = self.frame_queue.get()
+            cv2.imwrite("slika.jpg", frame)
+            print("Image saved successfully")
+        except Exception as e:
+            print(f"Error saving image: {e}")
+
 
     def start_streaming(self):
         self.streaming_started = True
@@ -178,10 +223,22 @@ class OpencvCameraReader:
     def close(self):
         self.__capture.release()
 
+# def start_stream_server(frame_queue):
+#     server = HTTPServer(('0.0.0.0', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
+#     print(f'Starting streaming server on http://0.0.0.0:8080/')
+#     server.serve_forever()
+
 def start_stream_server(frame_queue):
     server = HTTPServer(('0.0.0.0', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
     print(f'Starting streaming server on http://0.0.0.0:8080/')
-    server.serve_forever()
+
+    # Pokrećemo server u zasebnom thread-u
+    server_thread = Thread(target=server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
+
+    # Čekamo da server završi (ovo će se dogoditi kada zatvorimo aplikaciju)
+    server_thread.join()
 
 
 class ROSCameraReader:
