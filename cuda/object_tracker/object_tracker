@@ -70,8 +70,11 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             while True:
+                # active_threads = threading.enumerate()
+                # print("Aktivni thread-ovi ===============================:", active_threads)
                 try:
                     frame = self.frame_queue.get()
+                    self.current_image = frame
 
                     _, img_encoded = cv2.imencode('.jpg', frame)
                     frame_bytes = img_encoded.tobytes()
@@ -87,10 +90,14 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
 
         elif self.path == '/save_image':
             # self.save_image()
-            Thread(target=self.save_image).start()
+            save_thread = threading.Thread(target=test)
+            save_thread.daemon = True
+            save_thread.start()
+            
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b'Image saving started')
+            # save_thread.join()
 
         else:
             self.send_response(404)
@@ -101,7 +108,8 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
     def save_image(self):
         try:
             print("Saving image...")
-            frame = self.frame_queue.get()
+            # frame = self.frame_queue.get()
+            frame = self.frame_queue.get().copy()
             cv2.imwrite("slika.jpg", frame)
             print("Image saved successfully")
         except Exception as e:
@@ -110,6 +118,9 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
 
     def start_streaming(self):
         self.streaming_started = True
+
+def test():
+    time.sleep(5)
 
 
 
@@ -232,12 +243,10 @@ def start_stream_server(frame_queue):
     server = HTTPServer(('0.0.0.0', 8080), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
     print(f'Starting streaming server on http://0.0.0.0:8080/')
 
-    # Pokrećemo server u zasebnom thread-u
     server_thread = Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
-
-    # Čekamo da server završi (ovo će se dogoditi kada zatvorimo aplikaciju)
+    
     server_thread.join()
 
 
@@ -310,6 +319,7 @@ def main():
     server_thread.start()
 
     while True:
+        
         success, image, (timestamp_sec, timestamp_nsec) = image_reader.read()
         if not success:
             break
