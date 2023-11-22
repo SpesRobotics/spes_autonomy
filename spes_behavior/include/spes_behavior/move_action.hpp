@@ -22,19 +22,25 @@ public:
             InputPort<double>("x"),
             InputPort<std::string>("frame_id"),
             InputPort<bool>("ignore_obstacles"),
+            InputPort<int>("reversing"),
             OutputPort<int>("error"),
         });
     }
 
     bool setGoal(Goal &goal) override {
+        int reversing;
+
         getInput<double>("x", goal.target.x);
         getInput<std::string>("frame_id", goal.header.frame_id);
         getInput<bool>("ignore_obstacles", goal.ignore_obstacles);
+        getInput<int>("reversing", reversing);
+        goal.reversing = reversing;
 
         std::cout << "TranslateAction: setGoal" << std::endl;
         std::cout << "  x: " << goal.target.x << std::endl;
         std::cout << "  frame_id: " << goal.header.frame_id << std::endl;
         std::cout << "  ignore_obstacles: " << goal.ignore_obstacles << std::endl;
+        std::cout << "  reversing: " << reversing << std::endl;
 
         goal.mode = spes_msgs::msg::MoveCommand::MODE_TRANSLATE;
 

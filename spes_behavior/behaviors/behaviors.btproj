@@ -15,6 +15,7 @@
             <input_port name="y" default="0"/>
             <input_port name="yaw" default="0"/>
             <output_port name="error" default="error"/>
+            <input_port name="reversing" default="0"/>
         </Action>
         <Action ID="Translate" editable="true">
             <input_port name="frame_id" default="base_link">Frame of the the target</input_port>
