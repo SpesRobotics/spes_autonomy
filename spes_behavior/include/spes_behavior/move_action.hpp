@@ -89,7 +89,7 @@ public:
 
         getInput<double>("x", goal.target.x);
         getInput<double>("y", goal.target.y);
-        getInput<double>("yaw", goal.target.y);
+        getInput<double>("yaw", goal.target.theta);
         goal.target.theta = goal.target.theta * M_PI / 180.0;
 
         getInput<int>("mode", mode);
@@ -107,7 +107,7 @@ public:
         std::cout << "  mode: " << goal.mode << std::endl;
         std::cout << "  frame_id: " << goal.header.frame_id << std::endl;
         std::cout << "  ignore_obstacles: " << goal.ignore_obstacles << std::endl;
-        std::cout << "  reversing: " << goal.reversing << std::endl;
+        std::cout << "  reversing: " << reversing << std::endl;
 
         return true;
     }
