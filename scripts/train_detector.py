@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--destination", help="Remote destination")
     parser.add_argument("--steps", default='download,train,upload', help="Steps to run")
     parser.add_argument("--epochs", default=50, help="Number of epochs")
+    parser.add_argument("--imgsz", default=32*20, type=int, help="Image size")
     args = parser.parse_args()
 
     steps = args.steps.split(',')
@@ -46,7 +47,7 @@ def main():
 
     if 'train' in steps:
         model = YOLO("yolov8n.pt")
-        model.train(data=DATA_YAML_FILENAME, epochs=int(args.epochs), imgsz=800)
+        model.train(data=DATA_YAML_FILENAME, epochs=int(args.epochs), imgsz=int(args.imgsz))
 
     if 'upload' in steps:
         model_path = glob("**/best.pt", recursive=True)[-1]
