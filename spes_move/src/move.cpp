@@ -1,8 +1,5 @@
 #include "spes_move/move.hpp"
 
-// TODO: Temporary hack, delete
-#include <fstream>
-
 #define sign(x) (((x) > 0) - ((x) < 0))
 
 namespace spes_move
@@ -380,26 +377,6 @@ namespace spes_move
           is_collision_ahead = true;
       } catch (const std::exception& e) {
         RCLCPP_ERROR_ONCE(get_logger(), "Collision checker failed: %s", e.what());
-      }
-
-      // TODO: Temporary hack, delete
-      if (!is_collision_ahead)
-      {
-        std::string filename = "/tmp/obstacle.txt";
-        std::ifstream fr(filename);
-        if (fr.good()) {
-          int obstacle;
-          fr >> obstacle;
-          fr.close();
-
-          if (obstacle == 1)
-          {
-            is_collision_ahead = true;
-            std::ofstream fw(filename);
-            fw << 0;
-            fw.close();
-          }
-        }
       }
 
       if (is_collision_ahead)
