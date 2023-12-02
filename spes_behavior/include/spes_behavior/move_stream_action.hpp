@@ -7,7 +7,7 @@
 
 using namespace BT;
 
-class MoveStream : public RosTopicPubNode<spes_msgs::msg::MoveCommand>
+class MoveStreamAction : public RosTopicPubNode<spes_msgs::msg::MoveCommand>
 {
 public:
   MoveStream(const std::string& name,

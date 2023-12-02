@@ -7,9 +7,9 @@
 #include "spes_behavior/move_action.hpp"
 #include "spes_behavior/image_x_yaw_regulator_action.hpp"
 #include "spes_behavior/joint.hpp"
-#include "spes_behavior/move_stream.hpp"
-#include  "spes_behavior/is_path_clear.hpp"
-#include  "spes_behavior/is_object_detected.hpp"
+#include "spes_behavior/move_stream_action.hpp"
+#include "spes_behavior/is_path_clear.hpp"
+#include "spes_behavior/is_object_detected.hpp"
 
 int main(int argc, char **argv)
 {
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     params.default_port_value = "move/move";
     factory.registerNodeType<TranslateAction>("Translate", params);
     factory.registerNodeType<MoveAction>("Move", params);
-    factory.registerNodeType<MoveStream>("MoveStream", params);
+    factory.registerNodeType<MoveStreamAction>("MoveStream", params);
 
     params.default_port_value = "move/state";
     factory.registerNodeType<IsPathClear>("IsPathClear", params);
