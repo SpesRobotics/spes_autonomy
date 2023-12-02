@@ -1,4 +1,4 @@
-#include "bt_topic_sub_node.hpp"
+#include "behaviortree_ros2/bt_topic_sub_node.hpp"
 #include "std_msgs/msg/bool.hpp"
 
 using namespace BT;
