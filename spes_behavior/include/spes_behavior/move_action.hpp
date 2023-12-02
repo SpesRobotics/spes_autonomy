@@ -22,6 +22,7 @@ public:
             InputPort<double>("x"),
             InputPort<std::string>("frame_id"),
             InputPort<bool>("ignore_obstacles"),
+            InputPort<int>("reversing"),
             OutputPort<int>("error"),
         });
     }
@@ -80,12 +81,15 @@ public:
             InputPort<std::string>("frame_id"),
             InputPort<bool>("ignore_obstacles"),
             OutputPort<int>("error"),
+            InputPort<int>("reversing"),
         });
     }
 
     bool setGoal(Goal &goal) override {
         int mode;
         double yaw_deg;
+        int reversing;
+
         getInput<double>("x", goal.target.x);
         getInput<double>("y", goal.target.y);
         getInput<double>("yaw", yaw_deg);
@@ -99,12 +103,16 @@ public:
 
         goal.mode = mode;
 
+        getInput<int>("reversing", reversing);
+        goal.reversing = reversing;
+
         std::cout << "MoveAction: setGoal" << std::endl;
         std::cout << "  x: " << goal.target.x << std::endl;
         std::cout << "  y: " << goal.target.y << std::endl;
         std::cout << "  mode: " << goal.mode << std::endl;
         std::cout << "  frame_id: " << goal.header.frame_id << std::endl;
         std::cout << "  ignore_obstacles: " << goal.ignore_obstacles << std::endl;
+        std::cout << "  reversing: " << reversing << std::endl;
 
         return true;
     }

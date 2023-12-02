@@ -7,12 +7,12 @@ Local navigation. Low-level mobile robot motion package for short distances (e.g
 Main features:
 - **Accurate position control.** Implements the distance-angle controller.
 - **Motion generation.** Limits velocity, acceleration, and jerk.
-- **Frame transformations.** Receives (x,y,yaw) in a target frame and regulates position in the odom frame.
-- **Position based servoing.** Accepts continuous position commands.
+- **Servoing.** Pose tracking, accepts continuous position commands.
+- **Obstacle detection.** Integrates Nav2 costmaps to detect obstacles on a simulated path.
+- **Frame transformations.** Receives (x, y, yaw) in a target frame and regulates position in the `odom` frame.
 - **Latency compensation.** Utilizes odometry + TF buffer to compensate for the latency. 
 - **Debouncing.** Regulates position until the robot completely stops.
-- **Obstacle detection.** Integrates Nav2 costmaps to detect obstacles on a simulated path.
-- **Stuck detection. (WIP)** Implements a robust stuck detection algorithm.
+- **Stuck detection (WIP).** Implements a robust stuck detection algorithm.
 
 ## Interface
 
@@ -39,7 +39,7 @@ Therefore, there are two stages:
 In the typical example `global` = `map` and `odom` = `odom`.
 It means the robot moves to the absolute pose, but it uses the `odom` frame to avoid discrete pose jumps.
 
-However, `global` + `odom` frames gives us a flexibility to achieve useful behaviors:
+However, `global` + `odom` frames give us the flexibility to achieve useful behaviors:
 - If `global` = `base_link` and `odom` = `odom` then the robot moves relative to its current pose.
 - If `global` = `marker_1` (a fiducial marker) and `odom` = `marker_1` then the robot moves to the marker pose (e.g. to pick the object). 
 - However, if the robot loses the `marker_1` from its sight then we can set the following `global` = `marker_1` and `odom` = `odom`.
