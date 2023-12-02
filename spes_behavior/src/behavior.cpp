@@ -27,6 +27,8 @@ int main(int argc, char **argv)
     params.default_port_value = "move/move";
     factory.registerNodeType<TranslateAction>("Translate", params);
     factory.registerNodeType<MoveAction>("Move", params);
+
+    params.default_port_value = "move/command";
     factory.registerNodeType<MoveStreamAction>("MoveStream", params);
 
     params.default_port_value = "move/state";

@@ -39,15 +39,29 @@
             x="-0.6"
             y="0"
             yaw="0"
-            error="error"/>
+            error="error"
+            reversing="0"/>
       <Move frame_id="target_frame"
             ignore_obstacles="true"
             mode="7"
             x="-0.4"
             y="0"
             yaw="0"
-            error="error"/>
+            error="error"
+            reversing="0"/>
     </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="test_move_stream">
+    <Repeat num_cycles="200">
+      <Sequence>
+        <Sleep msec="250"/>
+        <MoveStream x="0.1"
+                    frame_id="base_link"
+                    ignore_obstacles="false"
+                    error="error"/>
+      </Sequence>
+    </Repeat>
   </BehaviorTree>
 
   <BehaviorTree ID="test_translate">
@@ -97,6 +111,19 @@
                   default="0"/>
       <input_port name="yaw"
                   default="0"/>
+      <output_port name="error"
+                   default="error"/>
+      <input_port name="reversing"
+                  default="0"/>
+    </Action>
+    <Action ID="MoveStream"
+            editable="true">
+      <input_port name="x"
+                  default="0"/>
+      <input_port name="frame_id"
+                  default="base_link"/>
+      <input_port name="ignore_obstacles"
+                  default="false"/>
       <output_port name="error"
                    default="error"/>
     </Action>
