@@ -9,7 +9,7 @@
 #include "spes_behavior/joint.hpp"
 #include "spes_behavior/move_stream.hpp"
 #include  "spes_behavior/is_path_clear.hpp"
-#include  "spes_behavior/is_weed_detected.hpp"
+#include  "spes_behavior/is_object_detected.hpp"
 
 int main(int argc, char **argv)
 {
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     factory.registerNodeType<IsPathClear>("IsPathClear", params);
 
     params.default_port_value = "have_detection";
-    factory.registerNodeType<IsWeedDetected>("IsWeedDetected", params);
+    factory.registerNodeType<IsObjectDetected>("IsObjectDetected", params);
 
     params.default_port_value = "image_x_yaw_regulator/regulate";
     factory.registerNodeType<ImageXYawRegulatorAction>("ImageXYawRegulator", params);
