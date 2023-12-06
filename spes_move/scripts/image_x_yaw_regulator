@@ -2,6 +2,7 @@
 
 import rclpy
 from rclpy.action import ActionServer
+from action_msgs.msg import GoalStatus
 from rclpy.node import Node
 import socket
 import struct
@@ -176,6 +177,8 @@ class ImageXYawRegulator(Node):
         self.__last_move_state = None
         while self.__direction is not None:
             time.sleep(0.01)
+            if time.time() - self.__tracking_instance.timestamp() > 2.0:
+                return None
         
         result = ImageXYawRegulate.Result()
         return result
