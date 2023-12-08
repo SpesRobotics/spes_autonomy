@@ -11,7 +11,9 @@ from launch.conditions import IfCondition
 
 def generate_launch_description():
     package_dir = get_package_share_directory('spesbot_hardware')
-    robot_description = pathlib.Path(os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
+    robot_description = pathlib.Path(
+        os.path.join(package_dir, 'resource', 'description.urdf')
+    ).read_text()
     controller_params_file = os.path.join(package_dir, 'resource', 'controllers.yaml')
     
     camera = LaunchConfiguration('camera', default='')
@@ -19,15 +21,12 @@ def generate_launch_description():
     controller_manager_node = Node(
         package='controller_manager',
         executable='ros2_control_node',
-        parameters=[
-            {'robot_description': robot_description},
-            controller_params_file
-        ],
+        parameters=[{'robot_description': robot_description}, controller_params_file],
         remappings=[
             ('/diffdrive_controller/cmd_vel_unstamped', 'cmd_vel'),
             ('/diffdrive_controller/odom', 'odom'),
         ],
-        output='screen'
+        output='screen',
     )
 
     diffdrive_controller_spawner = Node(
@@ -87,9 +86,12 @@ def generate_launch_description():
         executable='static_transform_publisher',
         output='screen',
         arguments=[
-            '--x', '0.0',
-            '--frame-id', 'base_link',
-            '--child-frame-id', 'laser'
+            '--x',
+            '0.0',
+            '--frame-id',
+            'base_link',
+            '--child-frame-id',
+            'laser',
         ],
     )
 
@@ -98,9 +100,12 @@ def generate_launch_description():
         executable='static_transform_publisher',
         output='screen',
         arguments=[
-            '--x', '0.0',
-            '--frame-id', 'base_link',
-            '--child-frame-id', 'base_footprint'
+            '--x',
+            '0.0',
+            '--frame-id',
+            'base_link',
+            '--child-frame-id',
+            'base_footprint',
         ],
     )
 
@@ -108,9 +113,7 @@ def generate_launch_description():
         package='hls_lfcd_lds_driver',
         executable='hlds_laser_publisher',
         output='screen',
-        parameters=[
-            {'port': '/dev/ttyUSB0', 'frame_id': 'laser'}
-        ]
+        parameters=[{'port': '/dev/ttyUSB0', 'frame_id': 'laser'}],
     )
 
     return LaunchDescription([

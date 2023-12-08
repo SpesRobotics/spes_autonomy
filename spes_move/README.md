@@ -98,3 +98,17 @@ Move to pose (-0.5, -0.5) using action:
 ```bash
 ros2 action send_goal move/move spes_msgs/action/Move '{ "header": {"frame_id": "odom" }, "odom_frame": "odom", "target": { "x": -0.5, "y": -0.5 } }'
 ```
+
+## ImageXYawRegulate
+
+A regulator built on of the `move` command that servos the robot's x & yaw according to object detections in an image.
+
+A command example that regulate robot's rotation (yaw):
+```bash
+ros2 action send_goal /image_x_yaw_regulator/regulate spes_msgs/action/ImageXYawRegulate '{ "direction": 1, "tolerance": 0.02, "image_segment": 0.5 }'
+```
+
+A command example that regulate robot's position (x):
+```bash
+ros2 action send_goal /image_x_yaw_regulator/regulate spes_msgs/action/ImageXYawRegulate '{ "direction": 0, "tolerance": 0.05, "image_segment": 0.5 }'
+```

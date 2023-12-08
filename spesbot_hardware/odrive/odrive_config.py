@@ -80,7 +80,7 @@ def main(axes=['axis1', 'axis0']):
             exit(1)
         getattr(odrv0, axis).motor.config.pre_calibrated = True
         getattr(odrv0, axis).encoder.config.pre_calibrated = True
-
+"""
     if do_anticogging:
         print('Calibrating anti-cogging...')
         for axis in axes:
@@ -113,6 +113,7 @@ def main(axes=['axis1', 'axis0']):
         print('Axis in closed loop control')
         time.sleep(10)
         getattr(odrv0, axis).requested_state = AXIS_STATE_IDLE
+        """
 
 
 if __name__ == '__main__':

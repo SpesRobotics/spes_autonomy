@@ -1,10 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="test_image_x_yaw_regulator">
-    <Sequence>
-      <ImageXYawRegulator mode="0"
-                          tolerance="0.03"/>
-    </Sequence>
+    <RetryUntilSuccessful num_attempts="50">
+      <ForceFailure>
+        <Sequence>
+          <Sleep msec="4000"/>
+          <ForceSuccess>
+            <RetryUntilSuccessful num_attempts="2">
+              <ImageXYawRegulator name="TEST"
+                                  direction="1"
+                                  image_segment="0.6"
+                                  tolerance="0.01"
+                                  type="&lt;"/>
+            </RetryUntilSuccessful>
+          </ForceSuccess>
+          <RetryUntilSuccessful num_attempts="2">
+            <ImageXYawRegulator direction="0"
+                                image_segment="0.4"
+                                tolerance="0.01"
+                                type="&gt;"/>
+          </RetryUntilSuccessful>
+          <ForceSuccess>
+            <ImageXYawRegulator direction="1"
+                                image_segment="0.65"
+                                tolerance="0.01"
+                                type="="/>
+          </ForceSuccess>
+        </Sequence>
+      </ForceFailure>
+    </RetryUntilSuccessful>
   </BehaviorTree>
 
   <BehaviorTree ID="test_move_marker">
@@ -15,15 +39,29 @@
             x="-0.6"
             y="0"
             yaw="0"
-            error="error"/>
+            error="error"
+            reversing="0"/>
       <Move frame_id="target_frame"
             ignore_obstacles="true"
             mode="7"
             x="-0.4"
             y="0"
             yaw="0"
-            error="error"/>
+            error="error"
+            reversing="0"/>
     </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="test_move_stream">
+    <Repeat num_cycles="200">
+      <Sequence>
+        <Sleep msec="250"/>
+        <MoveStream x="0.1"
+                    frame_id="base_link"
+                    ignore_obstacles="false"
+                    error="error"/>
+      </Sequence>
+    </Repeat>
   </BehaviorTree>
 
   <BehaviorTree ID="test_translate">
@@ -50,10 +88,14 @@
   <TreeNodesModel>
     <Action ID="ImageXYawRegulator"
             editable="true">
-      <input_port name="mode"
+      <input_port name="direction"
                   default="0">0 - Y in image, 1 - X in image</input_port>
+      <input_port name="image_segment"
+                  default="0.5">Represents the image segment relative to which the robot's position will be regulated.</input_port>
       <input_port name="tolerance"
                   default="0.03">As ration of the image size [0, 1]</input_port>
+      <input_port name="type"
+                  default="=">It can take values "&lt;=", "&gt;=", "==".</input_port>
     </Action>
     <Action ID="Move"
             editable="true">
@@ -69,6 +111,19 @@
                   default="0"/>
       <input_port name="yaw"
                   default="0"/>
+      <output_port name="error"
+                   default="error"/>
+      <input_port name="reversing"
+                  default="0"/>
+    </Action>
+    <Action ID="MoveStream"
+            editable="true">
+      <input_port name="x"
+                  default="0"/>
+      <input_port name="frame_id"
+                  default="base_link"/>
+      <input_port name="ignore_obstacles"
+                  default="false"/>
       <output_port name="error"
                    default="error"/>
     </Action>

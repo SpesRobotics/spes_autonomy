@@ -18,22 +18,42 @@ public:
     static BT::PortsList providedPorts()
     {
         return providedBasicPorts({
-            InputPort<int>("mode"),
+            InputPort<int>("direction"),
             InputPort<double>("tolerance"),
+            InputPort<double>("image_segment"),
+            InputPort<double>("kp"),
+            InputPort<int>("object_class"),
+            InputPort<int>("timeout"),
+            InputPort<std::string>("type"),
         });
     }
 
     bool setGoal(Goal &goal) override
     {
-        int mode;
+        int direction;
+        int object_class;
+        int timeout;
 
-        getInput<int>("mode", mode);
-        goal.mode = (uint8_t)mode;
+        getInput<int>("direction", direction);
+        goal.direction = (uint8_t)direction;
+        getInput<int>("object_class", object_class);
+        goal.object_class = (uint8_t)object_class;
+        getInput<int>("timeout", timeout);
+        goal.timeout = (uint8_t)timeout;
+
         getInput<double>("tolerance", goal.tolerance);
+        getInput<double>("image_segment", goal.image_segment);
+        getInput<double>("kp", goal.kp);
+        getInput<std::string>("type", goal.type);
 
         std::cout << "ImageXYawRegulatorAction: setGoal" << std::endl;
-        std::cout << "  mode: " << goal.mode << std::endl;
+        std::cout << "  direction: " << direction << std::endl;
         std::cout << "  tolerance: " << goal.tolerance << std::endl;
+        std::cout << "  type: " << goal.type << std::endl;
+        std::cout << "  image_segment: " << goal.image_segment << std::endl;
+        std::cout << "  kp: " << goal.kp << std::endl;
+        std::cout << "  object_class: " << object_class << std::endl;
+        std::cout << "  timeout: " << timeout << std::endl;
 
         return true;
     }

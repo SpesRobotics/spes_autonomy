@@ -2,27 +2,20 @@
 
 import rclpy
 from rclpy.action import ActionServer
+from action_msgs.msg import GoalStatus
 from rclpy.node import Node
 import socket
 import struct
 import threading
 from builtin_interfaces.msg import Time as RosTime
-from spes_msgs.msg import MoveCommand
+from spes_msgs.msg import MoveCommand, MoveState
 from spes_msgs.action import ImageXYawRegulate
 import time
 
 
 UDP_IP = '127.0.0.1'
 UDP_PORT = 5000
-ALLOWED_CLASSES = [41] # 41 for cup, None for all
 TRACKING_DEBOUNCE_TIME = 2.0
-P_LINEAR = 0.2
-P_ANGULAR = 0.6
-X_THRESHOLD = 0.001
-Y_THRESHOLD = 0.005
-TARGET_X = 0.5
-TARGET_Y = 0.72
-TARGET_MOVE_FORWARD = 0.3
 
 
 class UDPStreamer:
@@ -143,32 +136,56 @@ class ImageXYawRegulator(Node):
 
         self.__publisher = self.create_publisher(MoveCommand, '/move/command', 1)
         self.__udp_streamer.register_on_detection(self.__on_detection_callback)
-        self.__move_type = None
+        self.__direction = None
         self.__tolerance = None
         self.__tracking_instance = None
+        self.__image_segment = None
+        self.__type = None
+        self.__kp = None
+        self.__object_class = None
         
         self._action_server = SimpleActionServer(
             self,
             ImageXYawRegulate,
             '~/regulate',
             self.__on_regulate_callback)
+        
+        self.__last_move_state = None
+        self.__state_subscription = self.create_subscription(
+            MoveState,
+            '/move/state',
+            self.__on_move_state_callback,
+            1)
+        self.__state_subscription  # prevent unused variable warning
+        
+    def __on_move_state_callback(self, msg):
+        self.__last_move_state = msg.state
     
     def __on_regulate_callback(self, goal_handle):
         self.get_logger().info('Executing goal...' )
         self.get_logger().info(f'{goal_handle}')
-        self.__move_type = goal_handle.mode 
+        self.__direction = goal_handle.direction 
         self.__tolerance = goal_handle.tolerance
-        self.get_logger().info(f"Motion Type: {self.__move_type}")
-        self.get_logger().info(f"Tolerance: {self.__tolerance}")
-        while self.__move_type!= -1:
+        self.__type = goal_handle.type
+        self.__image_segment = goal_handle.image_segment
+        self.__kp = goal_handle.kp
+        self.__object_class = goal_handle.object_class
+        self.get_logger().info(f" \
+        Direction: {self.__direction}, Tolerance: {self.__tolerance},   Imege segment: {self.__image_segment} \
+        Type: {self.__type},  kp: {self.__kp}, Object class: {self.__object_class}")
+        
+        self.__last_move_state = None
+        while self.__direction is not None:
             time.sleep(0.01)
+            if time.time() - self.__tracking_instance.timestamp() > 2.0:
+                return None
         
         result = ImageXYawRegulate.Result()
         return result
 
     def __update_tracking_instance(self, detections):
-        if ALLOWED_CLASSES is not None:
-            detections = filter_detections_by_classes(detections, ALLOWED_CLASSES)
+        if self.__object_class is not None:
+            detections = filter_detections_by_classes(detections, [self.__object_class])
 
         if self.__tracking_instance is None:
             self.__tracking_instance = find_detection_with_max_conf(detections)
@@ -194,42 +211,59 @@ class ImageXYawRegulator(Node):
     def __regulate_robot(self):
         if self.__tracking_instance is None:
             return
+        if self.__direction is None:
+            return
 
-        error_x = TARGET_X - (
+        error_x = self.__image_segment - (
             self.__tracking_instance.center_x / self.__tracking_instance.image_width
         )
-        error_y = TARGET_Y - (
+        error_y = self.__image_segment - (
             self.__tracking_instance.center_y / self.__tracking_instance.image_height
         )
 
         self.get_logger().info(f'Error: {error_x}, {error_y}, {self.__tracking_instance.image_width}')
         
-        if self.__move_type == ImageXYawRegulate.Goal.MODE_Y:
-            if abs(error_y) > self.__tolerance:
-                self.regulate_y(error_x, error_y, self.__tolerance)
-            else:
-                self.__move_type = -1
-        if self.__move_type == ImageXYawRegulate.Goal.MODE_X:
-            if abs(error_x) > self.__tolerance:
-                self.regulate_x(error_x, error_y, self.__tolerance)
-            else:
-                self.__move_type = -1
+        if self.__direction == ImageXYawRegulate.Goal.MODE_X:
+            if self.__type == ">" and error_x + self.__tolerance > 0:
+                self.__direction = None
+                return
+            if self.__type == "<" and error_x - self.__tolerance < 0:
+                self.__direction = None
+                return
+            
+        if self.__direction == ImageXYawRegulate.Goal.MODE_Y:
+            if self.__type == ">" and error_y + self.__tolerance > 0:
+                self.__direction = None
+                return
+            if self.__type == "<" and error_y - self.__tolerance < 0:
+                self.__direction = None
+                return
 
+        if self.__last_move_state == MoveState.STATE_IDLE:
+            self.__direction = None
+            return
 
-    def regulate_y(self, error_x, error_y, tolerance):
+        if self.__direction == ImageXYawRegulate.Goal.MODE_Y:
+            self.regulate_y(error_y)
+        elif self.__direction == ImageXYawRegulate.Goal.MODE_X:
+            self.regulate_x(error_x)
+
+    def regulate_y(self, error_y):
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
         move_command.mode = MoveCommand.MODE_TRANSLATE
-        move_command.target.x = error_y * P_LINEAR
+        move_command.linear_properties.tolerance = self.__tolerance
+        move_command.target.x = error_y * self.__kp
         self.__publisher.publish(move_command)
 
-    def regulate_x(self, error_x, error_y, tolerance):
+    def regulate_x(self, error_x):
         move_command = MoveCommand()
         move_command.header.frame_id = 'base_link'
         move_command.header.stamp = create_ros_timestamp(self.__tracking_instance)
         move_command.mode = MoveCommand.MODE_ROTATE_AT_GOAL
-        move_command.target.theta = P_ANGULAR * error_x
+        move_command.angular_properties.tolerance = self.__tolerance
+        move_command.target.theta = error_x * self.__kp
         self.__publisher.publish(move_command)
 
 

@@ -1,9 +1,22 @@
 uint8 MODE_Y = 0
 uint8 MODE_X = 1
 
-
+# Tolerance for position regulation in range (0 - 1)
 float64 tolerance
-uint8 mode
+
+# Value 0 for regulating the linear position.
+# Value 1 for regulating the angular position.
+uint8 direction
+
+# Regulation type, "=" for exact regulation, "<" to allow undershoot, and ">" to allow overshoot. 
+string type
+
+# This parameter represents the image segment relative to which the robot's position will be regulated.
+float64 image_segment
+
+float64 kp
+uint8 object_class
+uint8 timeout
 ---
 uint8 result
 ---

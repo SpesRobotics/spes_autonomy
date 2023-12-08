@@ -15,7 +15,7 @@ RUN useradd -d /${DOCKERUSER} -m \
     usermod -a -G video ${DOCKERUSER} && \
     usermod -a -G dialout ${DOCKERUSER}
 
-RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-overwrite" \
+RUN apt-get update && apt-get install -y -o Dpkg::Options::="--force-overwrite" \
     python3-pip \
     libusb-1.0-0-dev \
     v4l-utils \

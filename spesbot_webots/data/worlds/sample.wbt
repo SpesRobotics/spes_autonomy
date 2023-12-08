@@ -5,13 +5,14 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "../protos/SpesBot.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/drinks/protos/Can.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/kitchen/utensils/protos/Glass.proto"
 
 WorldInfo {
   basicTimeStep 20
 }
 Viewpoint {
-  orientation -0.28715850400100057 0.5647569324654038 0.7736857248341698 1.16284574545601
-  position -0.9326140836979332 -1.9060885078177001 2.29669281348387
+  orientation -0.18566048945660238 0.36066781252094626 0.9140289446544295 1.0258366792319071
+  position -1.2619088074510987 -2.4043678135125512 1.5230124521469854
 }
 RectangleArena {
   floorSize 3 3
@@ -44,4 +45,18 @@ Can {
 }
 SpesBot {
   translation 0 0 0.09
+}
+DEF GLASS Solid {
+  translation 0.37 0 0
+  children [
+    DEF GLASS Glass {
+    }
+  ]
+  name "glass"
+  boundingObject DEF GLASS Cylinder {
+    height 0.13
+    radius 0.02
+  }
+  physics Physics {
+  }
 }
