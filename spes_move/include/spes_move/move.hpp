@@ -51,6 +51,9 @@ namespace spes_move
     int update_rate_;
     double stopping_distance_;
 
+    double angular_stuck_coeff_;
+    double linear_stuck_coeff_;
+
     spes_msgs::msg::MoveState state_msg_;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
