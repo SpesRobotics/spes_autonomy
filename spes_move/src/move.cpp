@@ -350,7 +350,7 @@ namespace spes_move
     // Detect stuck
     const double planned_rotation_velocity = rotation_ruckig_output_.new_velocity[0];
     const double planned_translation_velocity = translation_ruckig_output_.new_velocity[0];
-    if (abs(last_error_x_) > planned_translation_velocity * linear_stuck_coeff_ || abs(last_error_yaw_) > planned_rotation_velocity * angular_stuck_coeff_) {
+    if (abs(last_error_x_) > abs(planned_translation_velocity * linear_stuck_coeff_) || abs(last_error_yaw_) > abs(planned_rotation_velocity * angular_stuck_coeff_)) {
       stop_robot();
       RCLCPP_WARN(get_logger(), "Stuck detected, stopping...");
 
