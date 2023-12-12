@@ -1,0 +1,19 @@
+#! /usr/bin/env python3
+
+from flask import Flask
+import time
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    try:
+       t = time.localtime()
+       current_time = time.strftime("%H:%M:%S", t)
+       current_time = "Current time is " + str(current_time)
+       return current_time
+    except Exception as e:
+       return e
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
