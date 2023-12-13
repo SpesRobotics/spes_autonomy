@@ -47,7 +47,7 @@ RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
         odrive_hardware_interface \
         behaviortree_ros2
 
-COPY cyclonedds.xml /etc/cyclonedds.xml
+COPY ./docker/cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
 ENV DOCKERUSER=${DOCKERUSER}
@@ -55,7 +55,7 @@ ENV DOCKERUSER=${DOCKERUSER}
 USER ${DOCKERUSER}
 RUN pip3 install odrive==0.5.4 fibre
 
-COPY bashrc /tmp/bashrc
+COPY ./docker/bashrc /tmp/bashrc
 RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
 ENV PATH="${PATH}:/${DOCKERUSER}/.local/bin"
 

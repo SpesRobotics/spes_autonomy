@@ -1,7 +1,9 @@
 FROM spesbot-image:latest
 
+RUN mkdir -p /${DOCKERUSER}/ros2_ws/src/spes_autonomy
 COPY . /${DOCKERUSER}/ros2_ws/src/spes_autonomy
 RUN . /opt/ros/humble/setup.sh && \
+    . /${DOCKERUSER}/ros2_libs_ws/install/setup.sh && \
     cd /${DOCKERUSER}/ros2_ws && \
     colcon build --symlink-install
 

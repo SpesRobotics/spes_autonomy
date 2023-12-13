@@ -28,20 +28,20 @@ run:
 		-v ~/.Xauthority:/${DOCKERUSER}/.Xauthority:ro \
 		-v /tmp/.X11-unix/:/tmp/.X11-unix:rw \
 		-v /dev/dri:/dev/dri:ro \
-		-v ${ROOT_DIR}/..:/${DOCKERUSER}/ros2_ws/src/${BASENAME} \
-		-v ${ROOT_DIR}/assets:/${DOCKERUSER}/assets \
+		-v ${ROOT_DIR}:/${DOCKERUSER}/ros2_ws/src/${BASENAME} \
+		-v ${ROOT_DIR}/docker/assets:/${DOCKERUSER}/assets \
 		-v /dev:/dev:rw \
 		--entrypoint bash \
 		-d -it ${BASENAME}-image
 
 build-pc:
-	docker build ${ROOT_DIR} -f ${ROOT_DIR}/Dockerfile.pc -t ${BASENAME}-image ${DOCKER_ARGS} --build-arg UID=${UID} --build-arg DOCKERUSER=${DOCKERUSER} --build-arg DOCKERUSERCOMMENT=${DOCKERUSERCOMMENT}
+	docker build ${ROOT_DIR} -f ${ROOT_DIR}/docker/Dockerfile.pc -t ${BASENAME}-image ${DOCKER_ARGS} --build-arg UID=${UID} --build-arg DOCKERUSER=${DOCKERUSER} --build-arg DOCKERUSERCOMMENT=${DOCKERUSERCOMMENT}
 
 build-sbc:
-	docker build ${ROOT_DIR} -f ${ROOT_DIR}/Dockerfile.sbc -t ${BASENAME}-image ${DOCKER_ARGS} --build-arg UID=${UID} --build-arg DOCKERUSER=${DOCKERUSER} --build-arg DOCKERUSERCOMMENT=${DOCKERUSERCOMMENT}
+	docker build ${ROOT_DIR} -f ${ROOT_DIR}/docker/Dockerfile.sbc -t ${BASENAME}-image ${DOCKER_ARGS} --build-arg UID=${UID} --build-arg DOCKERUSER=${DOCKERUSER} --build-arg DOCKERUSERCOMMENT=${DOCKERUSERCOMMENT}
 
-deploy:
-	docker build ${ROOT_DIR} -f ${ROOT_DIR}/docker/Dockerfile.deploy -t ${BASENAME}-image ${DOCKER_ARGS} --build-arg UID=${UID} --build-arg DOCKERUSER=${DOCKERUSER} --build-arg DOCKERUSERCOMMENT=${DOCKERUSERCOMMENT}
+deploy: build-sbc
+	docker build ${ROOT_DIR} -f ${ROOT_DIR}/docker/Dockerfile.deploy -t ${BASENAME}-deploy-image ${DOCKER_ARGS} --build-arg UID=${UID} --build-arg DOCKERUSER=${DOCKERUSER} --build-arg DOCKERUSERCOMMENT=${DOCKERUSERCOMMENT}
 	@docker container rm -f ${BASENAME}-container
 	docker run \
 		--net=host \
@@ -54,5 +54,5 @@ deploy:
 		-e DISPLAY=${DISPLAY} \
 		-v /dev/dri:/dev/dri:ro \
 		-v /dev:/dev:rw \
-		-it ${BASENAME}-image \
-		ls src/spes_autonomy
+		-it ${BASENAME}-deploy-image \
+		ros2 run spes_move move
