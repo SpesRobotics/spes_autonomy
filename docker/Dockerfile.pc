@@ -75,7 +75,7 @@ ENV DOCKERUSER=${DOCKERUSER}
 COPY bashrc /tmp/bashrc
 RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
 
-RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.1.1-x86_64.AppImage -O /usr/bin/groot2 && \
+RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.4.0-x86_64.AppImage -O /usr/bin/groot2 && \
     chmod +x /usr/bin/groot2
 
 USER ${DOCKERUSER}

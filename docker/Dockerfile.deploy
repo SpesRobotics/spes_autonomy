@@ -1,0 +1,10 @@
+FROM spesbot-image:latest
+
+COPY . /${DOCKERUSER}/ros2_ws/src/spes_autonomy
+RUN . /opt/ros/humble/setup.sh && \
+    cd /${DOCKERUSER}/ros2_ws && \
+    colcon build --symlink-install
+
+COPY docker/ros_entrypoint.sh /
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["bash"]
