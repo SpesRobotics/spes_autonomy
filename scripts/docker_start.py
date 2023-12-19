@@ -19,8 +19,8 @@ template = """
     {
         background-color: #3498db;
         color: white;
-        padding: 15px 30px;
-        font-size: 20px;
+        padding: 27px 65px;
+        font-size: 30px;
         border: none;
         border-radius: 4px;
         cursor: pointer;
@@ -77,7 +77,7 @@ template = """
         function updateStatus(data) {
             const statusElement = document.getElementById('status');
             if (statusElement) {
-                statusElement.innerHTML = `<p><b>Cuda container:</b>${data.cuda_status}</p><p><b>Green container:</b>${data.green_status}</p>`;
+                statusElement.innerHTML = `<p><b>Cuda container:</b> ${data.cuda_status}</p><p><b>Green container:</b> ${data.green_status}</p>`;
             } else {
                 console.error("Element with ID 'status' not found.");
             }
@@ -144,8 +144,7 @@ def get_container_status(container_name):
         print(f"Container '{container_name}' status: {container.status}")
         return container.status
     except docker.errors.NotFound:
-        print(f"Container '{container_name}' not found.")
-        return f"Container '{container_name}' not found."
+        return f"stopped"
     except docker.errors.APIError as e:
         print(f"Failed to get status for container '{container_name}': {e}")
         return f"Failed to get status for container '{container_name}': {e}"
