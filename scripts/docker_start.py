@@ -6,113 +6,147 @@ import time
 import threading
 
 template = """
-<!DOCTYPE html>
-<html lang="en">
+    <!DOCTYPE html>
+    <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spes Robotics</title>
-</head>
-<style>
-    .control-button
-    {
-        background-color: #3498db;
-        color: white;
-        padding: 27px 65px;
-        font-size: 30px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin: 10px;
-        text-decoration: none;
-    }
-</style>
-<body>
-    <h1>Spes control panel &#129302;</h1>
-    <button onclick="start()"
-        class="control-button">Start</button>
-    <button onclick="stopContainer()" class="control-button">Stop</button>
-    <a href="http://192.168.2.146:8080/" target="_blank">
-        <button class="control-button">View stream</button>
-    </a>
-    <hr>
-    <h2>Container Status:</h2>
-    <div id="status"></div>
-
-    <script>
-        function runCuda() {
-            fetch('/run_cuda')
-                .then(response => response.json())
-                .then(data => {
-                    updateStatus(data);
-                })
-                .catch(error => {
-                    updateStatusError(error);
-                });
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Spes Robotics</title>
+    </head>
+    <style>
+        .control-button
+        {
+            background-color: #3498db;
+            color: white;
+            padding: 27px 65px;
+            font-size: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
         }
+    </style>
+    <body>
+        <h1>Spes control panel &#129302;</h1>
+        <button onclick="start()"
+            class="control-button">Start</button>
+        <button onclick="stopContainer()" class="control-button">Stop</button>
+        <a href="http://192.168.2.146:8080/" target="_blank">
+            <button class="control-button">View stream</button>
+        </a>
+        <hr>
+        <h2>Container Status:</h2>
+        <div id="status"></div>
 
-        function start() {
-            fetch('/start')
-                .then(response => response.json())
-                .then(data => {
-                    updateStatus(data);
-                })
-                .catch(error => {
-                    updateStatusError(error);
-                });
-        }
-
-        function stopContainer() {
-            fetch('/stop')
-                .then(response => response.json())
-                .then(data => {
-                    updateStatus(data);
-                })
-                .catch(error => {
-                    updateStatusError(error);
-                });
-        }
-
-        function updateStatus(data) {
-            const statusElement = document.getElementById('status');
-            if (statusElement) {
-                statusElement.innerHTML = `<p><b>Cuda container:</b> ${data.cuda_status}</p><p><b>Green container:</b> ${data.green_status}</p>`;
-            } else {
-                console.error("Element with ID 'status' not found.");
+        <script>
+            function runCuda() {
+                fetch('/run_cuda')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateStatus(data);
+                    })
+                    .catch(error => {
+                        updateStatusError(error);
+                    });
             }
-        }
 
-        function updateStatusError(error) {
-            const statusElement = document.getElementById('status');
-            if (statusElement) {
-                statusElement.innerHTML = `<p style="color: red;">Greška prilikom akcije: ${error}</p>`;
-            } else {
-                console.error("Element with ID 'status' not found.");
+            function start() {
+                fetch('/start')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateStatus(data);
+                    })
+                    .catch(error => {
+                        updateStatusError(error);
+                    });
             }
-        }
 
-        function checkContainerStatus() {
-            fetch("/container_status")
-                .then(response => response.json())
-                .then(data => {
-                    updateStatus(data);
-                })
-                .catch(error => {
-                    updateStatusError(error);
-                });
-        }
+            function stopContainer() {
+                fetch('/stop')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateStatus(data);
+                    })
+                    .catch(error => {
+                        updateStatusError(error);
+                    });
+            }
 
-        setInterval(checkContainerStatus, 5000);
-    </script>
-</body>
+            function updateStatus(data) {
+                const statusElement = document.getElementById('status');
+                if (statusElement) {
+                    statusElement.innerHTML = `<p><b>Cuda container:</b> ${data.cuda_status}</p><p><b>Green container:</b> ${data.green_status}</p>`;
+                } else {
+                    console.error("Element with ID 'status' not found.");
+                }
+            }
 
-</html>
+            function updateStatusError(error) {
+                const statusElement = document.getElementById('status');
+                if (statusElement) {
+                    statusElement.innerHTML = `<p style="color: red;">Greška prilikom akcije: ${error}</p>`;
+                } else {
+                    console.error("Element with ID 'status' not found.");
+                }
+            }
+
+            function checkContainerStatus() {
+                fetch("/container_status")
+                    .then(response => response.json())
+                    .then(data => {
+                        updateStatus(data);
+                    })
+                    .catch(error => {
+                        updateStatusError(error);
+                    });
+            }
+
+            setInterval(checkContainerStatus, 5000);
+        </script>
+    </body>
+    </html>
+"""
+
+"""
+ docker run --tty --rm --net=host --privileged -v ${PWD}:/home spes-object-tracker-image
+  --source 0 --gpus all --model /home/best.pt
+"""
+"""
+  docker run --tty --rm --net=host --privileged -v /dev/dri:/dev/dri:ro -v /dev:/dev:rw -v
+  /home/shared/mgk_ws/src/green:/home:rw --name green-container green-deploy-image ros2 run
+  spes_move move
 """
 
 CUDA_CONTAINER = "spes-object-tracker"
 GREEN_CONTAINER = "green-container"
 
+CUDA_IMAGE = "spes-object-tracker-image"
+cuda_params ={
+        "tty": True,
+        "remove": True,
+        "network_mode": "host",
+        "privileged": True,
+        "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
+        "name": CUDA_CONTAINER
+}
+cuda_args = ["--source", "-1", "--gpus", "all", "--model", "/home/best.pt"]
+
+GREEN_IMAGE = "green-deploy-image"
+green_params = {
+        "tty": True,
+        "remove": True,
+        "network_mode": "host",
+        "privileged": True,
+        "volumes": {
+            "/dev/dri": {"bind": "/dev/dri", "mode": "ro"},
+            "/dev": {"bind": "/dev", "mode": "rw"},
+            "/home/shared/mgk_ws/src/green": {"bind": "/home", "mode": "rw"}
+        },
+        "name": GREEN_CONTAINER
+    }
+green_args = ["ros2", "run", "spes_move", "move"]
 
 def get_container_logs(client, container_name_or_id):
     try:
@@ -150,36 +184,22 @@ def get_container_status(container_name):
         return f"Failed to get status for container '{container_name}': {e}"
 
 
-"""
- docker run --tty --rm --net=host --privileged -v ${PWD}:/home spes-object-tracker-image
-  --source 0 --gpus all --model /home/best.pt
-"""
-def object_detection():
+def run(image, args, params, container_name):
     client = docker.from_env()
-
-    container_params = {
-        "tty": True,
-        "remove": True,
-        "network_mode": "host",
-        "privileged": True,
-        "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
-        "name": CUDA_CONTAINER
-    }
-
     container = None
 
     try:
         try:
-            stop_container_by_name(client, CUDA_CONTAINER)
+            stop_container_by_name(client, container_name)
         except Exception as e:
             print(e)
         container = client.containers.run(
-            "spes-object-tracker-image",
-            ["--source", "-1", "--gpus", "all", "--model", "/home/best.pt"],
+            image,
+            args,
             detach=True,
-            **container_params
+            **params
         )
-        print("Cuda container started successfully.")
+        print(f"{container_name} started successfully.")
         try:
             for log_message in container.logs(stream=True, follow=True):
                 print(log_message.decode("utf-8"), end='')
@@ -194,7 +214,7 @@ def object_detection():
         print(e)
     except KeyboardInterrupt:
         print("KeyboardInterrupt received. Stopping the container...")
-        stop_container_by_name(client, CUDA_CONTAINER)
+        stop_container_by_name(client, container_name)
         print("Stopped!")
         sys.exit(0)
     except Exception as e:
@@ -211,70 +231,8 @@ def object_detection():
                     print(f"Container execution failed with exit code {exit_code}")
             except docker.errors.APIError as e:
                 print(f"Failed to get container logs: {e}")
-            stop_container_by_name(client, CUDA_CONTAINER)
+            stop_container_by_name(client, container_name)
 
-"""
-  docker run --tty --rm --net=host --privileged -v /dev/dri:/dev/dri:ro -v /dev:/dev:rw -v
-  /home/shared/mgk_ws/src/green:/home:rw --name green-container green-deploy-image ros2 run
-  spes_move move
-"""
-def green_platform():
-    client = docker.from_env()
-
-    container_params = {
-        "tty": True,
-        "remove": True,
-        "network_mode": "host",
-        "privileged": True,
-        "volumes": {
-            "/dev/dri": {"bind": "/dev/dri", "mode": "ro"},
-            "/dev": {"bind": "/dev", "mode": "rw"},
-            "/home/shared/mgk_ws/src/green": {"bind": "/home", "mode": "rw"}
-        },
-        "name": GREEN_CONTAINER
-    }
-    container = None
-
-    try:
-        try:
-            stop_container_by_name(client, GREEN_CONTAINER)
-        except Exception as e:
-            print(e)
-
-        container = client.containers.run(
-            "green-deploy-image",
-            ["ros2", "run", "spes_move", "move"],
-            detach=True,
-            **container_params
-        )
-        print("Green container started successfully.")
-        try:
-            for log_message in container.logs(stdout=True, stderr=True, stream=True):
-                print(log_message.decode("utf-8"), end='')
-        except Exception as e:
-            print(e)
-    except docker.errors.ContainerError as e:
-        print("Container execution failed with an error:", e)
-        print(e.stderr.decode("utf-8"))
-    except docker.errors.ImageNotFound as e:
-        print("Error: Docker image not found.")
-        print(e)
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-    finally:
-        if container:
-            try:
-                print("Try to stop processes finally!")
-                time.sleep(2)
-                exit_code = container.wait()
-                print("Container Logs:")
-                if exit_code == 0:
-                    print("Container executed successfully.")
-                else:
-                    print(f"Container execution failed with exit code {exit_code}")
-            except docker.errors.APIError as e:
-                print(f"Failed to get container logs: {e}")
-            stop_container_by_name(client, GREEN_CONTAINER)
 
 
 
@@ -297,8 +255,8 @@ def index():
 @app.route('/start', methods=['GET'])
 def start():
     try:
-        thread_object_detection = threading.Thread(target=object_detection)
-        thread_green_platform = threading.Thread(target=green_platform)
+        thread_object_detection = threading.Thread(target=run, args=(CUDA_IMAGE, cuda_args, cuda_params, CUDA_CONTAINER))
+        thread_green_platform = threading.Thread(target=run, args=(GREEN_IMAGE, green_args, green_params, GREEN_CONTAINER))
 
         thread_object_detection.start()
         thread_green_platform.start()
@@ -307,23 +265,6 @@ def start():
         thread_green_platform.join()
 
         return jsonify({'status': 'success', 'message': 'Both Docker containers started!'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-
-@app.route('/run_cuda', methods=['GET'])
-def run_cuda():
-    try:
-        object_detection()
-        return jsonify({'status': 'success', 'message': 'Docker started!'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/run_green', methods=['GET'])
-def run_green():
-    try:
-        green_platform()
-        return jsonify({'status': 'success', 'message': 'Docker started!'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
