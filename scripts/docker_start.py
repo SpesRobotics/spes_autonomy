@@ -86,7 +86,7 @@ template = """
             function updateStatusError(error) {
                 const statusElement = document.getElementById('status');
                 if (statusElement) {
-                    statusElement.innerHTML = `<p style="color: red;">Greška prilikom akcije: ${error}</p>`;
+                    statusElement.innerHTML = `<p style="color: red;">Update error: ${error}</p>`;
                 } else {
                     console.error("Element with ID 'status' not found.");
                 }
@@ -103,50 +103,40 @@ template = """
                     });
             }
 
-            setInterval(checkContainerStatus, 5000);
+            setInterval(checkContainerStatus, 3000);
         </script>
     </body>
     </html>
 """
 
-"""
- docker run --tty --rm --net=host --privileged -v ${PWD}:/home spes-object-tracker-image
-  --source 0 --gpus all --model /home/best.pt
-"""
-"""
-  docker run --tty --rm --net=host --privileged -v /dev/dri:/dev/dri:ro -v /dev:/dev:rw -v
-  /home/shared/mgk_ws/src/green:/home:rw --name green-container green-deploy-image ros2 run
-  spes_move move
-"""
-
 CUDA_CONTAINER = "spes-object-tracker"
 GREEN_CONTAINER = "green-container"
 
-CUDA_IMAGE = "spes-object-tracker-image"
-cuda_params ={
-        "tty": True,
-        "remove": True,
-        "network_mode": "host",
-        "privileged": True,
-        "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
-        "name": CUDA_CONTAINER
+DOCKERS = {
+    'cuda' : {
+            'image': 'spes-object-tracker-image',
+            'args': ["--source", "-1", "--gpus", "all", "--model", "/home/best.pt"],
+            'params': {
+                "tty": True,
+                "remove": True,
+                "network_mode": "host",
+                "privileged": True,
+                "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
+                "name": 'spes-object-tracker'},
+            'container_name': 'spes-object-tracker'},
+    'green' : {
+            'image': 'green-deploy-image',
+            'args': ["ros2", "run", "spes_move", "move"],
+            'params': {
+                    "tty": True,
+                    "remove": True,
+                    "network_mode": "host",
+                    "privileged": True,
+                    "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
+                    "name": 'green-container'},
+            'container_name': 'green-container'}
 }
-cuda_args = ["--source", "-1", "--gpus", "all", "--model", "/home/best.pt"]
 
-GREEN_IMAGE = "green-deploy-image"
-green_params = {
-        "tty": True,
-        "remove": True,
-        "network_mode": "host",
-        "privileged": True,
-        "volumes": {
-            "/dev/dri": {"bind": "/dev/dri", "mode": "ro"},
-            "/dev": {"bind": "/dev", "mode": "rw"},
-            "/home/shared/mgk_ws/src/green": {"bind": "/home", "mode": "rw"}
-        },
-        "name": GREEN_CONTAINER
-    }
-green_args = ["ros2", "run", "spes_move", "move"]
 
 def get_container_logs(client, container_name_or_id):
     try:
@@ -171,6 +161,20 @@ def stop_container_by_name(client, container_name):
     except docker.errors.APIError as e:
         print(f"Failed to stop the container '{container_name}': {e}")
 
+def stop_containers():
+    client = docker.from_env()
+    for docker_name, docker_item in DOCKERS.items():
+        container_name = docker_item['container_name']
+        try:
+                container = client.containers.get(docker_item['container_name'])
+                container.stop()
+                container.remove()
+                print(f"Container '{container_name}' stopped and removed.")
+        except docker.errors.NotFound:
+            print(f"Container '{container_name}' not found.")
+        except docker.errors.APIError as e:
+            print(f"Failed to stop the container '{container_name}': {e}")
+
 def get_container_status(container_name):
     try:
         client = docker.from_env()
@@ -184,7 +188,7 @@ def get_container_status(container_name):
         return f"Failed to get status for container '{container_name}': {e}"
 
 
-def run(image, args, params, container_name):
+def run_container(image, args, params, container_name):
     client = docker.from_env()
     container = None
 
@@ -234,14 +238,28 @@ def run(image, args, params, container_name):
             stop_container_by_name(client, container_name)
 
 
+def run_all_containers():
+    threads = []
+    for docker_name, docker_item in DOCKERS.items():
+        image =  docker_item['image']
+        args = docker_item['args']
+        params  = docker_item['params']
+        container_name = docker_item['container_name']
+        print(image, args, params, container_name)
+        thread = threading.Thread(target=run_container, args=(image, args, params, container_name))
+        threads.append(thread)
+    print(threads)
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
 
 
 def signal_handler(sig, frame):
-    print("Server stopped. Stopping container...")
-    client = docker.from_env()
-    stop_container_by_name(client, CUDA_CONTAINER)
-    stop_container_by_name(client, GREEN_CONTAINER)
-    print("Stopped container.")
+    print("Server stopped. Stopping containers...")
+    stop_containers()
+    print("Stopped containers.")
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
@@ -255,15 +273,7 @@ def index():
 @app.route('/start', methods=['GET'])
 def start():
     try:
-        thread_object_detection = threading.Thread(target=run, args=(CUDA_IMAGE, cuda_args, cuda_params, CUDA_CONTAINER))
-        thread_green_platform = threading.Thread(target=run, args=(GREEN_IMAGE, green_args, green_params, GREEN_CONTAINER))
-
-        thread_object_detection.start()
-        thread_green_platform.start()
-
-        thread_object_detection.join()
-        thread_green_platform.join()
-
+        run_all_containers()
         return jsonify({'status': 'success', 'message': 'Both Docker containers started!'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
@@ -271,9 +281,7 @@ def start():
 @app.route('/stop', methods=['GET'])
 def stop():
     try:
-        client = docker.from_env()
-        stop_container_by_name(client, CUDA_CONTAINER)
-        stop_container_by_name(client, GREEN_CONTAINER)
+        stop_containers()
         return jsonify({'message': 'Stopped and removed containers!'})
     except Exception as e:
         return jsonify({'error': str(e)})
@@ -296,6 +304,6 @@ def container_status():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9000)
+    app.run(host='0.0.0.0', port=5000)
 
 
