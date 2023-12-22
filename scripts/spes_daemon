@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
-
 import docker
 import signal
 import sys
 from flask import Flask, render_template, jsonify, request
 import time
 import threading
+import socket
+
 
 template = """
     <!DOCTYPE html>
@@ -35,9 +36,7 @@ template = """
         <button onclick="start()"
             class="control-button">Start</button>
         <button onclick="stopContainer()" class="control-button">Stop</button>
-        <a href="http://192.168.2.146:8080/" target="_blank">
-            <button class="control-button">View stream</button>
-        </a>
+        <button id="viewStreamButton" class="control-button">View stream</button>
         <hr>
         <h2>Container Status:</h2>
         <div id="status"></div>
@@ -79,11 +78,21 @@ template = """
             function updateStatus(data) {
                 const statusElement = document.getElementById('status');
                 if (statusElement) {
-                    statusElement.innerHTML = `<p><b>Cuda container:</b> ${data.cuda_status}</p><p><b>Green container:</b> ${data.green_status}</p>`;
+                    let containerStatusHTML = '';
+
+                    for (const dockerName in data) {
+                        if (data.hasOwnProperty(dockerName)) {
+                            const dockerStatus = data[dockerName].status;
+                            containerStatusHTML += `<p><b>${dockerName}:</b> ${dockerStatus}</p>`;
+                        }
+                    }
+
+                    statusElement.innerHTML = containerStatusHTML;
                 } else {
                     console.error("Element with ID 'status' not found.");
                 }
             }
+
 
             function updateStatusError(error) {
                 const statusElement = document.getElementById('status');
@@ -105,38 +114,42 @@ template = """
                     });
             }
 
-            setInterval(checkContainerStatus, 3000);
+            setInterval(checkContainerStatus, 500);
+
+        document.getElementById('viewStreamButton').addEventListener('click', function() {
+            const currentHostIp = window.location.hostname;
+            const streamUrl = `http://${currentHostIp}:8080/`;
+            window.open(streamUrl, '_blank');
+        });
         </script>
     </body>
     </html>
 """
 
-CUDA_CONTAINER = "spes-object-tracker"
-GREEN_CONTAINER = "green-container"
 
 DOCKERS = {
     'cuda' : {
             'image': 'spes-object-tracker-image',
-            'args': ["--source", "-1", "--gpus", "all", "--model", "/home/best.pt"],
+            'args': ["--source", "-1", "--gpus", "all", "--model", "/home/marija/SpesRobotics/spes_autonomy/cuda/yolov8n.pt"],
             'params': {
                 "tty": True,
                 "remove": True,
                 "network_mode": "host",
                 "privileged": True,
-                "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
+                "volumes": {f"/home/marija/SpesRobotics/spes_autonomy/cuda": {"bind": "/home"}},
                 "name": 'spes-object-tracker'},
             'container_name': 'spes-object-tracker'},
-    'green' : {
-            'image': 'green-deploy-image',
+    'spes' : {
+            'image': 'spesbot-deploy-image',
             'args': ["ros2", "run", "spes_move", "move"],
             'params': {
                     "tty": True,
                     "remove": True,
                     "network_mode": "host",
                     "privileged": True,
-                    "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
-                    "name": 'green-container'},
-            'container_name': 'green-container'}
+                    "volumes": {f"/home/marija/SpesRobotics/spes_autonomy/docker": {"bind": "/home"}},
+                    "name": 'spesbot-container'},
+            'container_name': 'spesbot-container'}
 }
 
 
@@ -181,14 +194,13 @@ def get_container_status(container_name):
     try:
         client = docker.from_env()
         container = client.containers.get(container_name)
-        print(f"Container '{container_name}' status: {container.status}")
+        # print(f"Container '{container_name}' status: {container.status}")
         return container.status
     except docker.errors.NotFound:
         return f"stopped"
     except docker.errors.APIError as e:
         print(f"Failed to get status for container '{container_name}': {e}")
         return f"Failed to get status for container '{container_name}': {e}"
-
 
 def run_container(image, args, params, container_name):
     client = docker.from_env()
@@ -239,7 +251,6 @@ def run_container(image, args, params, container_name):
                 print(f"Failed to get container logs: {e}")
             stop_container_by_name(client, container_name)
 
-
 def run_all_containers():
     threads = []
     for docker_name, docker_item in DOCKERS.items():
@@ -257,12 +268,16 @@ def run_all_containers():
     for thread in threads:
         thread.join()
 
-
 def signal_handler(sig, frame):
     print("Server stopped. Stopping containers...")
     stop_containers()
     print("Stopped containers.")
     sys.exit(0)
+
+def get_host_ip():
+    host_name = socket.gethostname()
+    host_ip = socket.gethostbyname(host_name)
+    return host_ip
 
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -292,18 +307,18 @@ def stop():
 def container_status():
     try:
         client = docker.from_env()
-        cuda_status = get_container_status(CUDA_CONTAINER)
-        green_status = get_container_status(GREEN_CONTAINER)
-        return jsonify({
-            "cuda_status": cuda_status,
-            "green_status": green_status
-        })
+        statuses = {}
+
+        for docker_name, docker_item in DOCKERS.items():
+            container_name = docker_item['container_name']
+            status = get_container_status(container_name)
+            statuses[docker_name] = {'status': status}
+        return jsonify(statuses)
     except Exception as e:
         return jsonify({
             "status": "error",
             "message": str(e)
         })
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
