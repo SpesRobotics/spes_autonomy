@@ -110,31 +110,31 @@ template = """
 """
 
 CUDA_CONTAINER = "spes-object-tracker"
-GREEN_CONTAINER = "green-container"
+GREEN_CONTAINER = "spesbot-container"
 
 DOCKERS = {
     'cuda' : {
             'image': 'spes-object-tracker-image',
-            'args': ["--source", "-1", "--gpus", "all", "--model", "/home/best.pt"],
+            'args': ["--source", "-1", "--gpus", "all", "--model", "/home/marija/SpesRobotics/spes_autonomy/cuda/yolov8n.pt"],
             'params': {
                 "tty": True,
                 "remove": True,
                 "network_mode": "host",
                 "privileged": True,
-                "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
+                "volumes": {f"/home/marija/SpesRobotics/spes_autonomy/cuda": {"bind": "/home"}},
                 "name": 'spes-object-tracker'},
             'container_name': 'spes-object-tracker'},
-    'green' : {
-            'image': 'green-deploy-image',
+    'spes' : {
+            'image': 'spesbot-deploy-image',
             'args': ["ros2", "run", "spes_move", "move"],
             'params': {
                     "tty": True,
                     "remove": True,
                     "network_mode": "host",
                     "privileged": True,
-                    "volumes": {f"/home/shared/mgk_ws/src/green/cuda": {"bind": "/home"}},
-                    "name": 'green-container'},
-            'container_name': 'green-container'}
+                    "volumes": {f"/home/marija/SpesRobotics/spes_autonomy/docker": {"bind": "/home"}},
+                    "name": 'spesbot-container'},
+            'container_name': 'spesbot-container'}
 }
 
 
