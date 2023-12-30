@@ -13,16 +13,16 @@
             <input_port name="frame_id" default="map"/>
             <input_port name="ignore_obstacles" default="false"/>
             <input_port name="mode" default="7"/>
+            <input_port name="reversing" default="0"/>
             <input_port name="x" default="0"/>
             <input_port name="y" default="0"/>
             <input_port name="yaw" default="0"/>
             <output_port name="error" default="error"/>
-            <input_port name="reversing" default="0"/>
         </Action>
         <Action ID="MoveStream" editable="true">
-            <input_port name="x" default="0"/>
             <input_port name="frame_id" default="base_link"/>
             <input_port name="ignore_obstacles" default="false"/>
+            <input_port name="x" default="0"/>
             <output_port name="error" default="error"/>
         </Action>
         <Action ID="Translate" editable="true">

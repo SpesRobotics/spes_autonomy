@@ -36,19 +36,19 @@
       <Move frame_id="target_frame"
             ignore_obstacles="true"
             mode="7"
+            reversing="0"
             x="-0.6"
             y="0"
             yaw="0"
-            error="error"
-            reversing="0"/>
+            error="error"/>
       <Move frame_id="target_frame"
             ignore_obstacles="true"
             mode="7"
+            reversing="0"
             x="-0.4"
             y="0"
             yaw="0"
-            error="error"
-            reversing="0"/>
+            error="error"/>
     </Sequence>
   </BehaviorTree>
 
@@ -56,9 +56,9 @@
     <Repeat num_cycles="200">
       <Sequence>
         <Sleep msec="250"/>
-        <MoveStream x="0.1"
-                    frame_id="base_link"
+        <MoveStream frame_id="base_link"
                     ignore_obstacles="false"
+                    x="0.1"
                     error="error"/>
       </Sequence>
     </Repeat>
@@ -66,11 +66,25 @@
 
   <BehaviorTree ID="test_translate">
     <Sequence>
-      <AlwaysSuccess/>
-      <Translate frame_id="base_link"
-                 ignore_obstacles="true"
-                 x="0.2"
-                 error="error"/>
+      <Sleep msec="7000"/>
+      <Repeat num_cycles="500">
+        <Sequence>
+          <Sleep msec="500"/>
+          <Translate frame_id="base_link"
+                     ignore_obstacles="true"
+                     x="0.05"
+                     error="error"/>
+          <Move frame_id="base_link"
+                ignore_obstacles="true"
+                mode="1"
+                reversing="0"
+                x="0"
+                y="0"
+                yaw="100"
+                error="error"
+                _skipIf="rotate == false"/>
+        </Sequence>
+      </Repeat>
     </Sequence>
   </BehaviorTree>
 
@@ -105,6 +119,8 @@
                   default="false"/>
       <input_port name="mode"
                   default="7"/>
+      <input_port name="reversing"
+                  default="0"/>
       <input_port name="x"
                   default="0"/>
       <input_port name="y"
@@ -113,17 +129,15 @@
                   default="0"/>
       <output_port name="error"
                    default="error"/>
-      <input_port name="reversing"
-                  default="0"/>
     </Action>
     <Action ID="MoveStream"
             editable="true">
-      <input_port name="x"
-                  default="0"/>
       <input_port name="frame_id"
                   default="base_link"/>
       <input_port name="ignore_obstacles"
                   default="false"/>
+      <input_port name="x"
+                  default="0"/>
       <output_port name="error"
                    default="error"/>
     </Action>

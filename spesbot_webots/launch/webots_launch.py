@@ -15,10 +15,10 @@ def generate_launch_description():
 
     controller_params = os.path.join(get_package_share_directory('spesbot_hardware'),
                              'resource', 'controllers.yaml')
-    
+
     robot_description = pathlib.Path(
         os.path.join(package_dir, 'resource', 'description.urdf')).read_text()
-    
+
     webots = WebotsLauncher(world=PathJoinSubstitution([package_dir, 'data',
                                                'worlds', world]), ros2_supervisor=True)
     webots_robot_driver = Node(
@@ -74,7 +74,7 @@ def generate_launch_description():
             '--child-frame-id', 'base_footprint'
         ]
     )
-    
+
     tf_map = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -86,8 +86,37 @@ def generate_launch_description():
         ]
     )
 
+    behavior = Node(
+        package='spes_behavior',
+        executable='behavior',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': False,
+                'behavior': 'test_translate',
+            }
+        ],
+    )
+
+    move = Node(
+        package='spes_move',
+        executable='move',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': False,
+                'angular.max_velocity': 0.3,
+                'angular.max_acceleration': 0.3,
+                'angular.tolerance': 0.001,
+                'update_rate': 100,
+            }
+        ],
+    )
+
     return launch.LaunchDescription([
         webots,
+        behavior,
+        move,
         webots._supervisor,
         webots_robot_driver,
         diffdrive_controller_spawner,
