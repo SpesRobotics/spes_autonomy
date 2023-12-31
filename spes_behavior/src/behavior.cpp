@@ -22,57 +22,106 @@
 using tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
 
+const std::string htmlContent = R"(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Server Page</title>
+    <style>
+        .control-button
+        {
+            background-color: #3498db;
+            color: white;
+            padding: 27px 65px;
+            font-size: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <button id="rotateButton" class="control-button">Rotate!</button>
+    <script>
+        document.getElementById("rotateButton").addEventListener("click", function() {
+            fetch('/get')
+                .then(response => response.text())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
+)";
+
+
+
 void handleRequest(http::request<http::string_body>& request, tcp::socket& socket, BT::Blackboard::Ptr blackboard) {
-    if(request.method()==http::verb::get && request.target() == "/"){
-        http::response<http::string_body> response;
-        response.version(request.version());
-        response.result(http::status::ok);
-        response.set(http::field::server, "My HTTP Server");
-        response.set(http::field::content_type, "text/html");
-        response.body() = "<h3>Home page</h3>";
+    try{
+        if(request.method()==http::verb::get && request.target() == "/"){
+            http::response<http::string_body> response;
+            response.version(request.version());
+            response.result(http::status::ok);
+            response.set(http::field::server, "My HTTP Server");
+            response.set(http::field::content_type, "text/html");
+            response.body() = htmlContent;
 
-        response.prepare_payload();
-        boost::beast::http::write(socket, response);
-    }else if(request.method()==http::verb::get && request.target() == "/get"){
+            response.prepare_payload();
+            boost::beast::http::write(socket, response);
+        }else if(request.method()==http::verb::get && request.target() == "/get"){
 
-        http::response<http::string_body> response;
-        response.version(request.version());
-        response.result(http::status::ok);
-        response.set(http::field::server, "My HTTP Server");
-        response.set(http::field::content_type, "text/html");
+            http::response<http::string_body> response;
+            response.version(request.version());
+            response.result(http::status::ok);
+            response.set(http::field::server, "My HTTP Server");
+            response.set(http::field::content_type, "text/html");
 
-        blackboard->set("rotate", true);
-        response.body() = "<p>Request accepted!</p>";
+            bool rotate = false;
+            [[maybe_unused]] bool result = blackboard->get("rotate", rotate);
+            blackboard->set("rotate", !rotate);
+            response.body() = "<p>Request accepted!</p>";
 
-        response.prepare_payload();
-        boost::beast::http::write(socket, response);
+            response.prepare_payload();
+            boost::beast::http::write(socket, response);
 
-    }else if (request.method() == http::verb::put && request.target() == "/put")
-    {
-        http::response<http::string_body> response;
-        response.version(request.version());
-        response.result(http::status::ok);
-        response.set(http::field::server, "My HTTP Server");
-        response.set(http::field::content_type, "text/html");
-        response.body() = "Request received!";
+        }else if (request.method() == http::verb::put && request.target() == "/put")
+        {
+            http::response<http::string_body> response;
+            response.version(request.version());
+            response.result(http::status::ok);
+            response.set(http::field::server, "My HTTP Server");
+            response.set(http::field::content_type, "text/html");
+            response.body() = "Request received!";
 
-        response.prepare_payload();
-        boost::beast::http::write(socket, response);
+            response.prepare_payload();
+            boost::beast::http::write(socket, response);
 
-    }else
-    {
-        std::cout << "Not Found - Method: " << request.method_string().to_string()
-              << ", Target: " << request.target().to_string() << std::endl;
+        }else
+        {
+            std::cout << "Not Found - Method: " << request.method_string().to_string()
+                << ", Target: " << request.target().to_string() << std::endl;
 
-        http::response<http::string_body> response;
-        response.version(request.version());
-        response.result(http::status::not_found);
-        response.set(http::field::server, "My HTTP Server");
-        response.set(http::field::content_type, "text/html");
-        response.body() = "Not found";
+            http::response<http::string_body> response;
+            response.version(request.version());
+            response.result(http::status::not_found);
+            response.set(http::field::server, "My HTTP Server");
+            response.set(http::field::content_type, "text/html");
+            response.body() = "Not found";
 
-        response.prepare_payload();
-        boost::beast::http::write(socket, response);
+            response.prepare_payload();
+            boost::beast::http::write(socket, response);
+        }
+    } catch (const boost::wrapexcept<boost::system::system_error>& ex) {
+        std::cerr << "Boost System Error: " << ex.what() << std::endl;
+    } catch (const std::exception& ex) {
+        std::cerr << "Exception: " << ex.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception occurred." << std::endl;
     }
 }
 
@@ -94,21 +143,10 @@ void runServer(BT::Blackboard::Ptr blackboard) {
 
 int main(int argc, char **argv)
 {
-    // try {
-    //     // runServer();
-        rclcpp::init(argc, argv);
-        rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("spes_behavior");
-        BT::Blackboard::Ptr blackboard = BT::Blackboard::create();
-        blackboard->set("rotate", false);
-
-
-    // } catch (const std::exception& e) {
-    //     std::cerr << "Exception: " << e.what() << std::endl;
-    // }
-
-    // rclcpp::init(argc, argv);
-    // rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("spes_behavior");
-    // BT::Blackboard::Ptr blackboard = BT::Blackboard::create();
+    rclcpp::init(argc, argv);
+    rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("spes_behavior");
+    BT::Blackboard::Ptr blackboard = BT::Blackboard::create();
+    blackboard->set("rotate", false);
 
     node->declare_parameter<std::string>("behavior", "");
     std::string behavior = node->get_parameter("behavior").as_string();
