@@ -7,6 +7,7 @@ find_package(behaviortree_ros2 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(spes_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 get_filename_component(BEHAVIOR_DIRECTORY behaviors ABSOLUTE [CACHE])
 add_compile_definitions(BEHAVIOR_DIRECTORY="${BEHAVIOR_DIRECTORY}")
@@ -18,6 +19,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_action
   spes_msgs
+  sensor_msgs
   behaviortree_cpp
   behaviortree_ros2
 )
@@ -36,6 +38,7 @@ ament_export_dependencies(
     rclcpp
     rclcpp_action
     spes_msgs
+    sensor_msgs
     behaviortree_cpp
     behaviortree_ros2
 )

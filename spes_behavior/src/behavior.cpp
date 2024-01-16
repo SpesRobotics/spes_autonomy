@@ -10,6 +10,7 @@
 #include "spes_behavior/move_stream_action.hpp"
 #include "spes_behavior/is_path_clear.hpp"
 #include "spes_behavior/is_object_detected.hpp"
+#include "spes_behavior/battery_state.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -59,11 +60,12 @@ const std::string htmlContent = R"(
 </html>
 )";
 
-
-
-void handleRequest(http::request<http::string_body>& request, tcp::socket& socket, BT::Blackboard::Ptr blackboard) {
-    try{
-        if(request.method()==http::verb::get && request.target() == "/"){
+void handleRequest(http::request<http::string_body> &request, tcp::socket &socket, BT::Blackboard::Ptr blackboard)
+{
+    try
+    {
+        if (request.method() == http::verb::get && request.target() == "/")
+        {
             http::response<http::string_body> response;
             response.version(request.version());
             response.result(http::status::ok);
@@ -73,7 +75,9 @@ void handleRequest(http::request<http::string_body>& request, tcp::socket& socke
 
             response.prepare_payload();
             boost::beast::http::write(socket, response);
-        }else if(request.method()==http::verb::get && request.target() == "/get"){
+        }
+        else if (request.method() == http::verb::get && request.target() == "/get")
+        {
 
             http::response<http::string_body> response;
             response.version(request.version());
@@ -88,8 +92,8 @@ void handleRequest(http::request<http::string_body>& request, tcp::socket& socke
 
             response.prepare_payload();
             boost::beast::http::write(socket, response);
-
-        }else if (request.method() == http::verb::put && request.target() == "/put")
+        }
+        else if (request.method() == http::verb::put && request.target() == "/put")
         {
             http::response<http::string_body> response;
             response.version(request.version());
@@ -100,11 +104,11 @@ void handleRequest(http::request<http::string_body>& request, tcp::socket& socke
 
             response.prepare_payload();
             boost::beast::http::write(socket, response);
-
-        }else
+        }
+        else
         {
             std::cout << "Not Found - Method: " << request.method_string().to_string()
-                << ", Target: " << request.target().to_string() << std::endl;
+                      << ", Target: " << request.target().to_string() << std::endl;
 
             http::response<http::string_body> response;
             response.version(request.version());
@@ -116,20 +120,28 @@ void handleRequest(http::request<http::string_body>& request, tcp::socket& socke
             response.prepare_payload();
             boost::beast::http::write(socket, response);
         }
-    } catch (const boost::wrapexcept<boost::system::system_error>& ex) {
+    }
+    catch (const boost::wrapexcept<boost::system::system_error> &ex)
+    {
         std::cerr << "Boost System Error: " << ex.what() << std::endl;
-    } catch (const std::exception& ex) {
+    }
+    catch (const std::exception &ex)
+    {
         std::cerr << "Exception: " << ex.what() << std::endl;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::cerr << "Unknown exception occurred." << std::endl;
     }
 }
 
-void runServer(BT::Blackboard::Ptr blackboard) {
+void runServer(BT::Blackboard::Ptr blackboard)
+{
     boost::asio::io_context io_context;
     tcp::acceptor acceptor(io_context, {tcp::v4(), 8080});
-    std::cout<<"Server started!"<<std::endl;
-    while (true) {
+    std::cout << "Server started!" << std::endl;
+    while (true)
+    {
         tcp::socket socket(io_context);
         acceptor.accept(socket);
         boost::beast::flat_buffer buffer;
@@ -175,6 +187,9 @@ int main(int argc, char **argv)
 
     params.default_port_value = "removal_velocity_controller/commands";
     factory.registerNodeType<JointAction>("Joint", params);
+
+    params.default_port_value = "battery_state";
+    factory.registerNodeType<BatteryState>("isFullyBattery", params);
 
     using std::filesystem::directory_iterator;
     for (auto const &entry : directory_iterator(BEHAVIOR_DIRECTORY))
