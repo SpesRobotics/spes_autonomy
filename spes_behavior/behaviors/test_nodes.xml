@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
+  <BehaviorTree ID="test_battery_state">
+    <ForceSuccess>
+      <Sequence>
+        <Sleep msec="3000"/>
+        <isFullyBattery min_voltage="12.2"/>
+      </Sequence>
+    </ForceSuccess>
+  </BehaviorTree>
+
   <BehaviorTree ID="test_image_x_yaw_regulator">
     <RetryUntilSuccessful num_attempts="50">
       <ForceFailure>
@@ -151,6 +160,11 @@
                   default="0">Target in x direction</input_port>
       <output_port name="error"
                    default="error">Error code</output_port>
+    </Action>
+    <Action ID="isFullyBattery"
+            editable="true">
+      <input_port name="min_voltage"
+                  default="11.2"/>
     </Action>
   </TreeNodesModel>
 

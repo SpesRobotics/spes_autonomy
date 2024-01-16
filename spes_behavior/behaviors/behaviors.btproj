@@ -31,5 +31,8 @@
             <input_port name="x" default="0">Target in x direction</input_port>
             <output_port name="error" default="error">Error code</output_port>
         </Action>
+        <Action ID="isFullyBattery" editable="true">
+            <input_port name="min_voltage" default="11.2"/>
+        </Action>
     </TreeNodesModel>
 </root>

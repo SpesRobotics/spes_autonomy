@@ -16,13 +16,15 @@ public:
 
     static BT::PortsList providedPorts()
     {
-        return {};
+        return {InputPort<double>("min_voltage")};
     }
 
     NodeStatus onTick(const std::shared_ptr<sensor_msgs::msg::BatteryState> &last_msg) override
     {
+        double min_voltage;
+        getInput<double>("min_voltage", min_voltage);
 
-        if (last_msg == nullptr || last_msg->voltage < 10)
+        if (last_msg == nullptr || last_msg->voltage < min_voltage)
             return NodeStatus::FAILURE;
 
         return NodeStatus::SUCCESS;
