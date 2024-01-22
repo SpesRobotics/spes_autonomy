@@ -75,7 +75,7 @@ void handleRequest(http::request<http::string_body> &request, tcp::socket &socke
 void runServer(BT::Blackboard::Ptr blackboard)
 {
     boost::asio::io_context io_context;
-    tcp::acceptor acceptor(io_context, {tcp::v4(), 8080});
+    tcp::acceptor acceptor(io_context, {tcp::v4(), 8081});
     std::cout << "Server started!" << std::endl;
     while (true)
     {
