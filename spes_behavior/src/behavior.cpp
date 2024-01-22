@@ -23,60 +23,11 @@
 using tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
 
-const std::string htmlContent = R"(
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Server Page</title>
-    <style>
-        .control-button
-        {
-            background-color: #3498db;
-            color: white;
-            padding: 27px 65px;
-            font-size: 30px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 10px;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <button id="rotateButton" class="control-button">Rotate!</button>
-    <script>
-        document.getElementById("rotateButton").addEventListener("click", function() {
-            fetch('/get')
-                .then(response => response.text())
-                .then(data => console.log(data))
-                .catch(error => console.error('Error:', error));
-        });
-    </script>
-</body>
-</html>
-)";
-
 void handleRequest(http::request<http::string_body> &request, tcp::socket &socket, BT::Blackboard::Ptr blackboard)
 {
     try
     {
-        if (request.method() == http::verb::get && request.target() == "/")
-        {
-            http::response<http::string_body> response;
-            response.version(request.version());
-            response.result(http::status::ok);
-            response.set(http::field::server, "My HTTP Server");
-            response.set(http::field::content_type, "text/html");
-            response.body() = htmlContent;
-
-            response.prepare_payload();
-            boost::beast::http::write(socket, response);
-        }
-        else if (request.method() == http::verb::get && request.target() == "/get")
+        if (request.method() == http::verb::get && request.target() == "/rotate")
         {
 
             http::response<http::string_body> response;
@@ -85,22 +36,8 @@ void handleRequest(http::request<http::string_body> &request, tcp::socket &socke
             response.set(http::field::server, "My HTTP Server");
             response.set(http::field::content_type, "text/html");
 
-            bool rotate = false;
-            [[maybe_unused]] bool result = blackboard->get("rotate", rotate);
-            blackboard->set("rotate", !rotate);
+            blackboard->set("rotate", true);
             response.body() = "<p>Request accepted!</p>";
-
-            response.prepare_payload();
-            boost::beast::http::write(socket, response);
-        }
-        else if (request.method() == http::verb::put && request.target() == "/put")
-        {
-            http::response<http::string_body> response;
-            response.version(request.version());
-            response.result(http::status::ok);
-            response.set(http::field::server, "My HTTP Server");
-            response.set(http::field::content_type, "text/html");
-            response.body() = "Request received!";
 
             response.prepare_payload();
             boost::beast::http::write(socket, response);

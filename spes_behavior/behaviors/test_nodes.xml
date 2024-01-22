@@ -75,6 +75,15 @@
 
   <BehaviorTree ID="test_translate">
     <Sequence>
+      <Move frame_id="base_link"
+            ignore_obstacles="true"
+            mode="1"
+            reversing="0"
+            x="0"
+            y="0"
+            yaw="3"
+            error="error"
+            _skipIf="rotate == false"/>
       <Sleep msec="7000"/>
       <Repeat num_cycles="500">
         <Sequence>
@@ -92,6 +101,7 @@
                 yaw="100"
                 error="error"
                 _skipIf="rotate == false"/>
+          <Script code="rotate = false"/>
         </Sequence>
       </Repeat>
     </Sequence>
