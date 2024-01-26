@@ -9,6 +9,9 @@
             <input_port name="tolerance" default="0.03">As ration of the image size [0, 1]</input_port>
             <input_port name="type" default="=">It can take values "&lt;=", "&gt;=", "==".</input_port>
         </Action>
+        <Action ID="IsBatteryCharged" editable="true">
+            <input_port name="min_voltage" default="11.2"/>
+        </Action>
         <Action ID="Move" editable="true">
             <input_port name="frame_id" default="map"/>
             <input_port name="ignore_obstacles" default="false"/>
@@ -30,9 +33,6 @@
             <input_port name="ignore_obstacles" default="false">Whether to stop in front of obstacle</input_port>
             <input_port name="x" default="0">Target in x direction</input_port>
             <output_port name="error" default="error">Error code</output_port>
-        </Action>
-        <Action ID="isFullyBattery" editable="true">
-            <input_port name="min_voltage" default="11.2"/>
         </Action>
     </TreeNodesModel>
 </root>

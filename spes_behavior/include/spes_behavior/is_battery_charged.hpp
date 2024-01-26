@@ -4,12 +4,12 @@
 
 using namespace BT;
 
-class BatteryState : public RosTopicSubNode<sensor_msgs::msg::BatteryState>
+class IsBatteryCharged : public RosTopicSubNode<sensor_msgs::msg::BatteryState>
 {
 public:
-    BatteryState(const std::string &name,
-                 const NodeConfig &conf,
-                 const RosNodeParams &params)
+    IsBatteryCharged(const std::string &name,
+                     const NodeConfig &conf,
+                     const RosNodeParams &params)
         : RosTopicSubNode<sensor_msgs::msg::BatteryState>(name, conf, params)
     {
     }

@@ -10,7 +10,7 @@
 #include "spes_behavior/move_stream_action.hpp"
 #include "spes_behavior/is_path_clear.hpp"
 #include "spes_behavior/is_object_detected.hpp"
-#include "spes_behavior/battery_state.hpp"
+#include "spes_behavior/is_battery_charged.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     factory.registerNodeType<JointAction>("Joint", params);
 
     params.default_port_value = "battery_state";
-    factory.registerNodeType<BatteryState>("isFullyBattery", params);
+    factory.registerNodeType<IsBatteryCharged>("IsBatteryCharged", params);
 
     using std::filesystem::directory_iterator;
     for (auto const &entry : directory_iterator(BEHAVIOR_DIRECTORY))
