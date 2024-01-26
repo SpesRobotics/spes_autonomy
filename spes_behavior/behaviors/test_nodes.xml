@@ -4,7 +4,7 @@
     <ForceSuccess>
       <Sequence>
         <Sleep msec="3000"/>
-        <isFullyBattery min_voltage="12.2"/>
+        <IsBatteryCharged min_voltage="11.2"/>
       </Sequence>
     </ForceSuccess>
   </BehaviorTree>
@@ -130,6 +130,11 @@
       <input_port name="type"
                   default="=">It can take values "&lt;=", "&gt;=", "==".</input_port>
     </Action>
+    <Action ID="IsBatteryCharged"
+            editable="true">
+      <input_port name="min_voltage"
+                  default="11.2"/>
+    </Action>
     <Action ID="Move"
             editable="true">
       <input_port name="frame_id"
@@ -170,11 +175,6 @@
                   default="0">Target in x direction</input_port>
       <output_port name="error"
                    default="error">Error code</output_port>
-    </Action>
-    <Action ID="isFullyBattery"
-            editable="true">
-      <input_port name="min_voltage"
-                  default="11.2"/>
     </Action>
   </TreeNodesModel>
 
