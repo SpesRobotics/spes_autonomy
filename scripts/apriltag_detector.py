@@ -1,15 +1,16 @@
-from geometry_msgs.msg import TransformStamped, Quaternion
+from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
+import rclpy, cv2
 from rclpy.node import Node
 from cv_bridge import CvBridge
-import rclpy
-import cv2
 from dt_apriltags import Detector
 from sensor_msgs.msg import Image
-import time
 import numpy as np
 import transforms3d as t3d
-from cv_bridge import CvBridge
+
+CAMERA_MATRIX = np.array([[248.091261, 0.0, 338.72890467],
+                            [0.0, 249.17817251, 208.70472081],
+                            [0.0, 0.0, 1.0]])
 
 # create image_row topic with command: ros2 run v4l2_camera v4l2_camera_node
 class AprilTagBroadcaster(Node):
@@ -39,11 +40,7 @@ class AprilTagBroadcaster(Node):
                         decode_sharpening=0.25,
                         debug=0)
 
-        camera_matrix = np.array([[248.091261, 0.0, 338.72890467],
-                            [0.0, 249.17817251, 208.70472081],
-                            [0.0, 0.0, 1.0]])
-
-        self.camera_params = ( camera_matrix[0,0], camera_matrix[1,1], camera_matrix[0,2], camera_matrix[1,2] )
+        self.camera_params = ( CAMERA_MATRIX[0,0], CAMERA_MATRIX[1,1], CAMERA_MATRIX[0,2], CAMERA_MATRIX[1,2] )
 
     def __on_image_callback(self, msg):
         try:
