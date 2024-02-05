@@ -55,6 +55,7 @@ class AprilTagBroadcaster(Node):
         if self.__frame is None:
             return
         h, w, _ = self.__frame.shape
+        print(self.__frame.shape)
 
         color_img = self.__frame[:, round(w/2):w, :]
         image = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
@@ -82,10 +83,10 @@ class AprilTagBroadcaster(Node):
             tag_transform.transform.rotation.w = tag_orientation[2][2]
         
             quaternion = t3d.quaternions.mat2quat(tag_orientation)
-            tag_transform.transform.rotation.x = quaternion[0]
-            tag_transform.transform.rotation.y = quaternion[1]
-            tag_transform.transform.rotation.z = quaternion[2]
-            tag_transform.transform.rotation.w = quaternion[3]
+            tag_transform.transform.rotation.x = quaternion[1]
+            tag_transform.transform.rotation.y = quaternion[2]
+            tag_transform.transform.rotation.z = quaternion[3]
+            tag_transform.transform.rotation.w = quaternion[0]
 
             self.tf_broadcaster.sendTransform(tag_transform)
 
