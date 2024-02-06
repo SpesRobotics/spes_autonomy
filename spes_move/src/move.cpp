@@ -218,9 +218,11 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        stop_robot();
         lock_tf_odom_base_ = false;
-        state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
+        if (command_->mode & spes_msgs::msg::MoveCommand::MODE_TRANSLATE)
+          state_ = spes_msgs::msg::MoveState::STATE_TRANSLATING;
+        else
+          state_ = spes_msgs::msg::MoveState::STATE_IDLE;
         debouncing_reset();
       }
       return;
@@ -281,7 +283,6 @@ namespace spes_move
     {
       if (now() >= debouncing_end_)
       {
-        stop_robot();
         debouncing_reset();
         state_ = spes_msgs::msg::MoveState::STATE_IDLE;
       }
@@ -393,7 +394,10 @@ namespace spes_move
       }
     }
 
-    cmd_vel_pub_->publish(std::move(cmd_vel));
+    if (state_ == spes_msgs::msg::MoveState::STATE_IDLE)
+      stop_robot();
+    else
+      cmd_vel_pub_->publish(std::move(cmd_vel));
 
     update_state_msg(tf_base_target);
     state_pub_->publish(state_msg_);
