@@ -6,6 +6,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/project
 EXTERNPROTO "../protos/SpesBot.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/drinks/protos/Can.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/kitchen/utensils/protos/Glass.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/devices/robotis/protos/RobotisLds01.proto"
 
 WorldInfo {
   basicTimeStep 20
@@ -45,6 +46,22 @@ Can {
 }
 SpesBot {
   translation 0 0 0.09
+  controller "<extern>"
+  name "spesbot"
+  toolSlot [
+    Camera {
+      translation 0.01 0 0.11
+      rotation 0 1 0 0.4017996938995747
+      locked TRUE
+      width 1280
+      height 720
+      far 0.6
+    }
+    RobotisLds01 {
+      translation -0.05 0 0.2
+      rotation 0 0 1 0
+    }
+  ]
 }
 DEF GLASS Solid {
   translation 0.37 0 0
