@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
+  <BehaviorTree ID="test_battery_state">
+    <ForceSuccess>
+      <Sequence>
+        <Sleep msec="3000"/>
+        <IsBatteryCharged min_voltage="11.2"/>
+      </Sequence>
+    </ForceSuccess>
+  </BehaviorTree>
+
   <BehaviorTree ID="test_image_x_yaw_regulator">
     <RetryUntilSuccessful num_attempts="50">
       <ForceFailure>
@@ -36,19 +45,19 @@
       <Move frame_id="target_frame"
             ignore_obstacles="true"
             mode="7"
+            reversing="0"
             x="-0.6"
             y="0"
             yaw="0"
-            error="error"
-            reversing="0"/>
+            error="error"/>
       <Move frame_id="target_frame"
             ignore_obstacles="true"
             mode="7"
+            reversing="0"
             x="-0.4"
             y="0"
             yaw="0"
-            error="error"
-            reversing="0"/>
+            error="error"/>
     </Sequence>
   </BehaviorTree>
 
@@ -56,9 +65,9 @@
     <Repeat num_cycles="200">
       <Sequence>
         <Sleep msec="250"/>
-        <MoveStream x="0.1"
-                    frame_id="base_link"
+        <MoveStream frame_id="base_link"
                     ignore_obstacles="false"
+                    x="0.1"
                     error="error"/>
       </Sequence>
     </Repeat>
@@ -66,11 +75,35 @@
 
   <BehaviorTree ID="test_translate">
     <Sequence>
-      <AlwaysSuccess/>
-      <Translate frame_id="base_link"
-                 ignore_obstacles="true"
-                 x="0.2"
-                 error="error"/>
+      <Move frame_id="base_link"
+            ignore_obstacles="true"
+            mode="1"
+            reversing="0"
+            x="0"
+            y="0"
+            yaw="3"
+            error="error"
+            _skipIf="rotate == false"/>
+      <Sleep msec="7000"/>
+      <Repeat num_cycles="500">
+        <Sequence>
+          <Sleep msec="500"/>
+          <Translate frame_id="base_link"
+                     ignore_obstacles="true"
+                     x="0.05"
+                     error="error"/>
+          <Move frame_id="base_link"
+                ignore_obstacles="true"
+                mode="1"
+                reversing="0"
+                x="0"
+                y="0"
+                yaw="100"
+                error="error"
+                _skipIf="rotate == false"/>
+          <Script code="rotate = false"/>
+        </Sequence>
+      </Repeat>
     </Sequence>
   </BehaviorTree>
 
@@ -97,6 +130,11 @@
       <input_port name="type"
                   default="=">It can take values "&lt;=", "&gt;=", "==".</input_port>
     </Action>
+    <Action ID="IsBatteryCharged"
+            editable="true">
+      <input_port name="min_voltage"
+                  default="11.2"/>
+    </Action>
     <Action ID="Move"
             editable="true">
       <input_port name="frame_id"
@@ -105,6 +143,8 @@
                   default="false"/>
       <input_port name="mode"
                   default="7"/>
+      <input_port name="reversing"
+                  default="0"/>
       <input_port name="x"
                   default="0"/>
       <input_port name="y"
@@ -113,17 +153,15 @@
                   default="0"/>
       <output_port name="error"
                    default="error"/>
-      <input_port name="reversing"
-                  default="0"/>
     </Action>
     <Action ID="MoveStream"
             editable="true">
-      <input_port name="x"
-                  default="0"/>
       <input_port name="frame_id"
                   default="base_link"/>
       <input_port name="ignore_obstacles"
                   default="false"/>
+      <input_port name="x"
+                  default="0"/>
       <output_port name="error"
                    default="error"/>
     </Action>

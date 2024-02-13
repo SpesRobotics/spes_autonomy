@@ -9,20 +9,23 @@
             <input_port name="tolerance" default="0.03">As ration of the image size [0, 1]</input_port>
             <input_port name="type" default="=">It can take values "&lt;=", "&gt;=", "==".</input_port>
         </Action>
+        <Action ID="IsBatteryCharged" editable="true">
+            <input_port name="min_voltage" default="11.2"/>
+        </Action>
         <Action ID="Move" editable="true">
             <input_port name="frame_id" default="map"/>
             <input_port name="ignore_obstacles" default="false"/>
             <input_port name="mode" default="7"/>
+            <input_port name="reversing" default="0"/>
             <input_port name="x" default="0"/>
             <input_port name="y" default="0"/>
             <input_port name="yaw" default="0"/>
             <output_port name="error" default="error"/>
-            <input_port name="reversing" default="0"/>
         </Action>
         <Action ID="MoveStream" editable="true">
-            <input_port name="x" default="0"/>
             <input_port name="frame_id" default="base_link"/>
             <input_port name="ignore_obstacles" default="false"/>
+            <input_port name="x" default="0"/>
             <output_port name="error" default="error"/>
         </Action>
         <Action ID="Translate" editable="true">

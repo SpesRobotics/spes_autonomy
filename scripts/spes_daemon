@@ -37,6 +37,7 @@ template = """
             class="control-button">Start</button>
         <button onclick="stopContainer()" class="control-button">Stop</button>
         <button id="viewStreamButton" class="control-button">View stream</button>
+        <button id="rotateRobot" class="control-button">Rotate</button>
         <hr>
         <h2>Container Status:</h2>
         <div id="status"></div>
@@ -121,7 +122,22 @@ template = """
             const streamUrl = `http://${currentHostIp}:8080/`;
             window.open(streamUrl, '_blank');
         });
-        </script>
+
+       document.getElementById('rotateRobot').addEventListener('click', function() {
+        const currentHostIp = window.location.hostname;
+        const rotateUrl = `http://${currentHostIp}:8081/rotate`;
+        
+            fetch(rotateUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    console.log("Request accepted!");
+                    // Dodajte kod za rukovanje odgovorom ako je potrebno
+                })
+                .catch(error => console.error("Error:", error));
+        });
+    </script>
     </body>
     </html>
 """
