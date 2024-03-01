@@ -9,6 +9,7 @@ import socket
 import threading
 import struct
 import time
+from datetime import datetime
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from queue import Queue
@@ -18,12 +19,13 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server, frame_queue):
         self.frame_queue = frame_queue
         self.streaming_started = False  # Flag to track streaming start
+        if not os.path.exists('images'):
+            os.makedirs('images')
         super().__init__(request, client_address, server)
 
     def do_GET(self):
         if self.path == '/':
             if not self.streaming_started:
-                # Start streaming only on the first request
                 self.start_streaming()
             self.send_response(200)
             self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=frame')
@@ -44,6 +46,86 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
                     self.wfile.write(b'\r\n--frame\r\n')
                 except Exception as e:
                     print("Exception: ", e)
+        elif self.path == '/save_image':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+
+            html_content = """
+                            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Save Image</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        background-color: #f0f0f0;
+                    }
+
+                    h1 {
+                        color: #333;
+                    }
+
+                    button {
+                        padding: 25px 45px;
+                        font-size: 16px;
+                        width: 90%;
+                        height: 15%;
+                        background-color: #3498db;
+                        color: #fff;
+                        border: none;
+                        cursor: pointer;
+                    }
+
+                    button:hover {
+                        background-color: #2980b9;
+                    }
+
+                    #message {
+                        margin-top: 20px;
+                        font-size: 14px;
+                    }
+                </style>
+                <script>
+                    function saveImage() {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/save_image', true);
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState == 4 && xhr.status == 200) {
+                                var messageDiv = document.getElementById('message');
+                                var currentTime = new Date().toLocaleTimeString();
+                                messageDiv.innerHTML = 'Image saved successfully at ' + currentTime;
+                                console.log('Image saved successfully');
+                            }
+                        };
+                        xhr.send();
+                    }
+                </script>
+            </head>
+            <body>
+                <h1>Save Image</h1>
+                <button onclick="saveImage()">Save Image</button>
+                <div id="message"></div>
+            </body>
+            </html>
+
+            """
+            self.wfile.write(html_content.encode('utf-8'))
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b'Not Found')
+
+    def do_POST(self):
+        if self.path == '/save_image':
+            frame = self.frame_queue.get()
+            self.save_image()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(b'Image saved successfully')
         else:
             self.send_response(404)
             self.end_headers()
@@ -51,6 +133,17 @@ class MJPEGStreamHandler(BaseHTTPRequestHandler):
 
     def start_streaming(self):
         self.streaming_started = True
+    
+    def save_image(self):
+        try:
+            frame = self.frame_queue.get()
+            image_name = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+            image_name = 'images/' + str(image_name) + '.jpg'
+            cv2.imwrite(image_name, frame)
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(f'Error saving image: {str(e)}'.encode('utf-8'))
 
 
 
@@ -169,6 +262,11 @@ def start_stream_server(frame_queue):
     print(f'Starting streaming server on http://0.0.0.0:8080/')
     server.serve_forever()
 
+def start_save_image_server(frame_queue):
+    server = HTTPServer(('0.0.0.0', 8081), lambda *args, **kwargs: MJPEGStreamHandler(*args, **kwargs, frame_queue=frame_queue))
+    print(f'Starting save image server on http://0.0.0.0:8081/')
+    server.serve_forever()
+
 
 class ROSCameraReader:
     def __init__(self) -> None:
@@ -237,6 +335,10 @@ def main():
     server_thread = threading.Thread(target=start_stream_server, args=(frame_queue,))
     server_thread.daemon = True
     server_thread.start()
+
+    save_image_thread = threading.Thread(target=start_save_image_server, args=(frame_queue,))
+    save_image_thread.daemon = True
+    save_image_thread.start()
 
     while True:
         success, image, (timestamp_sec, timestamp_nsec) = image_reader.read()
