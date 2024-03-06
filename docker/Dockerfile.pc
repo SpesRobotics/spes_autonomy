@@ -81,6 +81,6 @@ RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_lin
 USER ${DOCKERUSER}
 
 RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-RUN pip3 install --no-warn-script-location --user ultralytics lapx
+RUN pip3 install --no-warn-script-location --user ultralytics lapx transforms3d dt_apriltags
     
 WORKDIR /${DOCKERUSER}/ros2_ws
