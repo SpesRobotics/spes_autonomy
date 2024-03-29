@@ -1,6 +1,6 @@
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import TransformBroadcaster
-import rclpy, cv2
+import rclpy, cv2, time
 from rclpy.node import Node
 from cv_bridge import CvBridge
 from dt_apriltags import Detector
@@ -8,29 +8,39 @@ from sensor_msgs.msg import Image
 import numpy as np
 import transforms3d as t3d
 
-CAMERA_MATRIX = np.array([[248.091261, 0.0, 338.72890467],
-                            [0.0, 249.17817251, 208.70472081],
-                            [0.0, 0.0, 1.0]])
+# sudo modprobe v4l2loopback video_nr=20,30 exclusive_caps=1 card_label="Spes Camera"
+# ffmpeg -i /dev/video0 -codec copy -f v4l2 /dev/video20 -codec copy -f v4l2 /dev/video30
 
-# create image_row topic with command: ros2 run v4l2_camera v4l2_camera_node
+CAMERA_MATRIX = np.array([[922.64240542, 0.0, 621.33488741],
+                          [0.0, 905.74778606, 386.01481495],
+                          [0.0, 0.0, 1.0]])
+
+class OpencvCameraReader:
+    def __init__(self, source):
+        self.__capture = None
+        while self.__capture == None:
+            self.__capture = cv2.VideoCapture(source, cv2.CAP_V4L2)
+            self.__capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.__capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            time.sleep(1)
+
+    def is_open(self):
+        return self.__capture.isOpened()
+
+    def read(self):
+        success, image = self.__capture.read()
+        return success, image
+
+    def close(self):
+        self.__capture.release()
+
 class AprilTagBroadcaster(Node):
 
     def __init__(self):    
-        print("Initializing AprilTag Broadcaster Node =====")
-
         super().__init__('apriltag_broadcaster_node')
         self.tf_broadcaster = TransformBroadcaster(self)
         self.timer = self.create_timer(0.1, self.broadcast_transform)
-        
-        self.node = rclpy.create_node('row_image_subscriber')
-        self.__image_subscription = self.create_subscription(
-            Image,
-            '/image_raw',
-            self.__on_image_callback,
-            1)
-        self.__image_subscription
-        self.bridge = CvBridge()
-        self.__frame = None
+        self.__image_reader = OpencvCameraReader(30)
 
         self.at_detector = Detector(families='tag36h11',
                         nthreads=1,
@@ -52,19 +62,17 @@ class AprilTagBroadcaster(Node):
 
         
     def broadcast_transform(self):
-        if self.__frame is None:
+        success, image = self.__image_reader.read()
+        
+        if not success:
             return
-        h, w, _ = self.__frame.shape
-        print(self.__frame.shape)
-
-        color_img = self.__frame[:, round(w/2):w, :]
-        image = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         tags = self.at_detector.detect(image, True, self.camera_params, 0.09)
-        # print(tags)
+
         for tag in tags:
             tag_transform = TransformStamped()
-            print(tag)
-    
+            self.get_logger().info(f'Apriltag found: {tag.tag_id}')
+
             tag_id = tag.tag_id
             tag_position = tag.pose_t
             tag_orientation = tag.pose_R
