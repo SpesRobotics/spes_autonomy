@@ -45,6 +45,13 @@ namespace spes_move
     while (rclcpp::ok() && state_ != spes_msgs::msg::MoveState::STATE_IDLE)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      if (action_server_->is_cancel_requested() || action_server_->is_preempt_requested())
+      {
+        result->set__error(spes_msgs::msg::MoveState::ERROR_CANCELED);
+        action_server_->terminate_current(result);
+        state_ = spes_msgs::msg::MoveState::STATE_IDLE;
+        RCLCPP_ERROR(get_logger(), "Move canceled");
+      }
     }
 
     result->error = state_msg_.error;
@@ -140,7 +147,8 @@ namespace spes_move
       state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
 
       // Multiturn. We allow multiturn only if the goal is in the base frame.
-      if (command_->mode == spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL && command_->header.frame_id == "base_link") {
+      if (command_->mode == spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL && command_->header.frame_id == "base_link")
+      {
         if (command->target.theta > M_PI)
           multiturn_n_ = (command->target.theta + M_PI) / (2 * M_PI);
         else if (command->target.theta < -M_PI)
@@ -372,25 +380,23 @@ namespace spes_move
       pose2d.y += sim_position_change * sin(pose2d.theta);
 
       bool is_collision_ahead = false;
-      try {
+      try
+      {
         const double score = collision_checker_->scorePose(pose2d);
         if (score >= 254)
           is_collision_ahead = true;
-      } catch (const std::exception& e) {
+      }
+      catch (const std::exception &e)
+      {
         RCLCPP_ERROR_ONCE(get_logger(), "Collision checker failed: %s", e.what());
       }
 
       if (is_collision_ahead)
       {
-        stop_robot();
         RCLCPP_WARN(get_logger(), "Collision Ahead - Exiting Move");
 
         state_msg_.error = spes_msgs::msg::MoveState::ERROR_OBSTACLE;
-
         state_ = spes_msgs::msg::MoveState::STATE_IDLE;
-        update_state_msg(tf_base_target);
-        state_pub_->publish(state_msg_);
-        return;
       }
     }
 
@@ -491,7 +497,8 @@ namespace spes_move
       translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
   }
 
-  void Move::init() {
+  void Move::init()
+  {
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     command_sub_ = create_subscription<spes_msgs::msg::MoveCommand>(
         "~/command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
