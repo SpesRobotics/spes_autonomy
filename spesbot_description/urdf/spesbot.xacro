@@ -42,6 +42,15 @@
             <command_interface name="position" />
             <state_interface name="position" />
         </joint>
+    </ros2_control>
+
+    <ros2_control name="isaac_system" type="system">
+        <hardware>
+            <plugin>topic_based_ros2_control/TopicBasedSystem</plugin>
+            <param name="joint_commands_topic">/joint_command</param>
+            <param name="joint_states_topic">/joint_states</param>
+            <param name="sum_wrapped_joint_states">true</param>
+        </hardware>
 
         <joint name="left_motor">
             <command_interface name="velocity" />
