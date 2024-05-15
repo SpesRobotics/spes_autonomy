@@ -37,6 +37,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Option
     ros-humble-realsense2-camera \
     ros-humble-apriltag-ros \
     ros-humble-topic-based-ros2-control \
+    ros-humble-ament-cmake-nose \
     nano \
     alsa \
     libxshmfence1 \
@@ -83,5 +84,6 @@ USER ${DOCKERUSER}
 
 RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip3 install --no-warn-script-location --user ultralytics lapx transforms3d dt_apriltags
+RUN pip3 install pymap3d
     
 WORKDIR /${DOCKERUSER}/ros2_ws
