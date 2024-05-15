@@ -11,10 +11,9 @@ def generate_launch_description():
     robot_description = xacro.process_file(xacro_file).toxml()
 
     config = os.path.join(
-        get_package_share_directory("spesbot_isaac"), "config", "controllers.yaml"
+        get_package_share_directory("spesbot_isaac"), "config", "spesbot_control.yaml"
     )
 
-    # Define the launch description
     ld = LaunchDescription(
         [
             Node(

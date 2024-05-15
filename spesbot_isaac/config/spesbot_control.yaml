@@ -11,11 +11,10 @@ controller_manager:
 
 diff_drive_controller:
   ros__parameters:
-
     base_frame_id: base_link
     left_wheel_names: ["left_motor"]
     right_wheel_names: ["right_motor"]
     wheel_separation: 0.365
-    wheel_radius: 0.0762
+    wheel_radius: 0.085
 
     use_stamped_vel: false

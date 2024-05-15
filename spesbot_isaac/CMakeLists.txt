@@ -3,6 +3,11 @@ project(spesbot_isaac)
 
 find_package(ament_cmake REQUIRED)
 
+install(PROGRAMS
+  scripts/tf2navsatfix.py
+  scripts/navsatfix2tf.py
+  DESTINATION lib/${PROJECT_NAME})
+
 install(DIRECTORY
   launch
   data
