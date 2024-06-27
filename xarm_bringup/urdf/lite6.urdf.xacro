@@ -7,13 +7,17 @@
   <xacro:arg name="add_gripper" default="false" />
   <xacro:arg name="robot_ip" default="" />
   <xacro:arg name="report_type" default="normal" />
-  <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotSystemHardware" />
+  <!-- <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotSystemHardware" /> -->
+  <xacro:arg name="ros2_control_plugin" default="fake_components/GenericSystem" />
   <xacro:arg name="baud_checkset" default="true" />
   <xacro:arg name="default_gripper_baud" default="2000000" />
   <xacro:arg name="hard_interface" default="PositionJointInterface" />
   <xacro:arg name="inertial_params_filename" default="" />
   <xacro:arg name="kinematics_params_filename" default="$(find xarm_description)/config/kinematics/default/lite6_default_kinematics.yaml" />
   <xacro:arg name="is_ros2" default="true" />
+
+  <xacro:include filename="$(find xarm_description)/urdf/common/common.material.xacro" />
+  <xacro:common_material prefix="$(arg prefix)" />
 
   <xacro:property name="use_xacro_load_yaml" value="true" scope="global"/>
   <xacro:property name="mesh_path" value="package://xarm_description/meshes" scope="global"/>

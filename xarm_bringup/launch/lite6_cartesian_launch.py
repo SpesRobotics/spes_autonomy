@@ -6,11 +6,10 @@ import xacro
 
 
 def generate_launch_description():
-    robot_description_path = os.path.join(get_package_share_directory(
-        'spesbot_description'), 'urdf', 'spesbot.xacro')
+    robot_description_path = os.path.join(get_package_share_directory('xarm_bringup'), 'urdf', 'lite6.urdf.xacro')
     robot_description = xacro.process_file(robot_description_path, mappings={}).toprettyxml(indent='  ')
     controllers = os.path.join(get_package_share_directory(
-        'spesbot_hardware'), 'resource', 'controllers.yaml')
+        'xarm_bringup'), 'resource', 'controllers.yaml')
 
     controller_manager = Node(
         package='controller_manager',
@@ -60,7 +59,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         arguments=['-d', os.path.join(get_package_share_directory(
-            'spesbot_description'), 'resource', 'cartesian_demo.rviz')],
+            'xarm_bringup'), 'resource', 'lite6_cartesian.rviz')],
         output='screen'
     )
 
