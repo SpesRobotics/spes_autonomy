@@ -7,10 +7,9 @@ Spes Robotics autonomy packages, software infrastructure, and hardware platform.
 You can install as a typical ROS workspace, but we highly recommend using Docker: 
 
 ```bash
-# Install Docker (and other dependencies) and reboot to apply the user group change
+# Install Docker (and other dependencies)
 sudo apt install git make curl
-curl -sSL https://get.docker.com | sh && sudo usermod -aG docker $USER
-sudo reboot 
+curl https://get.docker.com | sh && sudo systemctl --now enable docker
 
 # Clone the repo
 git clone https://github.com/SpesRobotics/spes_autonomy.git $HOME/spes_autonomy
