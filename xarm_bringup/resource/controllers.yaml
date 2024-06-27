@@ -41,6 +41,7 @@ cartesian_motion_controller:
     solver:
       error_scale: 1.0
       iterations: 12
+      publish_state_feedback: true
 
     pd_gains:
       trans_x: { p: 1.0 }

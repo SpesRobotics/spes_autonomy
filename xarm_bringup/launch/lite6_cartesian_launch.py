@@ -20,7 +20,8 @@ def generate_launch_description():
         ],
         remappings=[
             ('motion_control_handle/target_frame', 'target_frame'),
-            ('cartesian_motion_controller/target_frame', 'target_frame')
+            ('cartesian_motion_controller/target_frame', 'target_frame'),
+            ('cartesian_motion_controller/current_pose', 'current_pose')
         ],
         output='screen'
     )
