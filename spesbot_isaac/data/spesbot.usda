@@ -1,0 +1,454 @@
+#usda 1.0
+(
+    customLayerData = {
+        dictionary cameraSettings = {
+            dictionary Front = {
+                double3 position = (5, 0.033994525411854715, 0.3168775404462163)
+                double radius = 1.5637481689453125
+            }
+            dictionary Perspective = {
+                double3 position = (-0.5792931061622769, 1.5507538401156291, 0.9097080701316945)
+                double3 target = (1.213559772156657, -0.5303252929592499, 0.0946077490051841)
+            }
+            dictionary Right = {
+                double3 position = (0, -5, 0)
+                double radius = 5
+            }
+            dictionary Top = {
+                double3 position = (0, 0, 5)
+                double radius = 5
+            }
+            string boundCamera = "/World/spesbot_raw/base_link/Camera"
+        }
+        dictionary navmeshSettings = {
+            double agentHeight = 180
+            double agentRadius = 20
+            bool excludeRigidBodies = 1
+            int ver = 1
+            double voxelCeiling = 460
+        }
+        dictionary omni_layer = {
+            string authoring_layer = "./spesbot.usda"
+            dictionary locked = {
+            }
+            dictionary muteness = {
+            }
+        }
+        dictionary renderSettings = {
+            float3 "rtx:debugView:pixelDebug:textColor" = (0, 1e18, 0)
+            float3 "rtx:fog:fogColor" = (0.75, 0.75, 0.75)
+            float3 "rtx:index:regionOfInterestMax" = (0, 0, 0)
+            float3 "rtx:index:regionOfInterestMin" = (0, 0, 0)
+            float3 "rtx:iray:environment_dome_ground_position" = (0, 0, 0)
+            float3 "rtx:iray:environment_dome_ground_reflectivity" = (0, 0, 0)
+            float3 "rtx:iray:environment_dome_rotation_axis" = (3.4028235e38, 3.4028235e38, 3.4028235e38)
+            float3 "rtx:post:backgroundZeroAlpha:backgroundDefaultColor" = (0, 0, 0)
+            float3 "rtx:post:colorcorr:contrast" = (1, 1, 1)
+            float3 "rtx:post:colorcorr:gain" = (1, 1, 1)
+            float3 "rtx:post:colorcorr:gamma" = (1, 1, 1)
+            float3 "rtx:post:colorcorr:offset" = (0, 0, 0)
+            float3 "rtx:post:colorcorr:saturation" = (1, 1, 1)
+            float3 "rtx:post:colorgrad:blackpoint" = (0, 0, 0)
+            float3 "rtx:post:colorgrad:contrast" = (1, 1, 1)
+            float3 "rtx:post:colorgrad:gain" = (1, 1, 1)
+            float3 "rtx:post:colorgrad:gamma" = (1, 1, 1)
+            float3 "rtx:post:colorgrad:lift" = (0, 0, 0)
+            float3 "rtx:post:colorgrad:multiply" = (1, 1, 1)
+            float3 "rtx:post:colorgrad:offset" = (0, 0, 0)
+            float3 "rtx:post:colorgrad:whitepoint" = (1, 1, 1)
+            float3 "rtx:post:lensDistortion:lensFocalLengthArray" = (10, 30, 50)
+            float3 "rtx:post:lensFlares:anisoFlareFalloffX" = (450, 475, 500)
+            float3 "rtx:post:lensFlares:anisoFlareFalloffY" = (10, 10, 10)
+            float3 "rtx:post:lensFlares:cutoffPoint" = (2, 2, 2)
+            float3 "rtx:post:lensFlares:haloFlareFalloff" = (10, 10, 10)
+            float3 "rtx:post:lensFlares:haloFlareRadius" = (75, 75, 75)
+            float3 "rtx:post:lensFlares:isotropicFlareFalloff" = (50, 50, 50)
+            float3 "rtx:post:tonemap:whitepoint" = (1, 1, 1)
+            float3 "rtx:raytracing:inscattering:singleScatteringAlbedo" = (0.9, 0.9, 0.9)
+            float3 "rtx:raytracing:inscattering:transmittanceColor" = (0.5, 0.5, 0.5)
+            float3 "rtx:sceneDb:ambientLightColor" = (0.1, 0.1, 0.1)
+        }
+    }
+    defaultPrim = "World"
+    endTimeCode = 100
+    metersPerUnit = 1
+    startTimeCode = 0
+    timeCodesPerSecond = 60
+    upAxis = "Z"
+)
+
+def Xform "World"
+{
+    def "spesbot_raw" (
+        prepend apiSchemas = ["PhysicsArticulationRootAPI", "PhysxArticulationAPI"]
+        prepend references = @./spesbot_raw.usd@
+    )
+    {
+        quatd xformOp:orient = (1, 0, 0, 0)
+        double3 xformOp:scale = (1, 1, 1)
+        double3 xformOp:translate = (0, 0, 0.08918070793151855)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+        over "base_link" (
+            delete apiSchemas = ["PhysicsArticulationRootAPI", "PhysxArticulationAPI"]
+        )
+        {
+            over "left_motor"
+            {
+                float drive:angular:physics:stiffness = 0
+                float drive:angular:physics:targetVelocity = 0
+                float state:angular:physics:position = 0
+                float state:angular:physics:velocity = 0
+            }
+
+            over "right_motor"
+            {
+                float drive:angular:physics:stiffness = 0
+                float state:angular:physics:position = 0
+                float state:angular:physics:velocity = 0
+            }
+
+            over "caster_steering_joint" (
+                delete apiSchemas = ["PhysicsJointStateAPI:angular", "PhysicsDriveAPI:angular"]
+            )
+            {
+            }
+
+            over "visuals" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/spesbot_raw/Looks/Aluminum_Cast> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+            }
+
+            def Camera "Camera"
+            {
+                float2 clippingRange = (0.01, 10000000)
+                float focalLength = 18.147562
+                float focusDistance = 400
+                quatd xformOp:orient = (0.6408563820557884, 0.2988362387301199, -0.2988362387301199, -0.6408563820557887)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (-0.08252304704609752, 0, 0.4)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+        }
+
+        over "caster_holder_link"
+        {
+            over "caster_wheel_joint" (
+                delete apiSchemas = ["PhysicsDriveAPI:angular", "PhysicsJointStateAPI:angular"]
+            )
+            {
+            }
+
+            over "visuals" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/spesbot_raw/Looks/Cloth_Gray> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+            }
+        }
+
+        over "Looks"
+        {
+            over "material_DefaultMaterial" (
+                active = false
+            )
+            {
+            }
+
+            def Material "Aluminum_Cast"
+            {
+                token outputs:mdl:displacement.connect = </World/spesbot_raw/Looks/Aluminum_Cast/Shader.outputs:out>
+                token outputs:mdl:surface.connect = </World/spesbot_raw/Looks/Aluminum_Cast/Shader.outputs:out>
+                token outputs:mdl:volume.connect = </World/spesbot_raw/Looks/Aluminum_Cast/Shader.outputs:out>
+
+                def Shader "Shader"
+                {
+                    uniform token info:implementationSource = "sourceAsset"
+                    uniform asset info:mdl:sourceAsset = @http://omniverse-content-production.s3-us-west-2.amazonaws.com/Materials/Base/Metals/Aluminum_Cast.mdl@
+                    uniform token info:mdl:sourceAsset:subIdentifier = "Aluminum_Cast"
+                    token outputs:out (
+                        renderType = "material"
+                    )
+                }
+            }
+
+            def Material "Cloth_Gray"
+            {
+                token outputs:mdl:displacement.connect = </World/spesbot_raw/Looks/Cloth_Gray/Shader.outputs:out>
+                token outputs:mdl:surface.connect = </World/spesbot_raw/Looks/Cloth_Gray/Shader.outputs:out>
+                token outputs:mdl:volume.connect = </World/spesbot_raw/Looks/Cloth_Gray/Shader.outputs:out>
+
+                def Shader "Shader"
+                {
+                    uniform token info:implementationSource = "sourceAsset"
+                    uniform asset info:mdl:sourceAsset = @http://omniverse-content-production.s3-us-west-2.amazonaws.com/Materials/Base/Textiles/Cloth_Gray.mdl@
+                    uniform token info:mdl:sourceAsset:subIdentifier = "Cloth_Gray"
+                    token outputs:out (
+                        renderType = "material"
+                    )
+                }
+            }
+
+            def Material "Rubber_Smooth"
+            {
+                token outputs:mdl:displacement.connect = </World/spesbot_raw/Looks/Rubber_Smooth/Shader.outputs:out>
+                token outputs:mdl:surface.connect = </World/spesbot_raw/Looks/Rubber_Smooth/Shader.outputs:out>
+                token outputs:mdl:volume.connect = </World/spesbot_raw/Looks/Rubber_Smooth/Shader.outputs:out>
+
+                def Shader "Shader"
+                {
+                    uniform token info:implementationSource = "sourceAsset"
+                    uniform asset info:mdl:sourceAsset = @http://omniverse-content-production.s3-us-west-2.amazonaws.com/Materials/Base/Plastics/Rubber_Smooth.mdl@
+                    uniform token info:mdl:sourceAsset:subIdentifier = "Rubber_Smooth"
+                    token outputs:out (
+                        renderType = "material"
+                    )
+                }
+            }
+        }
+
+        over "left_wheel_link"
+        {
+            over "visuals" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/spesbot_raw/Looks/Rubber_Smooth> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+            }
+        }
+
+        over "right_wheel_link"
+        {
+            over "visuals" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/spesbot_raw/Looks/Rubber_Smooth> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+            }
+        }
+
+        over "caster_wheel_link"
+        {
+            over "visuals" (
+                prepend apiSchemas = ["MaterialBindingAPI"]
+            )
+            {
+                rel material:binding = </World/spesbot_raw/Looks/Rubber_Smooth> (
+                    bindMaterialAs = "weakerThanDescendants"
+                )
+            }
+        }
+    }
+
+    def OmniGraph "ActionGraph"
+    {
+        token evaluationMode = "Automatic"
+        token evaluator:type = "execution"
+        token fabricCacheBacking = "Shared"
+        int2 fileFormatVersion = (1, 7)
+        token pipelineStage = "pipelineStageSimulation"
+
+        def OmniGraphNode "ros2_publish_joint_state" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom uint64 inputs:context
+            custom uint inputs:execIn
+            delete uint inputs:execIn.connect = </World/ActionGraph/on_tick.outputs:tick>
+            prepend uint inputs:execIn.connect = </World/ActionGraph/on_playback_tick.outputs:tick>
+            custom string inputs:nodeNamespace
+            custom uint64 inputs:queueSize
+            custom rel inputs:targetPrim = </World/spesbot_raw> (
+                customData = {
+                    dictionary omni = {
+                        dictionary graph = {
+                            string relType = "target"
+                        }
+                    }
+                }
+            )
+            custom double inputs:timeStamp
+            prepend double inputs:timeStamp.connect = </World/ActionGraph/isaac_read_simulation_time.outputs:simulationTime>
+            custom string inputs:topicName = "isaac/joint_states"
+            token node:type = "omni.isaac.ros2_bridge.ROS2PublishJointState"
+            int node:typeVersion = 1
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (384.526, 476.51782)
+        }
+
+        def OmniGraphNode "ros2_subscribe_joint_state" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom uint64 inputs:context
+            custom uint inputs:execIn
+            delete uint inputs:execIn.connect = </World/ActionGraph/on_tick.outputs:tick>
+            prepend uint inputs:execIn.connect = </World/ActionGraph/on_playback_tick.outputs:tick>
+            custom string inputs:nodeNamespace
+            custom uint64 inputs:queueSize
+            custom string inputs:topicName = "isaac/joint_command"
+            token node:type = "omni.isaac.ros2_bridge.ROS2SubscribeJointState"
+            int node:typeVersion = 2
+            custom double[] outputs:effortCommand
+            custom uint outputs:execOut (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            custom token[] outputs:jointNames
+            custom double[] outputs:positionCommand
+            custom double outputs:timeStamp
+            custom double[] outputs:velocityCommand
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (432.2755, 96.88762)
+        }
+
+        def OmniGraphNode "articulation_controller" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom double[] inputs:effortCommand
+            prepend double[] inputs:effortCommand.connect = </World/ActionGraph/ros2_subscribe_joint_state.outputs:effortCommand>
+            custom uint inputs:execIn
+            delete uint inputs:execIn.connect = </World/ActionGraph/on_tick.outputs:tick>
+            prepend uint inputs:execIn.connect = </World/ActionGraph/on_playback_tick.outputs:tick>
+            custom int[] inputs:jointIndices
+            custom token[] inputs:jointNames
+            prepend token[] inputs:jointNames.connect = </World/ActionGraph/ros2_subscribe_joint_state.outputs:jointNames>
+            custom double[] inputs:positionCommand
+            prepend double[] inputs:positionCommand.connect = </World/ActionGraph/ros2_subscribe_joint_state.outputs:positionCommand>
+            custom string inputs:robotPath
+            custom rel inputs:targetPrim = </World/spesbot_raw> (
+                customData = {
+                    dictionary omni = {
+                        dictionary graph = {
+                            string relType = "target"
+                        }
+                    }
+                }
+            )
+            custom bool inputs:usePath = 0
+            custom double[] inputs:velocityCommand
+            prepend double[] inputs:velocityCommand.connect = </World/ActionGraph/ros2_subscribe_joint_state.outputs:velocityCommand>
+            token node:type = "omni.isaac.core_nodes.IsaacArticulationController"
+            int node:typeVersion = 1
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (860.1669, 175.0915)
+        }
+
+        def OmniGraphNode "isaac_read_simulation_time" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom bool inputs:resetOnStop
+            custom int64 inputs:swhFrameNumber
+            token node:type = "omni.isaac.core_nodes.IsaacReadSimulationTime"
+            int node:typeVersion = 1
+            custom double outputs:simulationTime
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (115, 575)
+        }
+
+        def OmniGraphNode "on_playback_tick" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            token node:type = "omni.graph.action.OnPlaybackTick"
+            int node:typeVersion = 1
+            custom double outputs:deltaSeconds
+            custom double outputs:frame
+            custom uint outputs:tick (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            custom double outputs:time
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (-69.119156, 292.00247)
+        }
+    }
+}
+
+def Xform "Environment"
+{
+    quatd xformOp:orient = (1, 0, 0, 0)
+    double3 xformOp:scale = (1, 1, 1)
+    double3 xformOp:translate = (0, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+    def DistantLight "defaultLight" (
+        prepend apiSchemas = ["ShapingAPI"]
+    )
+    {
+        float inputs:angle = 1
+        float inputs:intensity = 3000
+        float inputs:shaping:cone:angle = 180
+        float inputs:shaping:cone:softness
+        float inputs:shaping:focus
+        color3f inputs:shaping:focusTint
+        asset inputs:shaping:ies:file
+        quatd xformOp:orient = (0.6532814824381883, 0.2705980500730985, 0.27059805007309845, 0.6532814824381882)
+        double3 xformOp:scale = (1, 1, 1)
+        double3 xformOp:translate = (0, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+    }
+
+    def Xform "GroundPlane"
+    {
+        quatf xformOp:orient = (1, 0, 0, 0)
+        float3 xformOp:scale = (1, 1, 1)
+        double3 xformOp:translate = (0, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+        def Mesh "CollisionMesh"
+        {
+            uniform bool doubleSided = 0
+            int[] faceVertexCounts = [4]
+            int[] faceVertexIndices = [0, 1, 2, 3]
+            normal3f[] normals = [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)]
+            point3f[] points = [(-25, -25, 0), (25, -25, 0), (25, 25, 0), (-25, 25, 0)]
+            color3f[] primvars:displayColor = [(0.5, 0.5, 0.5)]
+            texCoord2f[] primvars:st = [(0, 0), (1, 0), (1, 1), (0, 1)] (
+                interpolation = "varying"
+            )
+        }
+
+        def Plane "CollisionPlane" (
+            prepend apiSchemas = ["PhysicsCollisionAPI"]
+        )
+        {
+            uniform token axis = "Z"
+            uniform token purpose = "guide"
+        }
+    }
+
+    def Mesh "Cylinder"
+    {
+        float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+        int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+        int[] faceVertexIndices = [0, 1, 33, 32, 1, 2, 34, 33, 2, 3, 35, 34, 3, 4, 36, 35, 4, 5, 37, 36, 5, 6, 38, 37, 6, 7, 39, 38, 7, 8, 40, 39, 8, 9, 41, 40, 9, 10, 42, 41, 10, 11, 43, 42, 11, 12, 44, 43, 12, 13, 45, 44, 13, 14, 46, 45, 14, 15, 47, 46, 15, 16, 48, 47, 16, 17, 49, 48, 17, 18, 50, 49, 18, 19, 51, 50, 19, 20, 52, 51, 20, 21, 53, 52, 21, 22, 54, 53, 22, 23, 55, 54, 23, 24, 56, 55, 24, 25, 57, 56, 25, 26, 58, 57, 26, 27, 59, 58, 27, 28, 60, 59, 28, 29, 61, 60, 29, 30, 62, 61, 30, 31, 63, 62, 31, 0, 32, 63, 0, 64, 1, 1, 64, 2, 2, 64, 3, 3, 64, 4, 4, 64, 5, 5, 64, 6, 6, 64, 7, 7, 64, 8, 8, 64, 9, 9, 64, 10, 10, 64, 11, 11, 64, 12, 12, 64, 13, 13, 64, 14, 14, 64, 15, 15, 64, 16, 16, 64, 17, 17, 64, 18, 18, 64, 19, 19, 64, 20, 20, 64, 21, 21, 64, 22, 22, 64, 23, 23, 64, 24, 24, 64, 25, 25, 64, 26, 26, 64, 27, 27, 64, 28, 28, 64, 29, 29, 64, 30, 30, 64, 31, 31, 64, 0, 32, 33, 65, 33, 34, 65, 34, 35, 65, 35, 36, 65, 36, 37, 65, 37, 38, 65, 38, 39, 65, 39, 40, 65, 40, 41, 65, 41, 42, 65, 42, 43, 65, 43, 44, 65, 44, 45, 65, 45, 46, 65, 46, 47, 65, 47, 48, 65, 48, 49, 65, 49, 50, 65, 50, 51, 65, 51, 52, 65, 52, 53, 65, 53, 54, 65, 54, 55, 65, 55, 56, 65, 56, 57, 65, 57, 58, 65, 58, 59, 65, 59, 60, 65, 60, 61, 65, 61, 62, 65, 62, 63, 65, 63, 32, 65]
+        normal3f[] normals = [(50, 0, 0), (49.03926, 9.754517, 0), (49.03926, 9.754517, 0), (50, 0, 0), (49.03926, 9.754517, 0), (46.193974, 19.13417, 0), (46.193974, 19.13417, 0), (49.03926, 9.754517, 0), (46.193974, 19.13417, 0), (41.57348, 27.778513, 0), (41.57348, 27.778513, 0), (46.193974, 19.13417, 0), (41.57348, 27.778513, 0), (35.35534, 35.35534, 0), (35.35534, 35.35534, 0), (41.57348, 27.778513, 0), (35.35534, 35.35534, 0), (27.778513, 41.57348, 0), (27.778513, 41.57348, 0), (35.35534, 35.35534, 0), (27.778513, 41.57348, 0), (19.13417, 46.193974, 0), (19.13417, 46.193974, 0), (27.778513, 41.57348, 0), (19.13417, 46.193974, 0), (9.754517, 49.03926, 0), (9.754517, 49.03926, 0), (19.13417, 46.193974, 0), (9.754517, 49.03926, 0), (3.061617e-15, 50, 0), (3.061617e-15, 50, 0), (9.754517, 49.03926, 0), (3.061617e-15, 50, 0), (-9.754517, 49.03926, 0), (-9.754517, 49.03926, 0), (3.061617e-15, 50, 0), (-9.754517, 49.03926, 0), (-19.13417, 46.193974, 0), (-19.13417, 46.193974, 0), (-9.754517, 49.03926, 0), (-19.13417, 46.193974, 0), (-27.778513, 41.57348, 0), (-27.778513, 41.57348, 0), (-19.13417, 46.193974, 0), (-27.778513, 41.57348, 0), (-35.35534, 35.35534, 0), (-35.35534, 35.35534, 0), (-27.778513, 41.57348, 0), (-35.35534, 35.35534, 0), (-41.57348, 27.778513, 0), (-41.57348, 27.778513, 0), (-35.35534, 35.35534, 0), (-41.57348, 27.778513, 0), (-46.193974, 19.13417, 0), (-46.193974, 19.13417, 0), (-41.57348, 27.778513, 0), (-46.193974, 19.13417, 0), (-49.03926, 9.754517, 0), (-49.03926, 9.754517, 0), (-46.193974, 19.13417, 0), (-49.03926, 9.754517, 0), (-50, 6.123234e-15, 0), (-50, 6.123234e-15, 0), (-49.03926, 9.754517, 0), (-50, 6.123234e-15, 0), (-49.03926, -9.754517, 0), (-49.03926, -9.754517, 0), (-50, 6.123234e-15, 0), (-49.03926, -9.754517, 0), (-46.193974, -19.13417, 0), (-46.193974, -19.13417, 0), (-49.03926, -9.754517, 0), (-46.193974, -19.13417, 0), (-41.57348, -27.778513, 0), (-41.57348, -27.778513, 0), (-46.193974, -19.13417, 0), (-41.57348, -27.778513, 0), (-35.35534, -35.35534, 0), (-35.35534, -35.35534, 0), (-41.57348, -27.778513, 0), (-35.35534, -35.35534, 0), (-27.778513, -41.57348, 0), (-27.778513, -41.57348, 0), (-35.35534, -35.35534, 0), (-27.778513, -41.57348, 0), (-19.13417, -46.193974, 0), (-19.13417, -46.193974, 0), (-27.778513, -41.57348, 0), (-19.13417, -46.193974, 0), (-9.754517, -49.03926, 0), (-9.754517, -49.03926, 0), (-19.13417, -46.193974, 0), (-9.754517, -49.03926, 0), (-9.184851e-15, -50, 0), (-9.184851e-15, -50, 0), (-9.754517, -49.03926, 0), (-9.184851e-15, -50, 0), (9.754517, -49.03926, 0), (9.754517, -49.03926, 0), (-9.184851e-15, -50, 0), (9.754517, -49.03926, 0), (19.13417, -46.193974, 0), (19.13417, -46.193974, 0), (9.754517, -49.03926, 0), (19.13417, -46.193974, 0), (27.778513, -41.57348, 0), (27.778513, -41.57348, 0), (19.13417, -46.193974, 0), (27.778513, -41.57348, 0), (35.35534, -35.35534, 0), (35.35534, -35.35534, 0), (27.778513, -41.57348, 0), (35.35534, -35.35534, 0), (41.57348, -27.778513, 0), (41.57348, -27.778513, 0), (35.35534, -35.35534, 0), (41.57348, -27.778513, 0), (46.193974, -19.13417, 0), (46.193974, -19.13417, 0), (41.57348, -27.778513, 0), (46.193974, -19.13417, 0), (49.03926, -9.754517, 0), (49.03926, -9.754517, 0), (46.193974, -19.13417, 0), (49.03926, -9.754517, 0), (50, 0, 0), (50, 0, 0), (49.03926, -9.754517, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)] (
+            interpolation = "faceVarying"
+        )
+        point3f[] points = [(0.5, 0, -0.5), (0.4903926, 0.09754517, -0.5), (0.46193972, 0.1913417, -0.5), (0.4157348, 0.27778512, -0.5), (0.35355338, 0.35355338, -0.5), (0.27778512, 0.4157348, -0.5), (0.1913417, 0.46193972, -0.5), (0.09754517, 0.4903926, -0.5), (3.061617e-17, 0.5, -0.5), (-0.09754517, 0.4903926, -0.5), (-0.1913417, 0.46193972, -0.5), (-0.27778512, 0.4157348, -0.5), (-0.35355338, 0.35355338, -0.5), (-0.4157348, 0.27778512, -0.5), (-0.46193972, 0.1913417, -0.5), (-0.4903926, 0.09754517, -0.5), (-0.5, 6.123234e-17, -0.5), (-0.4903926, -0.09754517, -0.5), (-0.46193972, -0.1913417, -0.5), (-0.4157348, -0.27778512, -0.5), (-0.35355338, -0.35355338, -0.5), (-0.27778512, -0.4157348, -0.5), (-0.1913417, -0.46193972, -0.5), (-0.09754517, -0.4903926, -0.5), (-9.184851e-17, -0.5, -0.5), (0.09754517, -0.4903926, -0.5), (0.1913417, -0.46193972, -0.5), (0.27778512, -0.4157348, -0.5), (0.35355338, -0.35355338, -0.5), (0.4157348, -0.27778512, -0.5), (0.46193972, -0.1913417, -0.5), (0.4903926, -0.09754517, -0.5), (0.5, 0, 0.5), (0.4903926, 0.09754517, 0.5), (0.46193972, 0.1913417, 0.5), (0.4157348, 0.27778512, 0.5), (0.35355338, 0.35355338, 0.5), (0.27778512, 0.4157348, 0.5), (0.1913417, 0.46193972, 0.5), (0.09754517, 0.4903926, 0.5), (3.061617e-17, 0.5, 0.5), (-0.09754517, 0.4903926, 0.5), (-0.1913417, 0.46193972, 0.5), (-0.27778512, 0.4157348, 0.5), (-0.35355338, 0.35355338, 0.5), (-0.4157348, 0.27778512, 0.5), (-0.46193972, 0.1913417, 0.5), (-0.4903926, 0.09754517, 0.5), (-0.5, 6.123234e-17, 0.5), (-0.4903926, -0.09754517, 0.5), (-0.46193972, -0.1913417, 0.5), (-0.4157348, -0.27778512, 0.5), (-0.35355338, -0.35355338, 0.5), (-0.27778512, -0.4157348, 0.5), (-0.1913417, -0.46193972, 0.5), (-0.09754517, -0.4903926, 0.5), (-9.184851e-17, -0.5, 0.5), (0.09754517, -0.4903926, 0.5), (0.1913417, -0.46193972, 0.5), (0.27778512, -0.4157348, 0.5), (0.35355338, -0.35355338, 0.5), (0.4157348, -0.27778512, 0.5), (0.46193972, -0.1913417, 0.5), (0.4903926, -0.09754517, 0.5), (0, 0, -0.5), (0, 0, 0.5)]
+        texCoord2f[] primvars:st = [(0, 0), (0.03125, 0), (0.03125, 1), (0, 1), (0.03125, 0), (0.0625, 0), (0.0625, 1), (0.03125, 1), (0.0625, 0), (0.09375, 0), (0.09375, 1), (0.0625, 1), (0.09375, 0), (0.125, 0), (0.125, 1), (0.09375, 1), (0.125, 0), (0.15625, 0), (0.15625, 1), (0.125, 1), (0.15625, 0), (0.1875, 0), (0.1875, 1), (0.15625, 1), (0.1875, 0), (0.21875, 0), (0.21875, 1), (0.1875, 1), (0.21875, 0), (0.25, 0), (0.25, 1), (0.21875, 1), (0.25, 0), (0.28125, 0), (0.28125, 1), (0.25, 1), (0.28125, 0), (0.3125, 0), (0.3125, 1), (0.28125, 1), (0.3125, 0), (0.34375, 0), (0.34375, 1), (0.3125, 1), (0.34375, 0), (0.375, 0), (0.375, 1), (0.34375, 1), (0.375, 0), (0.40625, 0), (0.40625, 1), (0.375, 1), (0.40625, 0), (0.4375, 0), (0.4375, 1), (0.40625, 1), (0.4375, 0), (0.46875, 0), (0.46875, 1), (0.4375, 1), (0.46875, 0), (0.5, 0), (0.5, 1), (0.46875, 1), (0.5, 0), (0.53125, 0), (0.53125, 1), (0.5, 1), (0.53125, 0), (0.5625, 0), (0.5625, 1), (0.53125, 1), (0.5625, 0), (0.59375, 0), (0.59375, 1), (0.5625, 1), (0.59375, 0), (0.625, 0), (0.625, 1), (0.59375, 1), (0.625, 0), (0.65625, 0), (0.65625, 1), (0.625, 1), (0.65625, 0), (0.6875, 0), (0.6875, 1), (0.65625, 1), (0.6875, 0), (0.71875, 0), (0.71875, 1), (0.6875, 1), (0.71875, 0), (0.75, 0), (0.75, 1), (0.71875, 1), (0.75, 0), (0.78125, 0), (0.78125, 1), (0.75, 1), (0.78125, 0), (0.8125, 0), (0.8125, 1), (0.78125, 1), (0.8125, 0), (0.84375, 0), (0.84375, 1), (0.8125, 1), (0.84375, 0), (0.875, 0), (0.875, 1), (0.84375, 1), (0.875, 0), (0.90625, 0), (0.90625, 1), (0.875, 1), (0.90625, 0), (0.9375, 0), (0.9375, 1), (0.90625, 1), (0.9375, 0), (0.96875, 0), (0.96875, 1), (0.9375, 1), (0.96875, 0), (1, 0), (1, 1), (0.96875, 1), (1, 0.5), (0.5, 0.5), (0.99039257, 0.40245485), (0.99039257, 0.40245485), (0.5, 0.5), (0.9619397, 0.3086583), (0.9619397, 0.3086583), (0.5, 0.5), (0.91573477, 0.22221488), (0.91573477, 0.22221488), (0.5, 0.5), (0.8535534, 0.14644659), (0.8535534, 0.14644659), (0.5, 0.5), (0.7777851, 0.08426523), (0.7777851, 0.08426523), (0.5, 0.5), (0.6913417, 0.038060308), (0.6913417, 0.038060308), (0.5, 0.5), (0.59754515, 0.009607434), (0.59754515, 0.009607434), (0.5, 0.5), (0.5, 0), (0.5, 0), (0.5, 0.5), (0.40245482, 0.009607434), (0.40245482, 0.009607434), (0.5, 0.5), (0.3086583, 0.038060308), (0.3086583, 0.038060308), (0.5, 0.5), (0.22221488, 0.08426523), (0.22221488, 0.08426523), (0.5, 0.5), (0.14644662, 0.14644659), (0.14644662, 0.14644659), (0.5, 0.5), (0.0842652, 0.22221488), (0.0842652, 0.22221488), (0.5, 0.5), (0.038060278, 0.3086583), (0.038060278, 0.3086583), (0.5, 0.5), (0.0096074045, 0.40245485), (0.0096074045, 0.40245485), (0.5, 0.5), (0, 0.5), (0, 0.5), (0.5, 0.5), (0.0096074045, 0.59754515), (0.0096074045, 0.59754515), (0.5, 0.5), (0.038060278, 0.6913417), (0.038060278, 0.6913417), (0.5, 0.5), (0.0842652, 0.7777851), (0.0842652, 0.7777851), (0.5, 0.5), (0.14644662, 0.8535534), (0.14644662, 0.8535534), (0.5, 0.5), (0.22221488, 0.91573477), (0.22221488, 0.91573477), (0.5, 0.5), (0.3086583, 0.9619397), (0.3086583, 0.9619397), (0.5, 0.5), (0.40245482, 0.99039257), (0.40245482, 0.99039257), (0.5, 0.5), (0.5, 1), (0.5, 1), (0.5, 0.5), (0.59754515, 0.99039257), (0.59754515, 0.99039257), (0.5, 0.5), (0.6913417, 0.9619397), (0.6913417, 0.9619397), (0.5, 0.5), (0.7777851, 0.91573477), (0.7777851, 0.91573477), (0.5, 0.5), (0.8535534, 0.8535534), (0.8535534, 0.8535534), (0.5, 0.5), (0.91573477, 0.7777851), (0.91573477, 0.7777851), (0.5, 0.5), (0.9619397, 0.6913417), (0.9619397, 0.6913417), (0.5, 0.5), (0.99039257, 0.59754515), (0.99039257, 0.59754515), (0.5, 0.5), (1, 0.5), (1, 0.5), (0.99039257, 0.59754515), (0.5, 0.5), (0.99039257, 0.59754515), (0.9619397, 0.6913417), (0.5, 0.5), (0.9619397, 0.6913417), (0.91573477, 0.7777851), (0.5, 0.5), (0.91573477, 0.7777851), (0.8535534, 0.8535534), (0.5, 0.5), (0.8535534, 0.8535534), (0.7777851, 0.91573477), (0.5, 0.5), (0.7777851, 0.91573477), (0.6913417, 0.9619397), (0.5, 0.5), (0.6913417, 0.9619397), (0.59754515, 0.99039257), (0.5, 0.5), (0.59754515, 0.99039257), (0.5, 1), (0.5, 0.5), (0.5, 1), (0.40245482, 0.99039257), (0.5, 0.5), (0.40245482, 0.99039257), (0.3086583, 0.9619397), (0.5, 0.5), (0.3086583, 0.9619397), (0.22221488, 0.91573477), (0.5, 0.5), (0.22221488, 0.91573477), (0.14644662, 0.8535534), (0.5, 0.5), (0.14644662, 0.8535534), (0.0842652, 0.7777851), (0.5, 0.5), (0.0842652, 0.7777851), (0.038060278, 0.6913417), (0.5, 0.5), (0.038060278, 0.6913417), (0.0096074045, 0.59754515), (0.5, 0.5), (0.0096074045, 0.59754515), (0, 0.5), (0.5, 0.5), (0, 0.5), (0.0096074045, 0.40245482), (0.5, 0.5), (0.0096074045, 0.40245482), (0.038060278, 0.3086583), (0.5, 0.5), (0.038060278, 0.3086583), (0.0842652, 0.22221488), (0.5, 0.5), (0.0842652, 0.22221488), (0.14644662, 0.14644662), (0.5, 0.5), (0.14644662, 0.14644662), (0.22221488, 0.0842652), (0.5, 0.5), (0.22221488, 0.0842652), (0.3086583, 0.038060278), (0.5, 0.5), (0.3086583, 0.038060278), (0.40245482, 0.0096074045), (0.5, 0.5), (0.40245482, 0.0096074045), (0.5, 0), (0.5, 0.5), (0.5, 0), (0.59754515, 0.0096074045), (0.5, 0.5), (0.59754515, 0.0096074045), (0.6913417, 0.038060278), (0.5, 0.5), (0.6913417, 0.038060278), (0.7777851, 0.0842652), (0.5, 0.5), (0.7777851, 0.0842652), (0.8535534, 0.14644662), (0.5, 0.5), (0.8535534, 0.14644662), (0.91573477, 0.22221488), (0.5, 0.5), (0.91573477, 0.22221488), (0.9619397, 0.3086583), (0.5, 0.5), (0.9619397, 0.3086583), (0.99039257, 0.40245482), (0.5, 0.5), (0.99039257, 0.40245482), (1, 0.5), (0.5, 0.5)] (
+            interpolation = "faceVarying"
+        )
+        uniform token subdivisionScheme = "none"
+        quatd xformOp:orient = (1, 0, 0, 0)
+        double3 xformOp:scale = (1, 1, 1)
+        double3 xformOp:translate = (1.2115703822657065, 0.007166017259538908, 0.5)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+    }
+}
+
