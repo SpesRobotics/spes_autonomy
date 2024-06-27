@@ -61,13 +61,16 @@ COPY ./docker/Webots-R2023b.conf /${DOCKERUSER}/.config/Cyberbotics/Webots-R2023
 COPY ./spes.repos /spes.repos
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
     cd /${DOCKERUSER}/ros2_libs_ws && \
-    vcs import src < /spes.repos && \
+    vcs import --recursive src < /spes.repos && \
     . /opt/ros/humble/setup.sh && \
     colcon build --symlink-install --packages-up-to \
         cartesian_motion_controller \
         cartesian_controller_handles \
         odrive_hardware_interface \
-        behaviortree_ros2
+        behaviortree_ros2 \
+        topic_based_ros2_control \
+        xarm_controller \
+        xarm_description
 
 COPY ./docker/cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -77,7 +80,7 @@ ENV DOCKERUSER=${DOCKERUSER}
 COPY ./docker/bashrc /tmp/bashrc
 RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
 
-RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.4.0-x86_64.AppImage -O /usr/bin/groot2 && \
+RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.6.0-x86_64.AppImage -O /usr/bin/groot2 && \
     chmod +x /usr/bin/groot2
 
 USER ${DOCKERUSER}
