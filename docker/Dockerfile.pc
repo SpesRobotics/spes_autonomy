@@ -77,9 +77,6 @@ ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
 ENV DOCKERUSER=${DOCKERUSER}
 
-COPY ./docker/bashrc /tmp/bashrc
-RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
-
 RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.6.0-x86_64.AppImage -O /usr/bin/groot2 && \
     chmod +x /usr/bin/groot2
 
@@ -88,5 +85,8 @@ USER ${DOCKERUSER}
 RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip3 install --no-warn-script-location --user ultralytics lapx transforms3d dt_apriltags
 RUN pip3 install pymap3d
-    
+
+COPY ./docker/bashrc /tmp/bashrc
+RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
+
 WORKDIR /${DOCKERUSER}/ros2_ws
