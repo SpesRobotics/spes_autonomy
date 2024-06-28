@@ -11,6 +11,9 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
+    position_controller:
+      type: position_controllers/JointGroupPositionController
+
 motion_control_handle:
   ros__parameters:
     end_effector_link: link6
@@ -50,3 +53,8 @@ cartesian_motion_controller:
       rot_x: { p: 5.0 }
       rot_y: { p: 5.0 }
       rot_z: { p: 5.0 }
+
+position_controller:
+  ros__parameters:
+    joints:
+      - gripper_left_joint

@@ -106,23 +106,12 @@
         <state_interface name="velocity" />
         <!-- <state_interface name="effort"/> -->
       </joint>
+
+      <joint name="gripper_left_joint">
+        <command_interface name="position" />
+        <state_interface name="position" />
+      </joint>
     </ros2_control>
   </xacro:macro>
 
-
-  <ros2_control name="GripperSystem" type="system">
-    <hardware>
-      <plugin>fake_components/GenericSystem</plugin>
-    </hardware>
-
-    <joint name="gripper_left_joint">
-      <command_interface name="position" />
-      <state_interface name="position" />
-    </joint>
-
-    <joint name="gripper_right_joint">
-      <command_interface name="position" />
-      <state_interface name="position" />
-    </joint>
-  </ros2_control>
 </robot>

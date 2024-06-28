@@ -61,6 +61,13 @@ def generate_launch_description():
         output='screen'
     )
 
+    position_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['position_controller'],
+        output='screen'
+    )
+
     rviz = Node(
         package='rviz2',
         executable='rviz2',
@@ -76,5 +83,6 @@ def generate_launch_description():
         cartesian_motion_controller_spawner,
         motion_control_handle_spawner,
         joint_state_broadcaster_spawner,
-        rviz
+        rviz,
+        position_controller
     ])
