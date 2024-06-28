@@ -3,6 +3,8 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 
 
 def generate_launch_description():
@@ -10,7 +12,9 @@ def generate_launch_description():
     robot_description = xacro.process_file(robot_description_path, mappings={}).toprettyxml(indent='  ')
     controllers = os.path.join(get_package_share_directory(
         'xarm_bringup'), 'resource', 'controllers.yaml')
-
+    
+    use_rviz = LaunchConfiguration('rviz', default=True)
+    
     controller_manager = Node(
         package='controller_manager',
         executable='ros2_control_node',
@@ -37,7 +41,8 @@ def generate_launch_description():
         package='controller_manager',
         executable='spawner',
         arguments=['motion_control_handle'],
-        output='screen'
+        output='screen',
+        condition=IfCondition(use_rviz)
     )
 
     robot_state_publisher = Node(
@@ -61,7 +66,8 @@ def generate_launch_description():
         executable='rviz2',
         arguments=['-d', os.path.join(get_package_share_directory(
             'xarm_bringup'), 'resource', 'lite6_cartesian.rviz')],
-        output='screen'
+        output='screen',
+        condition=IfCondition(use_rviz)
     )
 
     return LaunchDescription([
