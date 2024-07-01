@@ -7,8 +7,8 @@
                 double radius = 5
             }
             dictionary Perspective = {
-                double3 position = (2.103143997991893, 0.5740667545322982, 1.6974248183320233)
-                double3 target = (-6.915904087120943, -2.3521208757843177, -5.947788399976706)
+                double3 position = (0.4610491114905696, 0.7718617735742752, 0.45784414261784123)
+                double3 target = (-4.330172707891254, -10.947102265991884, -4.4745220753634385)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -458,7 +458,7 @@ def Xform "World" (
     {
         quatd xformOp:orient = (1, 0, 0, 0)
         double3 xformOp:scale = (1, 1, 1)
-        double3 xformOp:translate = (0.2, 0.05, 0)
+        double3 xformOp:translate = (0.25, 0.05, 0)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
         def Cube "Cube" (
@@ -474,7 +474,7 @@ def Xform "World" (
             bool physics:rigidBodyEnabled = 1
             double size = 1
             quatd xformOp:orient = (1, 0, 0, 0)
-            double3 xformOp:scale = (0.023, 0.04, 0.023)
+            double3 xformOp:scale = (0.027, 0.04, 0.023)
             double3 xformOp:translate = (0, 0, 0.02)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
         }
