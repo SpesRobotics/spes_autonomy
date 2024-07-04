@@ -14,6 +14,26 @@ controller_manager:
     position_controller:
       type: position_controllers/JointGroupPositionController
 
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+joint_trajectory_controller:
+  ros__parameters:
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+      - joint6
+    state_publish_rate: 100.0
+    allow_partial_joints_goal: true
+
 motion_control_handle:
   ros__parameters:
     end_effector_link: link6

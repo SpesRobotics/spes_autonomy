@@ -23,6 +23,31 @@ ros2 topic pub -r 10 /target_frame geometry_msgs/msg/PoseStamped '{header: {fram
 ros2 topic echo /current_pose
 ```
 
+## Moving to Joint Configuration
+```bash
+ros2 service call /controller_manager/switch_controller controller_manager_msgs/srv/SwitchController '{activate_controllers: ["joint_trajectory_controller"], deactivate_controllers: ["cartesian_motion_controller"], strictness: 2, activate_asap: true}'
+
+# You can use either action
+ros2 action send_goal /joint_trajectory_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory "{
+  trajectory: {
+    joint_names: [joint1, joint2, joint3, joint4, joint5, joint6],
+    points: [
+      { positions: [0, 0, 0, 0, 0, 0], time_from_start: { sec: 1, nanosec: 0 } },
+    ]
+  }
+}"
+
+# or topic
+ros2 topic pub -1 /joint_trajectory_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{
+    joint_names: [joint1, joint2, joint3, joint4, joint5, joint6],
+    points: [
+        { positions: [0, 0, 0, 0, 0, 0], time_from_start: { sec: 1, nanosec: 0 } },
+    ]
+}"
+
+ros2 service call /controller_manager/switch_controller controller_manager_msgs/srv/SwitchController '{deactivate_controllers: ["joint_trajectory_controller"], activate_controllers: ["cartesian_motion_controller"], strictness: 2, activate_asap: true}'
+```
+
 
 ## Gripper Control (Isaac Only)
 

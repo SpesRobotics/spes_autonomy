@@ -77,7 +77,15 @@ def generate_launch_description():
         condition=IfCondition(use_rviz)
     )
 
+    joint_trajectory_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_trajectory_controller', '--inactive'],
+        output='screen'
+    )
+
     return LaunchDescription([
+        joint_trajectory_controller,
         controller_manager,
         robot_state_publisher,
         cartesian_motion_controller_spawner,
