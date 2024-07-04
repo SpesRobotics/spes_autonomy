@@ -2,11 +2,13 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, Twist
 from std_msgs.msg import Float64MultiArray
-from sensor_msgs.msg import JointState
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from controller_manager_msgs.srv import SwitchController
+
 import tf2_ros
 import time
 from enum import Enum
-import subprocess
+import subprocess, re
 
 class EnvStates(Enum):
     IDLE = 0
@@ -17,21 +19,23 @@ class EnvStates(Enum):
     DOWN = 5
     MOVE = 6
 
-def spawn_controller(controller_name):
-    cmd = [
-        'ros2', 'run', 'controller_manager', 'spawner',
-        '-c', 'controller_manager',
-        controller_name
-    ]
-    subprocess.run(cmd)
 
-def unspawn_controller(controller_name):
-    cmd = [
-        'ros2', 'run', 'controller_manager', 'unspawner',
-        '-c', 'controller_manager',
-        controller_name
-    ]
-    subprocess.run(cmd)
+
+def call_ros2_service(activate_controllers, deactivate_controllers):
+    service_name = '/controller_manager/switch_controller'
+    service_type = 'controller_manager_msgs/srv/SwitchController'
+    strictness = '2'
+    activate_asap = 'true'
+
+    command = f'ros2 service call {service_name} {service_type} "{{activate_controllers: [\"{activate_controllers}\"], deactivate_controllers: [\"{deactivate_controllers}\"], strictness: {strictness}, activate_asap: {activate_asap}}}"'
+    try:
+        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        match = re.search(r'response:\n(.*)', result.stdout, re.DOTALL)
+        print(f"{activate_controllers}:", match.group(1).strip())
+    except subprocess.CalledProcessError as e:
+        print(f"Error calling ROS 2 service: {e}")
+
+
 
 class Test(Node):
     def __init__(self):
@@ -42,25 +46,28 @@ class Test(Node):
 
         self.publisher_gripper = self.create_publisher(Float64MultiArray, '/position_controller/commands', 10)
         self.publisher_respawn = self.create_publisher(Twist, '/respawn', 10)
+        self.publisher_joint_init = self.create_publisher(JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 10)
 
-        self.publisher_joint_position = self.create_publisher(JointState, '/isaac/joint_command', 10)
+        self.switch_service = self.create_client(SwitchController, '/controller_manager/switch_controller')
+        while not self.switch_service.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Switch service not available, waiting again...')
 
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
         self.current_pose = PoseStamped()
 
-        self.joint_state = JointState()
+        self.joint_state = JointTrajectory()
+        self.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+        
+        point = JointTrajectoryPoint()
 
-        self.joint_state.header.stamp = self.get_clock().now().to_msg()
-        self.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'gripper_left_joint']
-        self.joint_position = [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093, 0.0]
+        point.positions = [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093]
+        
+        point.time_from_start.sec = 1
+        point.time_from_start.nanosec = 0
 
-        self.joint_state.name = self.joint_names
-        self.joint_state.position = self.joint_position
-        self.joint_state.velocity = [0.0 for _ in self.joint_names]
-        self.joint_state.effort = []
-
-        self.publisher_joint_position.publish(self.joint_state)
+        self.joint_state.points = [point]
+        self.joint_state.joint_names = self.joint_names
 
         msg_arr = Twist()
         self.publisher_respawn.publish(msg_arr)
@@ -68,11 +75,49 @@ class Test(Node):
         self.start_time = time.time()
         self.is_object_picked = False
         self.next_episode_trigger = False
-        self.is_init = True
+        self.is_arm_init = False
+        self.is_trajectory_controler_active = False
 
         self.transform = None
-
         self.state = EnvStates.IDLE
+    
+
+    def switch_motion_controller(self, activate_controllers, deactivate_controllers) :
+        request = SwitchController.Request()
+        request.activate_controllers = [activate_controllers]
+        request.deactivate_controllers = [deactivate_controllers]
+        request.strictness = 2
+        request.activate_asap = True
+
+        self.switch_service.call(request)
+
+    def switch_motion_controller_ex(self, activate_controllers, deactivate_controllers):
+        request = SwitchController.Request()
+        request.activate_controllers = [activate_controllers]
+        request.deactivate_controllers = [deactivate_controllers]
+        request.strictness = 2
+        request.activate_asap = True
+        
+        result = self.switch_service.call(request)
+
+        
+        time.sleep(10)
+        print(result)
+        
+        print('+++')
+        # rclpy.spin_until_future_complete(self, future)
+        # self.get_logger().error('++++++++++++++++++++++++++++++++++++=')
+        # if future.result() is not None:
+        #     self.get_logger().info('Switched to Cartesian motion controller successfully')
+        # else:
+        #     self.get_logger().error('Failed to switch controllers:')
+        #     self.get_logger().error(str(future.exception()))
+
+        #     response = future.result()
+        #     if response is not None:
+        #         self.get_logger().error(f'Response: {response}')
+
+
 
     def get_transform(self, target_frame, source_frame):
         try:
@@ -83,6 +128,7 @@ class Test(Node):
             return None
 
     def publish_pose(self):
+
         epsilon = 0.003
         self.current_pose.header.stamp = self.get_clock().now().to_msg()
         self.current_pose.header.frame_id = 'link_base'
@@ -91,8 +137,19 @@ class Test(Node):
         if gripper2target is None:
             return
         
+        if not self.is_arm_init:
+            call_ros2_service('joint_trajectory_controller', 'cartesian_motion_controller')
+            self.joint_state.header.stamp = self.get_clock().now().to_msg()
+            self.publisher_joint_init.publish(self.joint_state)
+            self.is_arm_init = True
+            self.get_logger().info(f'Arm inited...')
+            self.start_time = time.time()
+
+        
         if self.state == EnvStates.IDLE:
             if time.time() - self.start_time > 3.0:
+                call_ros2_service('cartesian_motion_controller', 'joint_trajectory_controller')
+                self.is_trajectory_controler_active = False
                 self.transform = self.get_transform('link_base', 'pick_target')
             
                 if self.transform is None:
@@ -100,7 +157,6 @@ class Test(Node):
                 self.get_logger().info('Start...')
 
                 self.state = EnvStates.MOVE
-                self.is_init = False
 
         elif self.state == EnvStates.MOVE:
             if gripper2target.transform.translation.x > epsilon or gripper2target.transform.translation.y > epsilon or gripper2target.transform.translation.z > epsilon:
@@ -160,14 +216,13 @@ class Test(Node):
                 self.publisher_gripper.publish(msg)
                 self.get_logger().info('Open gripper!')
 
-                unspawn_controller('cartesian_motion_controller')
-                unspawn_controller('joint_state_broadcaster')
-                unspawn_controller('position_controller')
-
         elif self.state == EnvStates.RESET:
-            
-            self.publisher_joint_position.publish(self.joint_state)
-            self.get_logger().info('-------------------------------------------')
+            if not self.is_trajectory_controler_active:
+                call_ros2_service('joint_trajectory_controller', 'cartesian_motion_controller')
+                self.is_trajectory_controler_active = True
+                self.joint_state.header.stamp = self.get_clock().now().to_msg()
+                self.publisher_joint_init.publish(self.joint_state)
+                self.get_logger().info(f'Arm inited...')
             
             if time.time() - self.start_time > 10.0 and self.next_episode_trigger:
                 self.state = EnvStates.IDLE
@@ -177,10 +232,6 @@ class Test(Node):
                 msg_arr = Twist()
                 self.publisher_respawn.publish(msg_arr)
                 self.get_logger().info('Move object to the random position!')
-
-                spawn_controller('cartesian_motion_controller')
-                spawn_controller('position_controller')
-                spawn_controller('joint_state_broadcaster')
             
         else:
             self.state = EnvStates.IDLE

@@ -41,7 +41,7 @@ ros2 action send_goal /joint_trajectory_controller/follow_joint_trajectory contr
 ros2 topic pub -1 /joint_trajectory_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{
     joint_names: [joint1, joint2, joint3, joint4, joint5, joint6],
     points: [
-        { positions: [0, 0, 0, 0, 0, 0], time_from_start: { sec: 1, nanosec: 0 } },
+        { positions: [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093], time_from_start: { sec: 1, nanosec: 0 } },
     ]
 }"
 
