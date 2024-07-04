@@ -27,7 +27,8 @@
             </visual>
             <collision>
                 <geometry>
-                    <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" />
+                    <!-- <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" /> -->
+                    <box size="0.018 0.018 0.021" />
                 </geometry>
                 <origin rpy="0 0 3.14159" xyz="0 0 0" />
             </collision>
@@ -52,7 +53,8 @@
             </visual>
             <collision>
                 <geometry>
-                    <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" />
+                    <!-- <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" /> -->
+                    <box size="0.018 0.018 0.021" />
                 </geometry>
             </collision>
             <inertial>

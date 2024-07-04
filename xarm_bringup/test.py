@@ -103,20 +103,6 @@ class Test(Node):
         
         time.sleep(10)
         print(result)
-        
-        print('+++')
-        # rclpy.spin_until_future_complete(self, future)
-        # self.get_logger().error('++++++++++++++++++++++++++++++++++++=')
-        # if future.result() is not None:
-        #     self.get_logger().info('Switched to Cartesian motion controller successfully')
-        # else:
-        #     self.get_logger().error('Failed to switch controllers:')
-        #     self.get_logger().error(str(future.exception()))
-
-        #     response = future.result()
-        #     if response is not None:
-        #         self.get_logger().error(f'Response: {response}')
-
 
 
     def get_transform(self, target_frame, source_frame):
@@ -172,7 +158,7 @@ class Test(Node):
             self.current_pose.pose.orientation.z = self.transform.transform.rotation.z
             self.current_pose.pose.orientation.w = self.transform.transform.rotation.w
 
-            if round(gripper2target.transform.translation.z, 2) < -0.0245:
+            if round(gripper2target.transform.translation.z, 2) < -0.0205:
                 self.state = EnvStates.CLOSE_GRIPPER
 
         elif self.state == EnvStates.CLOSE_GRIPPER:

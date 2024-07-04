@@ -7,8 +7,8 @@
                 double radius = 5
             }
             dictionary Perspective = {
-                double3 position = (0.4610491114905696, 0.7718617735742752, 0.45784414261784123)
-                double3 target = (-4.330172707891254, -10.947102265991884, -4.4745220753634385)
+                double3 position = (0.7047912883088662, 0.6089703052995792, 0.7701424084423895)
+                double3 target = (-7.758265361527779, -13.686176916158287, -11.86829890406616)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -205,7 +205,7 @@ def Xform "World" (
                 float horizontalAperture = 40.955
                 quatd xformOp:orient = (6.123233995736766e-17, -0.7071067811865476, -0.7071067811865475, -4.329780281177466e-17)
                 double3 xformOp:scale = (1, 1, 1)
-                double3 xformOp:translate = (0.12, 1.3353245366985987e-7, -0.09)
+                double3 xformOp:translate = (0.055, 1.3353245366985987e-7, 0)
                 uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
             }
 
@@ -233,6 +233,13 @@ def Xform "World" (
             rel material:binding = </World/Looks/finger_color> (
                 bindMaterialAs = "strongerThanDescendants"
             )
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysxConvexDecompositionCollisionAPI", "PhysxConvexHullCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexDecomposition"
+            }
         }
 
         over "right_finger" (
@@ -454,11 +461,13 @@ def Xform "World" (
         }
     }
 
-    def Xform "screwdriver"
+    def Xform "screwdriver" (
+        delete apiSchemas = ["PhysxMeshMergeCollisionAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+    )
     {
         quatd xformOp:orient = (1, 0, 0, 0)
         double3 xformOp:scale = (1, 1, 1)
-        double3 xformOp:translate = (0.25, 0.05, 0)
+        double3 xformOp:translate = (0.28, 0.017641973606846967, 0)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
         def Cube "Cube" (
@@ -469,12 +478,15 @@ def Xform "World" (
             rel material:binding = </World/Looks/screwdriver_orange> (
                 bindMaterialAs = "strongerThanDescendants"
             )
+            rel material:binding:physics = </World/screwdriver/PhysicsMaterial> (
+                bindMaterialAs = "strongerThanDescendants"
+            )
             bool physics:collisionEnabled = 1
             bool physics:kinematicEnabled = 0
             bool physics:rigidBodyEnabled = 1
             double size = 1
             quatd xformOp:orient = (1, 0, 0, 0)
-            double3 xformOp:scale = (0.027, 0.04, 0.023)
+            double3 xformOp:scale = (0.025, 0.04, 0.023)
             double3 xformOp:translate = (0, 0, 0.02)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
         }
@@ -492,7 +504,7 @@ def Xform "World" (
             bool physics:rigidBodyEnabled = 1
             double size = 1
             quatd xformOp:orient = (1, 0, 0, 0)
-            double3 xformOp:scale = (0.015, 0.04, 0.015)
+            double3 xformOp:scale = (0.017, 0.04, 0.015)
             double3 xformOp:translate = (0, 0.04, 0.018)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
@@ -567,7 +579,7 @@ def Xform "World" (
             )
             custom double outputs:time
             uniform token ui:nodegraph:node:expansionState = "open"
-            uniform float2 ui:nodegraph:node:pos = (-22.607283, 18.757343)
+            uniform float2 ui:nodegraph:node:pos = (-187.38805, 128.13768)
         }
 
         def OmniGraphNode "ros2_publish_transform_tree" (
@@ -582,7 +594,7 @@ def Xform "World" (
             )
             prepend uint inputs:execIn.connect = </World/ros2_position_respawn/on_playback_tick.outputs:tick>
             custom string inputs:nodeNamespace
-            custom rel inputs:parentPrim = </World/lite6/link_base> (
+            custom rel inputs:parentPrim = </World/lite6/gripper_base_link> (
                 customData = {
                     dictionary omni = {
                         dictionary graph = {
@@ -608,8 +620,157 @@ def Xform "World" (
             token node:type = "omni.isaac.ros2_bridge.ROS2PublishTransformTree"
             int node:typeVersion = 1
             uniform token ui:nodegraph:node:expansionState = "open"
-            uniform float2 ui:nodegraph:node:pos = (326.48636, 18.004698)
+            uniform float2 ui:nodegraph:node:pos = (229.89133, 242.46661)
         }
+
+        def OmniGraphNode "ros2_subscribe_twist" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom uint64 inputs:context
+            custom uint inputs:execIn (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            prepend uint inputs:execIn.connect = </World/ros2_position_respawn/on_playback_tick.outputs:tick>
+            custom string inputs:nodeNamespace
+            custom string inputs:qosProfile
+            custom uint64 inputs:queueSize
+            custom string inputs:topicName = "respawn"
+            token node:type = "omni.isaac.ros2_bridge.ROS2SubscribeTwist"
+            int node:typeVersion = 1
+            custom vector3d outputs:angularVelocity
+            custom uint outputs:execOut (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            custom vector3d outputs:linearVelocity
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (400.09076, -103.75943)
+        }
+
+        def OmniGraphNode "script_node" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom uint inputs:execIn (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            prepend uint inputs:execIn.connect = </World/ros2_position_respawn/ros2_subscribe_twist.outputs:execOut>
+            custom string inputs:script = '''import numpy as np
+import random
+from pxr import Gf
+
+def setup(db: og.Database):
+    pass
+
+
+def cleanup(db: og.Database):
+    pass
+
+
+def compute(db: og.Database):
+    stage = omni.usd.get_context().get_stage()
+    screwdriver = stage.GetPrimAtPath("/World/screwdriver/Cube/screwdriver")
+    
+    x_coor = random.uniform(0.25, 0.35)
+    y_coor = random.uniform(-0.1, 0.1)
+    new_position = Gf.Vec3d(x_coor, y_coor, 0.0)
+    
+    screwdriver.GetAttribute("xformOp:translate").Set(new_position)'''
+            custom token inputs:scriptPath
+            custom bool inputs:usePath
+            token node:type = "omni.graph.scriptnode.ScriptNode"
+            int node:typeVersion = 2
+            custom uint outputs:execOut (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            custom bool state:omni_initialized
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (804.27783, -75.276)
+        }
+
+        def OmniGraphNode "ros2_publish_raw_transform_tree" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom string inputs:childFrameId = "pick_target"
+            custom uint64 inputs:context
+            custom uint inputs:execIn (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            prepend uint inputs:execIn.connect = </World/ros2_position_respawn/on_playback_tick.outputs:tick>
+            custom string inputs:nodeNamespace
+            custom string inputs:parentFrameId = "screwdriver"
+            custom string inputs:qosProfile
+            custom uint64 inputs:queueSize
+            custom quatd inputs:rotation = (0, 0.707, 0.707, 0)
+            custom bool inputs:staticPublisher = 0
+            custom double inputs:timeStamp
+            custom string inputs:topicName
+            custom vector3d inputs:translation = (0.005, 0.005, 0.12)
+            token node:type = "omni.isaac.ros2_bridge.ROS2PublishRawTransformTree"
+            int node:typeVersion = 1
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (253.10826, 541.9804)
+        }
+
+        def OmniGraphNode "ros2_publish_transform_tree_for_gripper" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom uint64 inputs:context
+            custom uint inputs:execIn (
+                customData = {
+                    bool isExecution = 1
+                }
+            )
+            prepend uint inputs:execIn.connect = </World/ros2_position_respawn/on_playback_tick.outputs:tick>
+            custom string inputs:nodeNamespace
+            custom rel inputs:parentPrim = </World/lite6/base_link> (
+                customData = {
+                    dictionary omni = {
+                        dictionary graph = {
+                            string relType = "target"
+                        }
+                    }
+                }
+            )
+            custom string inputs:qosProfile
+            custom uint64 inputs:queueSize
+            custom bool inputs:staticPublisher
+            custom rel inputs:targetPrims = </World/lite6/gripper_base_link> (
+                customData = {
+                    dictionary omni = {
+                        dictionary graph = {
+                            string relType = "target"
+                        }
+                    }
+                }
+            )
+            custom double inputs:timeStamp
+            custom string inputs:topicName
+            token node:type = "omni.isaac.ros2_bridge.ROS2PublishTransformTree"
+            int node:typeVersion = 1
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (570.34955, 169.2905)
+        }
+    }
+
+    def PhysicsScene "PhysicsScene" (
+        prepend apiSchemas = ["PhysxSceneAPI"]
+    )
+    {
+        uniform token physxScene:broadphaseType = "SAP"
+        bool physxScene:enableGPUDynamics = 0
     }
 }
 

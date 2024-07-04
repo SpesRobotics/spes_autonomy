@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Twist
 from std_msgs.msg import Float64MultiArray
 import numpy as np
 import sys, select, termios, tty
@@ -59,6 +59,7 @@ class TeleopTwistKeyboard(Node):
         self.timer = self.create_timer(0.01, self.publish_pose)
 
         self.publisher_gripper = self.create_publisher(Float64MultiArray, '/position_controller/commands', 10)
+        self.publisher_respawn = self.create_publisher(Twist, '/respawn', 10)
 
         self.speed = 0.5
         self.turn = 1.0
@@ -107,6 +108,10 @@ class TeleopTwistKeyboard(Node):
 
                     self.is_gripper_open = (not self.is_gripper_open)
                     self.publisher_gripper.publish(msg_arr)
+                
+                if key == 'r':
+                    msg_arr = Twist()
+                    self.publisher_respawn.publish(msg_arr)
 
                 self.current_pose.header.stamp = self.get_clock().now().to_msg()
                 self.current_pose.header.frame_id = 'link_base'
