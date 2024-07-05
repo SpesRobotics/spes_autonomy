@@ -7,8 +7,8 @@
                 double radius = 5
             }
             dictionary Perspective = {
-                double3 position = (0.6162543973460077, 0.1477820016220676, 0.2346352213450045)
-                double3 target = (-16.364618823404204, -10.112877148977518, -6.251779752062681)
+                double3 position = (2.0756772258273855, 1.0296353671694138, 0.7921107977851414)
+                double3 target = (-16.364618823404257, -10.112877148977548, -6.251779752062703)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -475,6 +475,24 @@ def Xform "World" (
             uniform token ui:nodegraph:node:expansionState = "open"
             uniform float2 ui:nodegraph:node:pos = (552.00476, 509.42435)
         }
+
+        def OmniGraphNode "isaac_read_system_time" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom int64 inputs:swhFrameNumber
+            token node:type = "omni.isaac.core_nodes.IsaacReadSystemTime"
+            int node:typeVersion = 1
+            custom double outputs:systemTime
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (-117.246414, -39.250423)
+        }
+
+        over "ros2_publish_joint_state"
+        {
+            custom double inputs:timeStamp
+            prepend double inputs:timeStamp.connect = </World/ros2_graph/isaac_read_system_time.outputs:systemTime>
+        }
     }
 
     def Xform "screwdriver" (
@@ -632,6 +650,7 @@ def Xform "World" (
                 }
             )
             custom double inputs:timeStamp
+            prepend double inputs:timeStamp.connect = </World/ros2_position_respawn/isaac_read_system_time.outputs:systemTime>
             custom string inputs:topicName
             token node:type = "omni.isaac.ros2_bridge.ROS2PublishTransformTree"
             int node:typeVersion = 1
@@ -691,7 +710,7 @@ def cleanup(db: og.Database):
 
 def compute(db: og.Database):
     stage = omni.usd.get_context().get_stage()
-    screwdriver = stage.GetPrimAtPath("/World/screwdriver/Cube/screwdriver")
+    screwdriver = stage.GetPrimAtPath("/World/screwdriver")
     
     x_coor = random.uniform(0.25, 0.35)
     y_coor = random.uniform(-0.1, 0.1)
@@ -731,12 +750,25 @@ def compute(db: og.Database):
             custom quatd inputs:rotation = (0, 0.707, 0.707, 0)
             custom bool inputs:staticPublisher = 0
             custom double inputs:timeStamp
+            prepend double inputs:timeStamp.connect = </World/ros2_position_respawn/isaac_read_system_time.outputs:systemTime>
             custom string inputs:topicName
             custom vector3d inputs:translation = (0.005, 0.005, 0.12)
             token node:type = "omni.isaac.ros2_bridge.ROS2PublishRawTransformTree"
             int node:typeVersion = 1
             uniform token ui:nodegraph:node:expansionState = "open"
             uniform float2 ui:nodegraph:node:pos = (253.10826, 541.9804)
+        }
+
+        def OmniGraphNode "isaac_read_system_time" (
+            prepend apiSchemas = ["NodeGraphNodeAPI"]
+        )
+        {
+            custom int64 inputs:swhFrameNumber
+            token node:type = "omni.isaac.core_nodes.IsaacReadSystemTime"
+            int node:typeVersion = 1
+            custom double outputs:systemTime
+            uniform token ui:nodegraph:node:expansionState = "open"
+            uniform float2 ui:nodegraph:node:pos = (-433.15652, 418.21524)
         }
     }
 
