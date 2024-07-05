@@ -7,8 +7,8 @@
                 double radius = 5
             }
             dictionary Perspective = {
-                double3 position = (0.7047912883088662, 0.6089703052995792, 0.7701424084423895)
-                double3 target = (-7.758265361527779, -13.686176916158287, -11.86829890406616)
+                double3 position = (0.6162543973460077, 0.1477820016220676, 0.2346352213450045)
+                double3 target = (-16.364618823404204, -10.112877148977518, -6.251779752062681)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -123,6 +123,11 @@ def Xform "World" (
     {
         over "base_link"
         {
+            over "joint1"
+            {
+                float state:angular:physics:position = 0
+                float state:angular:physics:velocity = 0
+            }
         }
 
         over "link_base"
@@ -181,6 +186,17 @@ def Xform "World" (
 
         over "link6"
         {
+            over "gripper_left_joint"
+            {
+                float state:linear:physics:position = 0
+                float state:linear:physics:velocity = 0
+            }
+
+            over "gripper_right_joint"
+            {
+                float state:linear:physics:position = 0
+                float state:linear:physics:velocity = 0
+            }
         }
 
         over "gripper_base_link"
@@ -594,7 +610,7 @@ def Xform "World" (
             )
             prepend uint inputs:execIn.connect = </World/ros2_position_respawn/on_playback_tick.outputs:tick>
             custom string inputs:nodeNamespace
-            custom rel inputs:parentPrim = </World/lite6/gripper_base_link> (
+            custom rel inputs:parentPrim = </World/lite6/base_link> (
                 customData = {
                     dictionary omni = {
                         dictionary graph = {
@@ -721,47 +737,6 @@ def compute(db: og.Database):
             int node:typeVersion = 1
             uniform token ui:nodegraph:node:expansionState = "open"
             uniform float2 ui:nodegraph:node:pos = (253.10826, 541.9804)
-        }
-
-        def OmniGraphNode "ros2_publish_transform_tree_for_gripper" (
-            prepend apiSchemas = ["NodeGraphNodeAPI"]
-        )
-        {
-            custom uint64 inputs:context
-            custom uint inputs:execIn (
-                customData = {
-                    bool isExecution = 1
-                }
-            )
-            prepend uint inputs:execIn.connect = </World/ros2_position_respawn/on_playback_tick.outputs:tick>
-            custom string inputs:nodeNamespace
-            custom rel inputs:parentPrim = </World/lite6/base_link> (
-                customData = {
-                    dictionary omni = {
-                        dictionary graph = {
-                            string relType = "target"
-                        }
-                    }
-                }
-            )
-            custom string inputs:qosProfile
-            custom uint64 inputs:queueSize
-            custom bool inputs:staticPublisher
-            custom rel inputs:targetPrims = </World/lite6/gripper_base_link> (
-                customData = {
-                    dictionary omni = {
-                        dictionary graph = {
-                            string relType = "target"
-                        }
-                    }
-                }
-            )
-            custom double inputs:timeStamp
-            custom string inputs:topicName
-            token node:type = "omni.isaac.ros2_bridge.ROS2PublishTransformTree"
-            int node:typeVersion = 1
-            uniform token ui:nodegraph:node:expansionState = "open"
-            uniform float2 ui:nodegraph:node:pos = (570.34955, 169.2905)
         }
     }
 
