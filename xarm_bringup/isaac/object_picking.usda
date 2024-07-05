@@ -8,7 +8,7 @@
             }
             dictionary Perspective = {
                 double3 position = (2.0756772258273855, 1.0296353671694138, 0.7921107977851414)
-                double3 target = (-16.364618823404257, -10.112877148977548, -6.251779752062703)
+                double3 target = (-16.3646188234043, -10.112877148977569, -6.251779752062719)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -196,6 +196,19 @@ def Xform "World" (
             {
                 float state:linear:physics:position = 0
                 float state:linear:physics:velocity = 0
+            }
+
+            def Camera "Camera"
+            {
+                float2 clippingRange = (0.01, 10000000)
+                float focalLength = 18.147562
+                float focusDistance = 400
+                float horizontalAperture = 40.995
+                bool omni:kit:cameraLock = 1
+                quatd xformOp:orient = (6.123233995736766e-17, -0.7071067811865476, -0.7071067811865475, -4.329780281177466e-17)
+                double3 xformOp:scale = (1, 1, 1)
+                double3 xformOp:translate = (0.055, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
             }
         }
 
@@ -411,7 +424,7 @@ def Xform "World" (
             prepend apiSchemas = ["NodeGraphNodeAPI"]
         )
         {
-            custom rel inputs:cameraPrim = </World/lite6/gripper_base_link/Camera> (
+            custom rel inputs:cameraPrim = </World/lite6/link6/Camera> (
                 customData = {
                     dictionary omni = {
                         dictionary graph = {
@@ -499,9 +512,9 @@ def Xform "World" (
         delete apiSchemas = ["PhysxMeshMergeCollisionAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
     )
     {
-        quatd xformOp:orient = (1, 0, 0, 0)
+        quatd xformOp:orient = (-0.9396926207859085, 0, 0, -0.34202014332566855)
         double3 xformOp:scale = (1, 1, 1)
-        double3 xformOp:translate = (0.28, 0.017641973606846967, 0)
+        double3 xformOp:translate = (0.280900011708295, 0.05141282121758267, 0)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
         def Cube "Cube" (
@@ -698,7 +711,7 @@ def Xform "World" (
             prepend uint inputs:execIn.connect = </World/ros2_position_respawn/ros2_subscribe_twist.outputs:execOut>
             custom string inputs:script = '''import numpy as np
 import random
-from pxr import Gf
+from pxr import Gf, UsdGeom
 
 def setup(db: og.Database):
     pass
@@ -716,7 +729,22 @@ def compute(db: og.Database):
     y_coor = random.uniform(-0.1, 0.1)
     new_position = Gf.Vec3d(x_coor, y_coor, 0.0)
     
-    screwdriver.GetAttribute("xformOp:translate").Set(new_position)'''
+    screwdriver.GetAttribute("xformOp:translate").Set(new_position)
+    
+    
+    rotation_angle = random.uniform(150, 400)
+    rotation_axis = Gf.Vec3d(0, 0, 1)
+    new_rotation = Gf.Rotation(rotation_axis, rotation_angle)  
+    
+    quaternion_rotation = Gf.Quatd(new_rotation.GetQuaternion().GetReal(), 
+                                   new_rotation.GetQuaternion().GetImaginary())
+    print(type(quaternion_rotation))
+    print(type(screwdriver.GetAttribute("xformOp:orient").Get()))
+    
+    screwdriver.GetAttribute("xformOp:orient").Set(quaternion_rotation)
+    
+    
+    '''
             custom token inputs:scriptPath
             custom bool inputs:usePath
             token node:type = "omni.graph.scriptnode.ScriptNode"
