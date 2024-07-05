@@ -59,14 +59,14 @@ class Test(Node):
         self.joint_state = JointTrajectory()
         self.joint_names = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
         
-        self.point = JointTrajectoryPoint()
+        point = JointTrajectoryPoint()
 
-        self.point.positions = [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093]
-     
-        self.point.time_from_start.sec = 2
-        self.point.time_from_start.nanosec = 0
+        point.positions = [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093]
+        
+        point.time_from_start.sec = 3
+        point.time_from_start.nanosec = 0
 
-        self.joint_state.points = [self.point]
+        self.joint_state.points = [point]
         self.joint_state.joint_names = self.joint_names
 
         msg_arr = Twist()
@@ -80,7 +80,7 @@ class Test(Node):
 
         self.transform = None
         self.state = EnvStates.IDLE
-        self.number_of_retry = 0
+    
 
     def switch_motion_controller(self, activate_controllers, deactivate_controllers) :
         request = SwitchController.Request()
@@ -124,16 +124,10 @@ class Test(Node):
             return
         
         if not self.is_arm_init:
-            if self.number_of_retry == 0:
-                call_ros2_service('joint_trajectory_controller', 'cartesian_motion_controller')
-                self.get_logger().info('___________________________________')
+            call_ros2_service('joint_trajectory_controller', 'cartesian_motion_controller')
             self.joint_state.header.stamp = self.get_clock().now().to_msg()
             self.publisher_joint_init.publish(self.joint_state)
-            self.number_of_retry += 1
-
-            if self.number_of_retry > 3:
-                self.is_arm_init = True
-                self.number_of_retry = 0
+            self.is_arm_init = True
             self.get_logger().info(f'Arm inited...')
             self.start_time = time.time()
 
@@ -210,25 +204,16 @@ class Test(Node):
 
         elif self.state == EnvStates.RESET:
             if not self.is_trajectory_controler_active:
-                if self.number_of_retry == 0:
-                    call_ros2_service('joint_trajectory_controller', 'cartesian_motion_controller')
-                    self.get_logger().info('___________________________________')
-
-                
+                call_ros2_service('joint_trajectory_controller', 'cartesian_motion_controller')
+                self.is_trajectory_controler_active = True
                 self.joint_state.header.stamp = self.get_clock().now().to_msg()
                 self.publisher_joint_init.publish(self.joint_state)
-                self.number_of_retry += 1
-
-                if self.number_of_retry > 3:
-                    self.is_trajectory_controler_active = True
-                    self.get_logger().info(f'Arm inited...')
-                
+                self.get_logger().info(f'Arm inited...')
             
             if time.time() - self.start_time > 10.0 and self.next_episode_trigger:
                 self.state = EnvStates.IDLE
                 self.start_time = time.time()
                 self.next_episode_trigger = False
-                self.number_of_retry = 0
 
                 msg_arr = Twist()
                 self.publisher_respawn.publish(msg_arr)
