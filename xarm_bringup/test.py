@@ -56,27 +56,27 @@ class Test(Node):
         super().__init__('test_subscriber')
 
         self.publisher_ = self.create_publisher(
-            PoseStamped, '/target_frame', 10)
-        self.timer = self.create_timer(0.01, self.publish_pose)
+            PoseStamped, '/target_frame', 1)
+        self.timer = self.create_timer(0.1, self.publish_pose)
 
         self.publisher_gripper = self.create_publisher(
-            Float64MultiArray, '/position_controller/commands', 10)
-        self.publisher_respawn = self.create_publisher(Twist, '/respawn', 10)
+            Float64MultiArray, '/position_controller/commands', 1)
+        self.publisher_respawn = self.create_publisher(Twist, '/respawn', 1)
         self.publisher_joint_init = self.create_publisher(
-            JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 10)
+            JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 1)
 
         self.image_subscriber = self.create_subscription(
             Image,
             '/rgb',
             self.image_callback,
-            10)
+            1)
         self.image_subscriber
 
         self.current_pose_subscriber = self.create_subscription(
             PoseStamped,
             '/current_pose',
             self.current_pose_callback,
-            10)
+            1)
         self.current_pose_subscriber
 
         self.cv_bridge = CvBridge()
@@ -195,12 +195,12 @@ class Test(Node):
         
         action = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}, {gripper_status}]\n")
 
-        if self.episode_frame_counter % 10 == 0:
-            image_name = self.images_folder + '/' + str(self.images_counter) + '.jpg'
-            cv2.imwrite(image_name, self.image)
-            self.action_file.write(action)
+        # if self.episode_frame_counter % 10 == 0:
+        image_name = self.images_folder + '/' + str(self.images_counter) + '.jpg'
+        cv2.imwrite(image_name, self.image)
+        self.action_file.write(action)
 
-            self.images_counter += 1
+        self.images_counter += 1
 
     def publish_pose(self):
         if not self.skip_saving:
@@ -276,7 +276,7 @@ class Test(Node):
                     f'Close gripper! {round(gripper2target.transform.translation.z, 2)  + 0.026}')
 
         elif self.state == EnvStates.UP:
-            if time.time() - self.start_time > 3.0:
+            if time.time() - self.start_time > 0.1:
                 self.current_pose.pose.position.z = 0.2
                 self.state = EnvStates.DOWN
                 self.start_time = time.time()
@@ -284,7 +284,7 @@ class Test(Node):
                 self.get_logger().info('Move upward...')
 
         elif self.state == EnvStates.DOWN:
-            if time.time() - self.start_time > 3.0:
+            if time.time() - self.start_time > 1.0:
                 self.skip_saving = True
                 self.current_pose.pose.position.z = 0.095
                 self.state = EnvStates.OPEN_GRIPPER
@@ -294,7 +294,7 @@ class Test(Node):
                 self.get_logger().info('Move downward...')
 
         elif self.state == EnvStates.OPEN_GRIPPER:
-            if time.time() - self.start_time > 3.0 and self.is_object_picked:
+            if time.time() - self.start_time > 1.0 and self.is_object_picked:
                 self.state = EnvStates.RESET
                 self.is_object_picked = False
 
