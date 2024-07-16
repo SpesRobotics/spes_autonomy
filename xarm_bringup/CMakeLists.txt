@@ -8,4 +8,10 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+# install scripts
+install(
+  PROGRAMS scripts/sixd_speed_limiter
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()

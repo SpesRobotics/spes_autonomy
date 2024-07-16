@@ -38,6 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Option
     ros-humble-apriltag-ros \
     ros-humble-topic-based-ros2-control \
     ros-humble-ament-cmake-nose \
+    ros-humble-tf-transformations \
     nano \
     alsa \
     libxshmfence1 \
@@ -70,7 +71,8 @@ RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
         behaviortree_ros2 \
         topic_based_ros2_control \
         xarm_controller \
-        xarm_description
+        xarm_description \
+        ros2_numpy
 
 COPY ./docker/cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
