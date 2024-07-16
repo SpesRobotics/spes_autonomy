@@ -59,6 +59,9 @@ class Test(Node):
             PoseStamped, '/target_frame', 1)
         self.timer = self.create_timer(0.1, self.publish_pose)
 
+        self.publisher_speed_limiter = self.create_publisher(
+            PoseStamped, '/target_frame_raw', 1)
+
         self.publisher_gripper = self.create_publisher(
             Float64MultiArray, '/position_controller/commands', 1)
         self.publisher_respawn = self.create_publisher(Twist, '/respawn', 1)
@@ -83,6 +86,7 @@ class Test(Node):
         self.image = None
         self.obtained_object_pose = PoseStamped()
         self.action_file = None
+        self.observation_file = None
         self.images_folder = None
         self.images_counter = 0
         self.episode_frame_counter = 0
@@ -122,6 +126,7 @@ class Test(Node):
 
         self.transform = None
         self.state = EnvStates.IDLE
+        self.previous_state = self.state
 
     def switch_motion_controller(self, activate_controllers, deactivate_controllers):
         request = SwitchController.Request()
@@ -157,6 +162,7 @@ class Test(Node):
         episode_name = date.strftime("%Y_%m_%d_%H_%M_%S")
         self.images_folder = dir_path + '/' + episode_name
         action_folder = dir_path + '/actions'
+        observation_folder = dir_path + '/observations'
 
         if not os.path.exists(dir_path):
             os.mkdir(dir_path)
@@ -166,9 +172,14 @@ class Test(Node):
 
         if not os.path.exists(self.images_folder):
             os.mkdir(self.images_folder)
+        
+        if not os.path.exists(observation_folder):
+            os.mkdir(observation_folder)
 
         action_file_neme = action_folder + '/' + episode_name+'.txt'
+        observation_file_neme = observation_folder + '/' + episode_name+'.txt'
         self.action_file = open( action_file_neme, "a")
+        self.observation_file = open( observation_file_neme, "a")
         self.get_logger().info(f'Episode {episode_name} saving started...')
 
 
@@ -193,16 +204,36 @@ class Test(Node):
         if self.gripper_status == GripperStatus.CLOSE:
             gripper_status = 1
         
-        action = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}, {gripper_status}]\n")
+        # observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}, {gripper_status}]\n")
+        observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}]\n")
+
+        x_action_pos = self.current_pose.pose.position.x
+        y_action_pos = self.current_pose.pose.position.y
+        z_action_pos = self.current_pose.pose.position.z
+
+        x_action_ori = self.current_pose.pose.orientation.x
+        y_action_ori = self.current_pose.pose.orientation.y
+        z_action_ori = self.current_pose.pose.orientation.z
+        w_action_ori = self.current_pose.pose.orientation.w
+
+        # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}, {gripper_status}]\n")
+        action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}]\n")
+
+
 
         # if self.episode_frame_counter % 10 == 0:
         image_name = self.images_folder + '/' + str(self.images_counter) + '.jpg'
         cv2.imwrite(image_name, self.image)
+        self.observation_file.write(observation)
         self.action_file.write(action)
 
         self.images_counter += 1
 
     def publish_pose(self):
+        if self.previous_state != self.state:
+            self.get_logger().info(f'========================================================={self.previous_state, self.state}')
+            self.previous_state = self.state
+
         if not self.skip_saving:
                 self.save_current_frame()
 
@@ -222,7 +253,7 @@ class Test(Node):
             self.is_arm_init = True
             self.get_logger().info(f'Arm inited...')
             self.start_time = time.time()
-
+        
         if self.state == EnvStates.IDLE:
 
             if time.time() - self.start_time > 3.0:
@@ -249,6 +280,7 @@ class Test(Node):
                 self.current_pose.pose.position.z = self.transform.transform.translation.z
             else:
                 self.current_pose.pose.position.z = 0.095
+                self.skip_saving = True
 
             self.current_pose.pose.position.x = self.transform.transform.translation.x
             self.current_pose.pose.position.y = self.transform.transform.translation.y
@@ -258,8 +290,9 @@ class Test(Node):
             self.current_pose.pose.orientation.z = self.transform.transform.rotation.z
             self.current_pose.pose.orientation.w = self.transform.transform.rotation.w
 
-            if round(gripper2target.transform.translation.z, 2) < -0.0205:
+            if round(gripper2target.transform.translation.z, 4) < -0.0205:
                 self.state = EnvStates.CLOSE_GRIPPER
+            self.get_logger().info(f'{round(gripper2target.transform.translation.z, 2)}')
 
         elif self.state == EnvStates.CLOSE_GRIPPER:
             if not self.is_object_picked:
@@ -273,7 +306,7 @@ class Test(Node):
                 msg.data = [-0.01]
                 self.publisher_gripper.publish(msg)
                 self.get_logger().info(
-                    f'Close gripper! {round(gripper2target.transform.translation.z, 2)  + 0.026}')
+                    f'Close gripper! {round(gripper2target.transform.translation.z, 2)}')
 
         elif self.state == EnvStates.UP:
             if time.time() - self.start_time > 0.1:
@@ -331,7 +364,7 @@ class Test(Node):
             self.start_time = time.time()
 
         if self.state is not EnvStates.RESET:
-            self.publisher_.publish(self.current_pose)
+            self.publisher_speed_limiter.publish(self.current_pose)
 
 
 def main(args=None):

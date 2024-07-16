@@ -7,6 +7,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, Pose
 import math
 import ros2_numpy as rnp
+import time
 
 
 def norm_angle(angle):
@@ -25,8 +26,8 @@ def clip(value, limit):
     return value
 
 
-LIMIT_LINEAR = 0.005
-LIMIT_ANGULAR = math.degrees(1.0)
+LIMIT_LINEAR = 0.002
+LIMIT_ANGULAR = math.degrees(0.5)
 REGULATION_RATE = 20
 
 
@@ -35,6 +36,7 @@ class SixDSpeedLimiter(Node):
         super().__init__("sixd_speed_limiter")
         self.__target = None
         self.__trajectory = None
+        self.__last_target_time = 0
 
         self.__target_pose_subscriber = self.create_subscription(
             PoseStamped, "/target_frame_raw", self.target_callback, 1
@@ -49,14 +51,21 @@ class SixDSpeedLimiter(Node):
 
     def target_callback(self, msg):
         self.__target = rnp.numpify(msg.pose)
+        self.__last_target_time = time.time()
 
     def current_callback(self, msg):
+        if self.__target is None:
+            return
         if self.__trajectory is not None:
             return
         self.__trajectory = rnp.numpify(msg.pose)
         self.get_logger().info("Trajectory initialized")
 
     def control_callback(self):
+        if time.time() - self.__last_target_time > 0.5:
+            self.__trajectory = None
+            self.__target = None
+
         if self.__trajectory is None or self.__target is None:
             return
 
