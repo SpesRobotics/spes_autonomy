@@ -8,7 +8,7 @@
             }
             dictionary Perspective = {
                 double3 position = (2.0756772258273855, 1.0296353671694138, 0.7921107977851414)
-                double3 target = (-16.3646188234043, -10.112877148977569, -6.251779752062719)
+                double3 target = (-16.36461882340436, -10.112877148977606, -6.251779752062741)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -512,7 +512,7 @@ def Xform "World" (
         delete apiSchemas = ["PhysxMeshMergeCollisionAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
     )
     {
-        quatd xformOp:orient = (-0.9396926207859085, 0, 0, -0.34202014332566855)
+        quatd xformOp:orient = (0.7071067811865476, 0, 0, -0.7071067811865475)
         double3 xformOp:scale = (1, 1, 1)
         double3 xformOp:translate = (0.280900011708295, 0.05141282121758267, 0)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]

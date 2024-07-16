@@ -84,6 +84,12 @@ def generate_launch_description():
         output='screen'
     )
 
+    sixd_speed_limiter = Node(
+        package = 'xarm_bringup',
+        executable = 'sixd_speed_limiter',
+        output = 'screen'
+    )
+
     return LaunchDescription([
         joint_trajectory_controller,
         controller_manager,
@@ -92,5 +98,6 @@ def generate_launch_description():
         motion_control_handle_spawner,
         joint_state_broadcaster_spawner,
         rviz,
-        position_controller
+        position_controller,
+        sixd_speed_limiter
     ])
