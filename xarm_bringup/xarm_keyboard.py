@@ -69,7 +69,7 @@ class TeleopTwistKeyboard(Node):
             10)
         self.current_pose_subscriber
 
-        self.speed = 0.5
+        self.speed = 0.05
         self.turn = 1.0
         self.frequency = 0.01
 
