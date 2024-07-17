@@ -5,6 +5,7 @@ from std_msgs.msg import Float64MultiArray
 import numpy as np
 import sys, select, termios, tty
 import transforms3d
+import time
 
 settings = termios.tcgetattr(sys.stdin)
 
@@ -55,11 +56,18 @@ class TeleopTwistKeyboard(Node):
     def __init__(self):
         super().__init__('xarm_manual_control')
 
-        self.publisher_ = self.create_publisher(PoseStamped, '/target_frame', 10)
+        self.publisher_ = self.create_publisher(PoseStamped, '/target_frame_raw', 10)
         self.timer = self.create_timer(0.01, self.publish_pose)
 
         self.publisher_gripper = self.create_publisher(Float64MultiArray, '/position_controller/commands', 10)
         self.publisher_respawn = self.create_publisher(Twist, '/respawn', 10)
+
+        self.current_pose_subscriber = self.create_subscription(
+            PoseStamped,
+            '/current_pose',
+            self.current_pose_callback,
+            10)
+        self.current_pose_subscriber
 
         self.speed = 0.5
         self.turn = 1.0
@@ -67,25 +75,52 @@ class TeleopTwistKeyboard(Node):
 
         self.current_pose = PoseStamped()
 
-        self.current_pose_x = 0.087
-        self.current_pose_y = 0.0
-        self.current_pose_z = 0.15359
+        self.current_pose_x = None
+        self.current_pose_y = None
+        self.current_pose_z = None
 
-        self.current_orientation_x = np.pi
-        self.current_orientation_y = 0.0
-        self.current_orientation_z = 0.0
+        self.current_orientation_x = None
+        self.current_orientation_y = None
+        self.current_orientation_z = None
 
         self.is_gripper_open = True
+
+        self.is_inited = False
 
     def publish_pose(self):
         self.publisher_.publish(self.current_pose)
 
+    
+    def current_pose_callback(self, msg):
+        self.current_pose = msg
+        self.current_pose_x = msg.pose.position.x
+        self.current_pose_y = msg.pose.position.y
+        self.current_pose_z = msg.pose.position.z
+
+        euler_angle = transforms3d.euler.quat2euler([msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z], 'sxyz') 
+
+        self.current_orientation_x = euler_angle[0]
+        self.current_orientation_y = euler_angle[1]
+        self.current_orientation_z = euler_angle[2]
+
+    
+
 
     def run(self):
         print(msg)
+
+        while self.current_orientation_z is None:
+            try:
+                rclpy.spin_once(self, timeout_sec = 0.1)
+            except Exception as e:
+                print(e)
+                pass
+        
+        self.publisher_.publish(self.current_pose)
         try:
             while True:
                 key = getKey()
+                
                 if key in moveBindings.keys():
                     x = moveBindings[key][0]
                     y = moveBindings[key][1]
