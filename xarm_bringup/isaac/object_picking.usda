@@ -8,7 +8,7 @@
             }
             dictionary Perspective = {
                 double3 position = (2.0756772258273855, 1.0296353671694138, 0.7921107977851414)
-                double3 target = (-16.36461882340436, -10.112877148977606, -6.251779752062741)
+                double3 target = (-16.36461882340441, -10.112877148977635, -6.251779752062759)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -203,11 +203,12 @@ def Xform "World" (
                 float2 clippingRange = (0.01, 10000000)
                 float focalLength = 18.147562
                 float focusDistance = 400
-                float horizontalAperture = 40.995
-                bool omni:kit:cameraLock = 1
+                float horizontalAperture = 30
+                bool omni:kit:cameraLock = 0
+                float verticalAperture = 15
                 quatd xformOp:orient = (6.123233995736766e-17, -0.7071067811865476, -0.7071067811865475, -4.329780281177466e-17)
                 double3 xformOp:scale = (1, 1, 1)
-                double3 xformOp:translate = (0.055, 0, 0)
+                double3 xformOp:translate = (0.095, -0.035, 0)
                 uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
             }
         }
@@ -514,7 +515,7 @@ def Xform "World" (
     {
         quatd xformOp:orient = (0.7071067811865476, 0, 0, -0.7071067811865475)
         double3 xformOp:scale = (1, 1, 1)
-        double3 xformOp:translate = (0.280900011708295, 0.05141282121758267, 0)
+        double3 xformOp:translate = (0.32397857737410574, 0.09168, 0)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
         def Cube "Cube" (
@@ -726,7 +727,7 @@ def compute(db: og.Database):
     screwdriver = stage.GetPrimAtPath("/World/screwdriver")
     
     x_coor = random.uniform(0.25, 0.35)
-    y_coor = random.uniform(-0.1, 0.1)
+    y_coor = random.uniform(-0.1, 0.2)
     new_position = Gf.Vec3d(x_coor, y_coor, 0.0)
     
     screwdriver.GetAttribute("xformOp:translate").Set(new_position)
@@ -741,7 +742,7 @@ def compute(db: og.Database):
     print(type(quaternion_rotation))
     print(type(screwdriver.GetAttribute("xformOp:orient").Get()))
     
-    screwdriver.GetAttribute("xformOp:orient").Set(quaternion_rotation)
+    # screwdriver.GetAttribute("xformOp:orient").Set(quaternion_rotation)
     
     
     '''
