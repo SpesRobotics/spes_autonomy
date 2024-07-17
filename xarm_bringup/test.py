@@ -77,7 +77,7 @@ class Test(Node):
 
         self.current_pose_subscriber = self.create_subscription(
             PoseStamped,
-            '/current_pose',
+            '/target_frame_raw',
             self.current_pose_callback,
             1)
         self.current_pose_subscriber
@@ -290,7 +290,7 @@ class Test(Node):
             self.current_pose.pose.orientation.z = self.transform.transform.rotation.z
             self.current_pose.pose.orientation.w = self.transform.transform.rotation.w
 
-            if round(gripper2target.transform.translation.z, 4) < -0.0205:
+            if round(gripper2target.transform.translation.z, 4) <= -0.0215:
                 self.state = EnvStates.CLOSE_GRIPPER
             self.get_logger().info(f'{round(gripper2target.transform.translation.z, 2)}')
 
