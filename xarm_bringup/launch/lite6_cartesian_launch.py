@@ -4,16 +4,28 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
 from launch.substitutions import LaunchConfiguration
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
+import xml.etree.ElementTree as ET
 
+
+def get_ip_address_from_xacro(xacro_doc):
+    root = ET.fromstring(xacro_doc)
+    for param in root.findall(".//ros2_control/hardware/param"):
+        if param.attrib.get('name') == 'robot_ip':
+            robot_ip = param.text[1:]
+            print(robot_ip)
+            return robot_ip
 
 def generate_launch_description():
     robot_description_path = os.path.join(get_package_share_directory('xarm_bringup'), 'urdf', 'lite6.urdf.xacro')
     robot_description = xacro.process_file(robot_description_path, mappings={}).toprettyxml(indent='  ')
+    
     controllers = os.path.join(get_package_share_directory(
         'xarm_bringup'), 'resource', 'controllers.yaml')
     
     use_rviz = LaunchConfiguration('rviz', default=True)
+    use_sim = LaunchConfiguration('sim', default=True)
+    robot_ip = get_ip_address_from_xacro(robot_description)
     
     controller_manager = Node(
         package='controller_manager',
@@ -90,6 +102,29 @@ def generate_launch_description():
         output = 'screen'
     )
 
+    realsence_camera = Node(
+        package='realsense2_camera',
+        executable='realsense2_camera_node',
+        remappings=[
+            ('/camera/camera/color/image_raw', '/rgb')
+        ],
+        output = 'screen',
+        condition=UnlessCondition(use_sim)
+    )
+
+    gripper_service = Node(
+        package='xarm_api',
+        executable='xarm_driver_node',
+        output = 'screen',
+        parameters=[
+            {'robot_ip': robot_ip},
+            {'services.open_lite6_gripper': True},
+            {'services.close_lite6_gripper': True},
+            {'services.stop_lite6_gripper': True},
+        ],
+        condition=UnlessCondition(use_sim)
+    )
+
     return LaunchDescription([
         joint_trajectory_controller,
         controller_manager,
@@ -99,5 +134,7 @@ def generate_launch_description():
         joint_state_broadcaster_spawner,
         rviz,
         position_controller,
-        sixd_speed_limiter
+        sixd_speed_limiter, 
+        realsence_camera,
+        gripper_service
     ])
