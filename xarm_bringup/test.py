@@ -279,7 +279,7 @@ class Test(Node):
             if gripper2target.transform.translation.x > epsilon or gripper2target.transform.translation.y > epsilon or gripper2target.transform.translation.z > epsilon:
                 self.current_pose.pose.position.z = self.transform.transform.translation.z
             else:
-                self.current_pose.pose.position.z = 0.095
+                self.current_pose.pose.position.z = 0.1
                 self.skip_saving = True
 
             self.current_pose.pose.position.x = self.transform.transform.translation.x
@@ -290,9 +290,9 @@ class Test(Node):
             self.current_pose.pose.orientation.z = self.transform.transform.rotation.z
             self.current_pose.pose.orientation.w = self.transform.transform.rotation.w
 
-            if round(gripper2target.transform.translation.z, 4) <= -0.0215:
+            if round(gripper2target.transform.translation.z, 4) <= -0.0250:
                 self.state = EnvStates.CLOSE_GRIPPER
-            self.get_logger().info(f'{round(gripper2target.transform.translation.z, 2)}')
+            self.get_logger().info(f'{round(gripper2target.transform.translation.z, 4)}')
 
         elif self.state == EnvStates.CLOSE_GRIPPER:
             if not self.is_object_picked:
@@ -319,7 +319,7 @@ class Test(Node):
         elif self.state == EnvStates.DOWN:
             if time.time() - self.start_time > 1.0:
                 self.skip_saving = True
-                self.current_pose.pose.position.z = 0.095
+                self.current_pose.pose.position.z = 0.1
                 self.state = EnvStates.OPEN_GRIPPER
                 self.gripper_status = GripperStatus.OPEN
                 self.start_time = time.time()
