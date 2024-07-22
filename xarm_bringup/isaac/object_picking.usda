@@ -8,7 +8,7 @@
             }
             dictionary Perspective = {
                 double3 position = (2.0756772258273855, 1.0296353671694138, 0.7921107977851414)
-                double3 target = (-16.36461882340441, -10.112877148977635, -6.251779752062759)
+                double3 target = (-16.36461882340464, -10.112877148977775, -6.251779752062848)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -203,12 +203,12 @@ def Xform "World" (
                 float2 clippingRange = (0.01, 10000000)
                 float focalLength = 18.147562
                 float focusDistance = 400
-                float horizontalAperture = 30
+                float horizontalAperture = 20
                 bool omni:kit:cameraLock = 0
                 float verticalAperture = 15
                 quatd xformOp:orient = (6.123233995736766e-17, -0.7071067811865476, -0.7071067811865475, -4.329780281177466e-17)
                 double3 xformOp:scale = (1, 1, 1)
-                double3 xformOp:translate = (0.095, -0.035, 0)
+                double3 xformOp:translate = (0.04, -0.035, 0)
                 uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
             }
         }
@@ -513,9 +513,9 @@ def Xform "World" (
         delete apiSchemas = ["PhysxMeshMergeCollisionAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
     )
     {
-        quatd xformOp:orient = (0.7071067811865476, 0, 0, -0.7071067811865475)
+        quatd xformOp:orient = (0.8504410733263356, 0, 0, 0.5260703192535674)
         double3 xformOp:scale = (1, 1, 1)
-        double3 xformOp:translate = (0.32397857737410574, 0.09168, 0)
+        double3 xformOp:translate = (0.32285232105474415, -0.07895745133182379, 0)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
         def Cube "Cube" (
@@ -727,13 +727,13 @@ def compute(db: og.Database):
     screwdriver = stage.GetPrimAtPath("/World/screwdriver")
     
     x_coor = random.uniform(0.25, 0.35)
-    y_coor = random.uniform(-0.1, 0.2)
+    y_coor = random.uniform(-0.09, 0.27)
     new_position = Gf.Vec3d(x_coor, y_coor, 0.0)
     
     screwdriver.GetAttribute("xformOp:translate").Set(new_position)
     
     
-    rotation_angle = random.uniform(150, 400)
+    rotation_angle = random.uniform(40, 120)
     rotation_axis = Gf.Vec3d(0, 0, 1)
     new_rotation = Gf.Rotation(rotation_axis, rotation_angle)  
     
@@ -742,7 +742,7 @@ def compute(db: og.Database):
     print(type(quaternion_rotation))
     print(type(screwdriver.GetAttribute("xformOp:orient").Get()))
     
-    # screwdriver.GetAttribute("xformOp:orient").Set(quaternion_rotation)
+    screwdriver.GetAttribute("xformOp:orient").Set(quaternion_rotation)
     
     
     '''
@@ -776,12 +776,12 @@ def compute(db: og.Database):
             custom string inputs:parentFrameId = "screwdriver"
             custom string inputs:qosProfile
             custom uint64 inputs:queueSize
-            custom quatd inputs:rotation = (0, 0.707, 0.707, 0)
+            custom quatd inputs:rotation = (0, -0.707, 0.707, 0)
             custom bool inputs:staticPublisher = 0
             custom double inputs:timeStamp
             prepend double inputs:timeStamp.connect = </World/ros2_position_respawn/isaac_read_system_time.outputs:systemTime>
             custom string inputs:topicName
-            custom vector3d inputs:translation = (0.005, 0.005, 0.12)
+            custom vector3d inputs:translation = (0.005, 0.005, 0.13)
             token node:type = "omni.isaac.ros2_bridge.ROS2PublishRawTransformTree"
             int node:typeVersion = 1
             uniform token ui:nodegraph:node:expansionState = "open"
