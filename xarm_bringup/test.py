@@ -1,11 +1,13 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import PoseStamped, Twist, Pose, TransformStamped
 from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from controller_manager_msgs.srv import SwitchController
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+import ros2_numpy as rnp
+import transforms3d as t3d
 
 import tf2_ros
 import time
@@ -15,6 +17,8 @@ import subprocess
 import re
 import cv2
 import os
+import numpy as np
+
 
 
 class EnvStates(Enum):
@@ -25,6 +29,7 @@ class EnvStates(Enum):
     UP = 4
     DOWN = 5
     MOVE = 6
+    GO_CLOSE = 7
 
 
 class GripperStatus(Enum):
@@ -33,6 +38,19 @@ class GripperStatus(Enum):
 
 
 DATA_DIR = 'DATA'
+
+
+def are_transforms_close(a, b=None, linear_tol=0.03, angular_tol=0.03):
+    if b is None:
+        b = np.eye(4)
+    c = np.linalg.inv(a) @ b
+    xyz = c[:3, 3]
+    if np.any(np.abs(xyz) > linear_tol):
+        return False
+    rpy = t3d.euler.mat2euler(c[:3, :3])
+    if np.any(np.abs(np.array(rpy)) > angular_tol):
+        return False
+    return True
 
 
 def call_ros2_service(activate_controllers, deactivate_controllers):
@@ -64,7 +82,9 @@ class Test(Node):
 
         self.publisher_gripper = self.create_publisher(
             Float64MultiArray, '/position_controller/commands', 1)
+        
         self.publisher_respawn = self.create_publisher(Twist, '/respawn', 1)
+        
         self.publisher_joint_init = self.create_publisher(
             JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 1)
 
@@ -77,7 +97,7 @@ class Test(Node):
 
         self.current_pose_subscriber = self.create_subscription(
             PoseStamped,
-            '/target_frame_raw',
+            '/current_pose',
             self.current_pose_callback,
             1)
         self.current_pose_subscriber
@@ -85,9 +105,12 @@ class Test(Node):
         self.cv_bridge = CvBridge()
         self.image = None
         self.obtained_object_pose = PoseStamped()
+
         self.action_file = None
         self.observation_file = None
+        self.reward_file = None
         self.images_folder = None
+        
         self.images_counter = 0
         self.episode_frame_counter = 0
         self.gripper_status = GripperStatus.OPEN
@@ -100,6 +123,7 @@ class Test(Node):
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
         self.current_pose = PoseStamped()
+        self.current_relative_pose = TransformStamped()
 
         self.joint_state = JointTrajectory()
         self.joint_names = ['joint1', 'joint2',
@@ -124,9 +148,11 @@ class Test(Node):
         self.new_episode = True
         self.skip_saving = False
 
+
         self.transform = None
         self.state = EnvStates.IDLE
         self.previous_state = self.state
+        
 
     def switch_motion_controller(self, activate_controllers, deactivate_controllers):
         request = SwitchController.Request()
@@ -163,6 +189,7 @@ class Test(Node):
         self.images_folder = dir_path + '/' + episode_name
         action_folder = dir_path + '/actions'
         observation_folder = dir_path + '/observations'
+        rewards_folder = dir_path + '/rewards'
 
         if not os.path.exists(dir_path):
             os.mkdir(dir_path)
@@ -175,11 +202,17 @@ class Test(Node):
         
         if not os.path.exists(observation_folder):
             os.mkdir(observation_folder)
+        
+        if not os.path.exists(rewards_folder):
+            os.mkdir(rewards_folder)
 
         action_file_neme = action_folder + '/' + episode_name+'.txt'
         observation_file_neme = observation_folder + '/' + episode_name+'.txt'
+        rewards_file_neme = rewards_folder + '/' + episode_name+'.txt'
+
         self.action_file = open( action_file_neme, "a")
         self.observation_file = open( observation_file_neme, "a")
+        # self.reward_file = open(rewards_file_neme, "a")
         self.get_logger().info(f'Episode {episode_name} saving started...')
 
 
@@ -205,45 +238,58 @@ class Test(Node):
             gripper_status = 1
         
         # observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}, {gripper_status}]\n")
+
         observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}]\n")
 
-        x_action_pos = self.current_pose.pose.position.x
-        y_action_pos = self.current_pose.pose.position.y
-        z_action_pos = self.current_pose.pose.position.z
+        x_action_pos = self.current_relative_pose.transform.translation.x
+        y_action_pos = self.current_relative_pose.transform.translation.y
+        z_action_pos = self.current_relative_pose.transform.translation.z
 
-        x_action_ori = self.current_pose.pose.orientation.x
-        y_action_ori = self.current_pose.pose.orientation.y
-        z_action_ori = self.current_pose.pose.orientation.z
-        w_action_ori = self.current_pose.pose.orientation.w
+        x_action_ori = self.current_relative_pose.transform.rotation.x
+        y_action_ori = self.current_relative_pose.transform.rotation.y
+        z_action_ori = self.current_relative_pose.transform.rotation.z
+        w_action_ori = self.current_relative_pose.transform.rotation.w
 
         # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}, {gripper_status}]\n")
         action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}]\n")
 
+        # reward = (1 / (self.euclidean_distance + self.angle_distance)) * 0.01
 
-
-        # if self.episode_frame_counter % 10 == 0:
         image_name = self.images_folder + '/' + str(self.images_counter) + '.jpg'
         cv2.imwrite(image_name, self.image)
         self.observation_file.write(observation)
         self.action_file.write(action)
+        # self.reward_file.write(str(reward)+ '\n')
 
         self.images_counter += 1
 
     def publish_pose(self):
         if self.previous_state != self.state:
-            self.get_logger().info(f'========================================================={self.previous_state, self.state}')
             self.previous_state = self.state
 
         if not self.skip_saving:
                 self.save_current_frame()
 
-        epsilon = 0.003
+        
         self.current_pose.header.stamp = self.get_clock().now().to_msg()
         self.current_pose.header.frame_id = 'link_base'
 
         gripper2target = self.get_transform('gripper_base_link', 'pick_target')
+        base2gripper = self.get_transform('link_base', 'gripper_base_link')
+        
         if gripper2target is None:
             return
+        
+        if base2gripper is None:
+            return
+        
+        self.current_relative_pose = gripper2target
+
+        gripper2target_matrix = rnp.numpify(gripper2target.transform)
+        base2gripper_matrix = rnp.numpify(base2gripper.transform)
+
+        target_transform =  base2gripper_matrix @ gripper2target_matrix
+        pose = rnp.msgify(Pose, target_transform)
 
         if not self.is_arm_init:
             call_ros2_service('joint_trajectory_controller',
@@ -260,7 +306,7 @@ class Test(Node):
                 call_ros2_service('cartesian_motion_controller',
                                   'joint_trajectory_controller')
                 self.is_trajectory_controler_active = False
-                self.transform = self.get_transform('link_base', 'pick_target')
+                self.transform = self.get_transform('link_base', 'pick_target') # ?????????????????????
 
                 if self.transform is None:
                     return
@@ -276,23 +322,22 @@ class Test(Node):
                     self.episode_frame_counter = 0
 
         elif self.state == EnvStates.MOVE:
-            if gripper2target.transform.translation.x > epsilon or gripper2target.transform.translation.y > epsilon or gripper2target.transform.translation.z > epsilon:
-                self.current_pose.pose.position.z = self.transform.transform.translation.z
-            else:
-                self.current_pose.pose.position.z = 0.1
+            # self.euclidean_distance = np.sqrt(gripper2target.transform.translation.x**2 + gripper2target.transform.translation.y**2)
+            # self.angle_distance = 2 * math.acos(gripper2target.transform.rotation.w)
+            self.current_pose.pose = pose
+            self.get_logger().info(f'================= {are_transforms_close(gripper2target_matrix):} ====================')
+            if are_transforms_close(gripper2target_matrix):
+                self.state = EnvStates.GO_CLOSE
                 self.skip_saving = True
-
-            self.current_pose.pose.position.x = self.transform.transform.translation.x
-            self.current_pose.pose.position.y = self.transform.transform.translation.y
-
-            self.current_pose.pose.orientation.x = self.transform.transform.rotation.x
-            self.current_pose.pose.orientation.y = self.transform.transform.rotation.y
-            self.current_pose.pose.orientation.z = self.transform.transform.rotation.z
-            self.current_pose.pose.orientation.w = self.transform.transform.rotation.w
-
-            if round(gripper2target.transform.translation.z, 4) <= -0.0250:
-                self.state = EnvStates.CLOSE_GRIPPER
-            self.get_logger().info(f'{round(gripper2target.transform.translation.z, 4)}')
+                self.current_pose.pose.position.z = 0.09
+                self.start_time  = time.time()
+            # if gripper2target.transform.translation.x < epsilon and gripper2target.transform.translation.y < epsilon and gripper2target.transform.translation.z < epsilon:
+                # self.current_pose.pose.position.x = 0.09
+        elif self.state == EnvStates.GO_CLOSE:
+            if time.time() - self.start_time > 2:
+                if round(gripper2target.transform.translation.z, 4) <= -0.0255:
+                    self.state = EnvStates.CLOSE_GRIPPER
+                self.get_logger().info(f'{round(gripper2target.transform.translation.z, 4)}')
 
         elif self.state == EnvStates.CLOSE_GRIPPER:
             if not self.is_object_picked:
@@ -367,6 +412,31 @@ class Test(Node):
             self.publisher_speed_limiter.publish(self.current_pose)
 
 
+def test_tf_close():
+    a = t3d.affines.compose(
+        [0, 0, 0],
+        t3d.euler.euler2mat(0, 0, 0),
+        [1, 1, 1]
+    )
+    b = t3d.affines.compose(
+        [0, 0, 0],
+        t3d.euler.euler2mat(0, 0, 0),
+        [1, 1, 1]
+    )
+    assert are_transforms_close(a, b) == True
+    b = t3d.affines.compose(
+        [0, 0, 0],
+        t3d.euler.euler2mat(0.3, 0, 0),
+        [1, 1, 1]
+    )
+    assert are_transforms_close(a, b) == False
+    b = t3d.affines.compose(
+        [0, 0, 0],
+        t3d.euler.euler2mat(0.01, 0.01, -0.01),
+        [1, 1, 1]
+    )
+    assert are_transforms_close(a, b) == True
+
 def main(args=None):
     rclpy.init(args=args)
     test = Test()
@@ -377,3 +447,6 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
+
+# a_b_tf = ..
+# b_a_tf = np.linalg.inv(a_b_tf)
