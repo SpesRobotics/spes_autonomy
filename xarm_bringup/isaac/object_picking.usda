@@ -7,8 +7,8 @@
                 double radius = 5
             }
             dictionary Perspective = {
-                double3 position = (2.0756772258273855, 1.0296353671694138, 0.7921107977851414)
-                double3 target = (-16.36461882340464, -10.112877148977775, -6.251779752062848)
+                double3 position = (0.8334861210920969, 0.2803735775458465, 0.31783993266942073)
+                double3 target = (-16.118178213044583, -10.078180029590103, -6.177034276474004)
             }
             dictionary Right = {
                 double3 position = (0, -5, 0)
@@ -19,6 +19,11 @@
                 double radius = 5
             }
             string boundCamera = "/OmniverseKit_Persp"
+        }
+        dictionary metricsAssembler = {
+            dictionary "/World/screwdriver_01" = {
+            }
+            int version = 1
         }
         dictionary omni_layer = {
             string authoring_layer = "./object_picking.usda"
@@ -97,12 +102,16 @@ def Xform "World" (
         double3 xformOp:translate = (0, 0, 0)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-        def Mesh "CollisionMesh"
+        def Mesh "CollisionMesh" (
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxTriangleMeshCollisionAPI", "PhysicsMeshCollisionAPI"]
+        )
         {
             uniform bool doubleSided = 0
             int[] faceVertexCounts = [4]
             int[] faceVertexIndices = [0, 1, 2, 3]
             normal3f[] normals = [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)]
+            uniform token physics:approximation = "none"
+            bool physics:collisionEnabled = 1
             point3f[] points = [(-25, -25, 0), (25, -25, 0), (25, 25, 0), (-25, 25, 0)]
             color3f[] primvars:displayColor = [(0.5, 0.5, 0.5)]
             texCoord2f[] primvars:st = [(0, 0), (1, 0), (1, 1), (0, 1)] (
@@ -111,10 +120,11 @@ def Xform "World" (
         }
 
         def Plane "CollisionPlane" (
-            prepend apiSchemas = ["PhysicsCollisionAPI"]
+            prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI"]
         )
         {
             uniform token axis = "Z"
+            bool physics:collisionEnabled = 1
             uniform token purpose = "guide"
         }
     }
@@ -127,6 +137,22 @@ def Xform "World" (
             {
                 float state:angular:physics:position = 0
                 float state:angular:physics:velocity = 0
+            }
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
             }
         }
 
@@ -146,6 +172,22 @@ def Xform "World" (
                 float state:angular:physics:position = 0
                 float state:angular:physics:velocity = 0
             }
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
         }
 
         over "link2"
@@ -154,6 +196,22 @@ def Xform "World" (
             {
                 float state:angular:physics:position = 0
                 float state:angular:physics:velocity = 0
+            }
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
             }
         }
 
@@ -164,6 +222,22 @@ def Xform "World" (
                 float state:angular:physics:position = 0
                 float state:angular:physics:velocity = 0
             }
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
         }
 
         over "link4"
@@ -173,6 +247,22 @@ def Xform "World" (
                 float state:angular:physics:position = 0
                 float state:angular:physics:velocity = 0
             }
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
         }
 
         over "link5"
@@ -181,6 +271,22 @@ def Xform "World" (
             {
                 float state:angular:physics:position = 0
                 float state:angular:physics:velocity = 0
+            }
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
             }
         }
 
@@ -210,6 +316,43 @@ def Xform "World" (
                 double3 xformOp:scale = (1, 1, 1)
                 double3 xformOp:translate = (0.04, -0.035, 0)
                 uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "visuals"
+            {
+                over "mesh_0" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexHull"
+                    bool physics:collisionEnabled = 1
+                }
+
+                over "mesh_1" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexHull"
+                    bool physics:collisionEnabled = 1
+                }
+            }
+
+            over "collisions"
+            {
+                over "mesh_0" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+                )
+                {
+                    uniform token physics:approximation = "convexHull"
+                    bool physics:collisionEnabled = 1
+                }
+
+                over "mesh_1" (
+                    prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI"]
+                )
+                {
+                    bool physics:collisionEnabled = 1
+                }
             }
         }
 
@@ -265,10 +408,19 @@ def Xform "World" (
             )
 
             over "collisions" (
-                prepend apiSchemas = ["PhysxConvexDecompositionCollisionAPI", "PhysxConvexHullCollisionAPI"]
+                prepend apiSchemas = ["PhysxConvexDecompositionCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsCollisionAPI", "PhysxCollisionAPI"]
             )
             {
                 uniform token physics:approximation = "convexDecomposition"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
             }
         }
 
@@ -279,6 +431,21 @@ def Xform "World" (
             rel material:binding = </World/Looks/finger_color> (
                 bindMaterialAs = "strongerThanDescendants"
             )
+
+            over "visuals" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxConvexHullCollisionAPI", "PhysicsMeshCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+
+            over "collisions" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI"]
+            )
+            {
+                bool physics:collisionEnabled = 1
+            }
         }
     }
 
@@ -509,101 +676,6 @@ def Xform "World" (
         }
     }
 
-    def Xform "screwdriver" (
-        delete apiSchemas = ["PhysxMeshMergeCollisionAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
-    )
-    {
-        quatd xformOp:orient = (0.8504410733263356, 0, 0, 0.5260703192535674)
-        double3 xformOp:scale = (1, 1, 1)
-        double3 xformOp:translate = (0.32285232105474415, -0.07895745133182379, 0)
-        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-
-        def Cube "Cube" (
-            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI", "PhysicsCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
-        )
-        {
-            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
-            rel material:binding = </World/Looks/screwdriver_orange> (
-                bindMaterialAs = "strongerThanDescendants"
-            )
-            rel material:binding:physics = </World/screwdriver/PhysicsMaterial> (
-                bindMaterialAs = "strongerThanDescendants"
-            )
-            bool physics:collisionEnabled = 1
-            bool physics:kinematicEnabled = 0
-            bool physics:rigidBodyEnabled = 1
-            double size = 1
-            quatd xformOp:orient = (1, 0, 0, 0)
-            double3 xformOp:scale = (0.025, 0.04, 0.023)
-            double3 xformOp:translate = (0, 0, 0.02)
-            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-        }
-
-        def Cube "Cube_01" (
-            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI", "PhysicsCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
-        )
-        {
-            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
-            rel material:binding = </World/Looks/screwdriver_orange> (
-                bindMaterialAs = "strongerThanDescendants"
-            )
-            bool physics:collisionEnabled = 1
-            bool physics:kinematicEnabled = 0
-            bool physics:rigidBodyEnabled = 1
-            double size = 1
-            quatd xformOp:orient = (1, 0, 0, 0)
-            double3 xformOp:scale = (0.017, 0.04, 0.015)
-            double3 xformOp:translate = (0, 0.04, 0.018)
-            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-
-            def PhysicsFixedJoint "FixedJoint"
-            {
-                rel physics:body0 = </World/screwdriver/Cube>
-                rel physics:body1 = </World/screwdriver/Cube_01>
-                float physics:breakForce = inf
-                float physics:breakTorque = inf
-                point3f physics:localPos0 = (-1.7763568e-15, 0.6666667, 0)
-                point3f physics:localPos1 = (0, 0, 0)
-                quatf physics:localRot0 = (1, 0, 0, 0)
-                quatf physics:localRot1 = (1, 0, 0, 0)
-            }
-        }
-
-        def Cylinder "Cylinder" (
-            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI", "PhysicsCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
-        )
-        {
-            uniform token axis = "Z"
-            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
-            double height = 1
-            rel material:binding = </World/Looks/screwdriver_gray> (
-                bindMaterialAs = "strongerThanDescendants"
-            )
-            bool physics:collisionEnabled = 1
-            bool physics:kinematicEnabled = 0
-            bool physics:rigidBodyEnabled = 1
-            double radius = 0.5
-            custom bool refinementEnableOverride = 1
-            custom int refinementLevel = 2
-            quatd xformOp:orient = (1, 0, 0, 0)
-            double3 xformOp:scale = (0.002, 0.1, 0.002)
-            double3 xformOp:translate = (0, 0.1, 0.018)
-            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-
-            def PhysicsFixedJoint "FixedJoint"
-            {
-                rel physics:body0 = </World/screwdriver/Cube_01>
-                rel physics:body1 = </World/screwdriver/Cylinder>
-                float physics:breakForce = inf
-                float physics:breakTorque = inf
-                point3f physics:localPos0 = (-3.5527137e-15, 1.6, -0.083333336)
-                point3f physics:localPos1 = (0, 0, 0)
-                quatf physics:localRot0 = (1, 0, 0, 0)
-                quatf physics:localRot1 = (1, 0, 0, 0)
-            }
-        }
-    }
-
     def OmniGraph "ros2_position_respawn"
     {
         token evaluationMode = "Automatic"
@@ -713,6 +785,7 @@ def Xform "World" (
             custom string inputs:script = '''import numpy as np
 import random
 from pxr import Gf, UsdGeom
+import math
 
 def setup(db: og.Database):
     pass
@@ -727,22 +800,36 @@ def compute(db: og.Database):
     screwdriver = stage.GetPrimAtPath("/World/screwdriver")
     
     x_coor = random.uniform(0.25, 0.35)
-    y_coor = random.uniform(-0.09, 0.27)
-    new_position = Gf.Vec3d(x_coor, y_coor, 0.0)
+    y_coor = random.uniform(-0.01, 0.22)
+    new_position = Gf.Vec3d(x_coor, y_coor, 0.012)
     
     screwdriver.GetAttribute("xformOp:translate").Set(new_position)
     
     
-    rotation_angle = random.uniform(40, 120)
-    rotation_axis = Gf.Vec3d(0, 0, 1)
-    new_rotation = Gf.Rotation(rotation_axis, rotation_angle)  
+    new_yaw = random.uniform(-60, 60)
+    #rotation_axis = Gf.Vec3d(0, 0, 1)
+    #new_rotation = Gf.Rotation(rotation_axis, rotation_angle)
     
-    quaternion_rotation = Gf.Quatd(new_rotation.GetQuaternion().GetReal(), 
-                                   new_rotation.GetQuaternion().GetImaginary())
-    print(type(quaternion_rotation))
+    #new_rotation_i = new_rotation.GetQuaternion().GetImaginary()
+    
+    #imaginary2float = Gf.Vec3f(float(new_rotation_i[0]), float(new_rotation_i[1]), float(new_rotation_i[2]))
+    
+    #quaternion_rotation = Gf.Quatf(new_rotation.GetQuaternion().GetReal(), 
+    #                               imaginary2float)
+   # print(type(quaternion_rotation))
     print(type(screwdriver.GetAttribute("xformOp:orient").Get()))
+    print(screwdriver.GetAttribute("xformOp:orient").Get())
     
-    screwdriver.GetAttribute("xformOp:orient").Set(quaternion_rotation)
+   
+    new_angle = Gf.Vec3d(0.0, 0.0, new_yaw)
+    w = math.cos(new_yaw / 2)
+    z = math.sin(new_yaw / 2)
+    
+    
+    #quat = Gf.Quatd(w, 0.0, 0.0, z)
+    screwdriver.GetAttribute("xformOp:rotateXYZ").Set(new_angle)
+    
+    #screwdriver.GetAttribute("xformOp:orient").Set(quat)
     
     
     '''
@@ -776,12 +863,12 @@ def compute(db: og.Database):
             custom string inputs:parentFrameId = "screwdriver"
             custom string inputs:qosProfile
             custom uint64 inputs:queueSize
-            custom quatd inputs:rotation = (0, -0.707, 0.707, 0)
+            custom quatd inputs:rotation = (0.2419, 0.9703, 0, 0)
             custom bool inputs:staticPublisher = 0
             custom double inputs:timeStamp
             prepend double inputs:timeStamp.connect = </World/ros2_position_respawn/isaac_read_system_time.outputs:systemTime>
             custom string inputs:topicName
-            custom vector3d inputs:translation = (0.005, 0.005, 0.13)
+            custom vector3d inputs:translation = (0.08, 0.072, 0.13)
             token node:type = "omni.isaac.ros2_bridge.ROS2PublishRawTransformTree"
             int node:typeVersion = 1
             uniform token ui:nodegraph:node:expansionState = "open"
@@ -807,6 +894,161 @@ def compute(db: og.Database):
     {
         uniform token physxScene:broadphaseType = "SAP"
         bool physxScene:enableGPUDynamics = 0
+    }
+
+    def Xform "screwdriver_old" (
+        delete apiSchemas = ["PhysxMeshMergeCollisionAPI", "PhysicsCollisionAPI", "PhysicsMeshCollisionAPI"]
+    )
+    {
+        quatd xformOp:orient = (0.8504410733263356, 0, 0, 0.5260703192535674)
+        double3 xformOp:scale = (1, 1, 1)
+        double3 xformOp:translate = (0.32285232105474415, -0.8, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+        def Cube "Cube" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI", "PhysicsCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            rel material:binding = </World/Looks/screwdriver_orange> (
+                bindMaterialAs = "strongerThanDescendants"
+            )
+            rel material:binding:physics = </World/screwdriver_old/PhysicsMaterial> (
+                bindMaterialAs = "strongerThanDescendants"
+            )
+            bool physics:collisionEnabled = 1
+            bool physics:kinematicEnabled = 0
+            bool physics:rigidBodyEnabled = 1
+            double size = 1
+            quatd xformOp:orient = (1, 0, 0, 0)
+            double3 xformOp:scale = (0.025, 0.04, 0.023)
+            double3 xformOp:translate = (0, 0, 0.02)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+        }
+
+        def Cube "Cube_01" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI", "PhysicsCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            rel material:binding = </World/Looks/screwdriver_orange> (
+                bindMaterialAs = "strongerThanDescendants"
+            )
+            bool physics:collisionEnabled = 1
+            bool physics:kinematicEnabled = 0
+            bool physics:rigidBodyEnabled = 1
+            double size = 1
+            quatd xformOp:orient = (1, 0, 0, 0)
+            double3 xformOp:scale = (0.017, 0.04, 0.015)
+            double3 xformOp:translate = (0, 0.04, 0.018)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def PhysicsFixedJoint "FixedJoint"
+            {
+                rel physics:body0 = </World/screwdriver_old/Cube>
+                rel physics:body1 = </World/screwdriver_old/Cube_01>
+                float physics:breakForce = inf
+                float physics:breakTorque = inf
+                point3f physics:localPos0 = (-1.7763568e-15, 0.6666667, 0)
+                point3f physics:localPos1 = (0, 0, 0)
+                quatf physics:localRot0 = (1, 0, 0, 0)
+                quatf physics:localRot1 = (1, 0, 0, 0)
+            }
+        }
+
+        def Cylinder "Cylinder" (
+            prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI", "PhysicsCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+        )
+        {
+            uniform token axis = "Z"
+            float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+            double height = 1
+            rel material:binding = </World/Looks/screwdriver_gray> (
+                bindMaterialAs = "strongerThanDescendants"
+            )
+            bool physics:collisionEnabled = 1
+            bool physics:kinematicEnabled = 0
+            bool physics:rigidBodyEnabled = 1
+            double radius = 0.5
+            custom bool refinementEnableOverride = 1
+            custom int refinementLevel = 2
+            quatd xformOp:orient = (1, 0, 0, 0)
+            double3 xformOp:scale = (0.002, 0.1, 0.002)
+            double3 xformOp:translate = (0, 0.1, 0.018)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def PhysicsFixedJoint "FixedJoint"
+            {
+                rel physics:body0 = </World/screwdriver_old/Cube_01>
+                rel physics:body1 = </World/screwdriver_old/Cylinder>
+                float physics:breakForce = inf
+                float physics:breakTorque = inf
+                point3f physics:localPos0 = (-3.5527137e-15, 1.6, -0.083333336)
+                point3f physics:localPos1 = (0, 0, 0)
+                quatf physics:localRot0 = (1, 0, 0, 0)
+                quatf physics:localRot1 = (1, 0, 0, 0)
+            }
+        }
+    }
+
+    def "screwdriver" (
+        prepend apiSchemas = ["PhysicsRigidBodyAPI", "PhysxRigidBodyAPI"]
+        prepend payload = @./screwdriver.usd@
+    )
+    {
+        bool physics:kinematicEnabled = 0
+        bool physics:rigidBodyEnabled = 1
+        double xformOp:rotateX:unitsResolve = 90
+        float3 xformOp:rotateXYZ = (-90, 0, 15)
+        float3 xformOp:scale = (2.5, 2.5, 2.5)
+        double3 xformOp:scale:unitsResolve = (0.01, 0.01, 0.01)
+        double3 xformOp:translate = (0.25411415679556304, 0.07059547623525368, 0.012)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale", "xformOp:rotateX:unitsResolve", "xformOp:scale:unitsResolve"]
+
+        over "Lamp" (
+            active = false
+        )
+        {
+        }
+
+        over "Camera" (
+            active = false
+        )
+        {
+        }
+
+        over "Cylinder_002"
+        {
+            over "Cylinder_002" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxTriangleMeshCollisionAPI", "PhysicsMeshCollisionAPI", "PhysxConvexHullCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "boundingCube"
+                bool physics:collisionEnabled = 1
+            }
+        }
+
+        over "Cylinder_001"
+        {
+            over "Cylinder_001" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxTriangleMeshCollisionAPI", "PhysicsMeshCollisionAPI", "PhysxConvexHullCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+        }
+
+        over "Cylinder"
+        {
+            over "Cylinder" (
+                prepend apiSchemas = ["PhysicsCollisionAPI", "PhysxCollisionAPI", "PhysxTriangleMeshCollisionAPI", "PhysicsMeshCollisionAPI", "PhysxConvexHullCollisionAPI"]
+            )
+            {
+                uniform token physics:approximation = "convexHull"
+                bool physics:collisionEnabled = 1
+            }
+        }
     }
 }
 
