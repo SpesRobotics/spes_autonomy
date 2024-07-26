@@ -153,6 +153,9 @@ class Test(Node):
         self.state = EnvStates.IDLE
         self.previous_state = self.state
         
+        self.is_end_episode = False
+        self.end_episode_cnt = 0
+        
 
     def switch_motion_controller(self, activate_controllers, deactivate_controllers):
         request = SwitchController.Request()
@@ -203,8 +206,8 @@ class Test(Node):
         if not os.path.exists(observation_folder):
             os.mkdir(observation_folder)
         
-        if not os.path.exists(rewards_folder):
-            os.mkdir(rewards_folder)
+        # if not os.path.exists(rewards_folder):
+        #     os.mkdir(rewards_folder)
 
         action_file_neme = action_folder + '/' + episode_name+'.txt'
         observation_file_neme = observation_folder + '/' + episode_name+'.txt'
@@ -252,6 +255,8 @@ class Test(Node):
 
         # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}, {gripper_status}]\n")
         action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}]\n")
+        if self.is_end_episode:
+            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}]\n")
 
         # reward = (1 / (self.euclidean_distance + self.angle_distance)) * 0.01
 
@@ -320,26 +325,29 @@ class Test(Node):
                     self.skip_saving = False
                     self.images_counter = 0
                     self.episode_frame_counter = 0
+                    self.is_end_episode = False
+                    self.end_episode_cnt = 0
 
         elif self.state == EnvStates.MOVE:
             # self.euclidean_distance = np.sqrt(gripper2target.transform.translation.x**2 + gripper2target.transform.translation.y**2)
             # self.angle_distance = 2 * math.acos(gripper2target.transform.rotation.w)
             self.current_pose.pose = pose
-            self.get_logger().info(f'================= {are_transforms_close(gripper2target_matrix):} ====================')
             if are_transforms_close(gripper2target_matrix):
                 self.state = EnvStates.GO_CLOSE
-                self.skip_saving = True
+                # self.skip_saving = True
                 self.current_pose.pose.position.z = 0.09
                 self.start_time  = time.time()
-            # if gripper2target.transform.translation.x < epsilon and gripper2target.transform.translation.y < epsilon and gripper2target.transform.translation.z < epsilon:
-                # self.current_pose.pose.position.x = 0.09
         elif self.state == EnvStates.GO_CLOSE:
             if time.time() - self.start_time > 2:
                 if round(gripper2target.transform.translation.z, 4) <= -0.0255:
-                    self.state = EnvStates.CLOSE_GRIPPER
+                    if self.end_episode_cnt > 5:
+                        self.state = EnvStates.CLOSE_GRIPPER
+                    self.end_episode_cnt += 1
+                    self.is_end_episode = True
                 self.get_logger().info(f'{round(gripper2target.transform.translation.z, 4)}')
 
         elif self.state == EnvStates.CLOSE_GRIPPER:
+            self.skip_saving  =True
             if not self.is_object_picked:
                 self.state = EnvStates.UP
                 self.gripper_status = GripperStatus.CLOSE
@@ -355,16 +363,17 @@ class Test(Node):
 
         elif self.state == EnvStates.UP:
             if time.time() - self.start_time > 0.1:
-                self.current_pose.pose.position.z = 0.2
+                self.current_pose.pose.position.z = 0.35
                 self.state = EnvStates.DOWN
                 self.start_time = time.time()
 
                 self.get_logger().info('Move upward...')
 
         elif self.state == EnvStates.DOWN:
-            if time.time() - self.start_time > 1.0:
+            # self.skip_saving = True
+            if time.time() - self.start_time > 3.0:
                 self.skip_saving = True
-                self.current_pose.pose.position.z = 0.1
+                self.current_pose.pose.position.z = 0.09
                 self.state = EnvStates.OPEN_GRIPPER
                 self.gripper_status = GripperStatus.OPEN
                 self.start_time = time.time()
@@ -372,7 +381,7 @@ class Test(Node):
                 self.get_logger().info('Move downward...')
 
         elif self.state == EnvStates.OPEN_GRIPPER:
-            if time.time() - self.start_time > 1.0 and self.is_object_picked:
+            if time.time() - self.start_time > 3.5 and self.is_object_picked:
                 self.state = EnvStates.RESET
                 self.is_object_picked = False
 
