@@ -27,7 +27,7 @@ def clip(value, limit):
 
 
 LIMIT_LINEAR = 0.002
-LIMIT_ANGULAR = math.degrees(0.5)
+LIMIT_ANGULAR = math.radians(1.5)
 REGULATION_RATE = 20
 
 
