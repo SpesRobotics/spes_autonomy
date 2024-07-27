@@ -11,7 +11,8 @@ RUN useradd -d /${DOCKERUSER} -m \
             -c "${DOCKERUSERCOMMENT}" ${DOCKERUSER} && \
     echo "${DOCKERUSER} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     usermod -a -G video ${DOCKERUSER} && \
-    usermod -a -G dialout ${DOCKERUSER}
+    usermod -a -G dialout ${DOCKERUSER} && \
+    usermod -a -G plugdev ${DOCKERUSER}
 
 # HOTFIX: RViz black screen
 RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository -y ppa:kisak/kisak-mesa && \
@@ -49,7 +50,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Option
     gdb \
     wget \
     fuse \
-    libfuse2
+    libfuse2 \
+    libhidapi-dev
 
 # Webots
 RUN curl -L -o /tmp/webots.deb \
@@ -86,7 +88,7 @@ USER ${DOCKERUSER}
 
 RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip3 install --no-warn-script-location --user ultralytics lapx transforms3d dt_apriltags
-RUN pip3 install pymap3d
+RUN pip3 install pymap3d pyspacemouse
 
 COPY ./docker/bashrc /tmp/bashrc
 RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
