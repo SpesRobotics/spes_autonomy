@@ -5,7 +5,7 @@
   <xacro:arg name="limited" default="false" />
   <xacro:arg name="velocity_control" default="false" />
   <xacro:arg name="add_gripper" default="true" />
-  <xacro:arg name="robot_ip" default="" />
+  <xacro:arg name="robot_ip" default="192.168.1.184" />
   <xacro:arg name="report_type" default="normal" />
   <!-- <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotSystemHardware" /> -->
   <!-- <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotFakeSystemHardware" /> -->
