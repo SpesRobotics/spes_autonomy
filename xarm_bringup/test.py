@@ -279,21 +279,21 @@ class Test(Node):
         self.current_pose.header.stamp = self.get_clock().now().to_msg()
         self.current_pose.header.frame_id = 'link_base'
 
-        gripper2target = self.get_transform('gripper_base_link', 'pick_target')
-        base2gripper = self.get_transform('link_base', 'gripper_base_link')
+        gripper_target_tf = self.get_transform('gripper_base_link', 'pick_target')
+        base_gripper_tf = self.get_transform('link_base', 'gripper_base_link')
         
-        if gripper2target is None:
+        if gripper_target_tf is None:
             return
         
-        if base2gripper is None:
+        if base_gripper_tf is None:
             return
         
-        self.current_relative_pose = gripper2target
+        self.current_relative_pose = gripper_target_tf
 
-        gripper2target_matrix = rnp.numpify(gripper2target.transform)
-        base2gripper_matrix = rnp.numpify(base2gripper.transform)
+        gripper_target = rnp.numpify(gripper_target_tf.transform)
+        base_gripper = rnp.numpify(base_gripper_tf.transform)
 
-        target_transform =  base2gripper_matrix @ gripper2target_matrix
+        target_transform =  base_gripper @ gripper_target
         pose = rnp.msgify(Pose, target_transform)
 
         if not self.is_arm_init:
@@ -332,19 +332,19 @@ class Test(Node):
             # self.euclidean_distance = np.sqrt(gripper2target.transform.translation.x**2 + gripper2target.transform.translation.y**2)
             # self.angle_distance = 2 * math.acos(gripper2target.transform.rotation.w)
             self.current_pose.pose = pose
-            if are_transforms_close(gripper2target_matrix):
+            if are_transforms_close(gripper_target):
                 self.state = EnvStates.GO_CLOSE
                 # self.skip_saving = True
                 self.current_pose.pose.position.z = 0.09
                 self.start_time  = time.time()
         elif self.state == EnvStates.GO_CLOSE:
             if time.time() - self.start_time > 2:
-                if round(gripper2target.transform.translation.z, 4) <= -0.0255:
+                if round(gripper_target_tf.transform.translation.z, 4) <= -0.0255:
                     if self.end_episode_cnt > 5:
                         self.state = EnvStates.CLOSE_GRIPPER
                     self.end_episode_cnt += 1
                     self.is_end_episode = True
-                self.get_logger().info(f'{round(gripper2target.transform.translation.z, 4)}')
+                self.get_logger().info(f'{round(gripper_target_tf.transform.translation.z, 4)}')
 
         elif self.state == EnvStates.CLOSE_GRIPPER:
             self.skip_saving  =True
@@ -359,7 +359,7 @@ class Test(Node):
                 msg.data = [-0.01]
                 self.publisher_gripper.publish(msg)
                 self.get_logger().info(
-                    f'Close gripper! {round(gripper2target.transform.translation.z, 2)}')
+                    f'Close gripper! {round(gripper_target_tf.transform.translation.z, 2)}')
 
         elif self.state == EnvStates.UP:
             if time.time() - self.start_time > 0.1:

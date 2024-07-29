@@ -19,14 +19,14 @@ class GripperSwitcher(Node):
         )
         self.close_cli = self.create_client(Call, '/xarm/close_lite6_gripper')
         self.open_cli = self.create_client(Call, '/xarm/open_lite6_gripper')
-        self.stop_cli = self.create_client(Call, '/xarm/close_lite6_gripper')
+        self.stop_cli = self.create_client(Call, '/xarm/stop_lite6_gripper')
         self.callback_group = ReentrantCallbackGroup()
 
         while not self.close_cli.wait_for_service(timeout_sec=1.0) or not self.open_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('One or both services not available, waiting again...')
 
     def switcher_callback(self, msg):
-        # 0 - open, 1 - close, others - stop
+        # 0 - close, 1 - open, others - stop
         self.call_close_gripper_service(msg.data)
             
 

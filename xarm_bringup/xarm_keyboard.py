@@ -5,7 +5,7 @@ from std_msgs.msg import Float64MultiArray
 import numpy as np
 import sys, select, termios, tty
 import transforms3d
-import time
+import sys, select, termios, tty
 
 settings = termios.tcgetattr(sys.stdin)
 
