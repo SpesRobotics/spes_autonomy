@@ -241,8 +241,10 @@ class Test(Node):
             gripper_status = 1
         
         # observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}, {gripper_status}]\n")
+        quat = [w_ori, x_ori, y_ori, z_ori]
+        euler_angles_o = t3d.euler.quat2euler(quat)
 
-        observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}]\n")
+        observation = (f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[0]}, {euler_angles_o[1]}, {euler_angles_o[2]}]\n")
 
         x_action_pos = self.current_relative_pose.translation.x
         y_action_pos = self.current_relative_pose.translation.y
@@ -254,9 +256,11 @@ class Test(Node):
         w_action_ori = self.current_relative_pose.rotation.w
 
         # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}, {gripper_status}]\n")
-        action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}]\n")
+        quat = [w_action_ori, x_action_ori, y_action_ori, z_action_ori]
+        euler_angles_a = t3d.euler.quat2euler(quat)
+        action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {euler_angles_a[0]}, {euler_angles_a[1]}, {euler_angles_a[2]}]\n")
         if self.is_end_episode:
-            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {1.0}]\n")
+            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}]\n")
 
         # reward = (1 / (self.euclidean_distance + self.angle_distance)) * 0.01
 
@@ -346,7 +350,7 @@ class Test(Node):
         elif self.state == EnvStates.GO_CLOSE:
             if time.time() - self.start_time > 2:
                 if round(gripper_target_tf.transform.translation.z, 4) <= -0.0255:
-                    if self.end_episode_cnt > 100:
+                    if self.end_episode_cnt > 10:
                         self.state = EnvStates.CLOSE_GRIPPER
                     self.end_episode_cnt += 1
                     self.is_end_episode = True
