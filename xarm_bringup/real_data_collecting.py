@@ -17,7 +17,7 @@ import re
 import cv2
 import os
 import numpy as np
-
+from collections import deque
 import threading
 
 DATA_DIR = 'DATA_REAL'
@@ -88,6 +88,7 @@ class RealDataCollecting(Node):
 
         self.start_saving = False
         self.is_teleoperation_stareted = False
+        self.observation_queue = deque(maxlen=10)
 
     
     def start_keyboard_listener(self):
@@ -125,7 +126,8 @@ class RealDataCollecting(Node):
             print(e)
 
     def current_pose_callback(self, msg):
-        self.obtained_object_pose = msg
+        self.observation_queue.append(msg)
+        # self.obtained_object_pose = msg
 
     def target_pose_callback(self, msg):
         # self.get_logger().info(f'{msg}')
@@ -173,7 +175,7 @@ class RealDataCollecting(Node):
     def save_current_frame(self):
         if self.action_file is None or self.images_folder is None:
             return
-        if self.image is None or self.obtained_object_pose is None:
+        if self.image is None:
             return
 
 
@@ -234,7 +236,10 @@ class RealDataCollecting(Node):
             self.end_episode_cnt = 0
             self.is_teleoperation_stareted = False
             time.sleep(3.5)
-
+        
+        self.obtained_object_pose = self.observation_queue[0]
+        if self.obtained_object_pose is None:
+            return
         base_gripper_tf = self.get_transform('link_base', 'gripper_base_link')
         if base_gripper_tf is None:
             return

@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped, Twist, Pose, TransformStamped
+from geometry_msgs.msg import PoseStamped, Twist, Pose, TransformStamped, Transform
 from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from controller_manager_msgs.srv import SwitchController
@@ -149,7 +149,7 @@ class Test(Node):
         self.skip_saving = False
 
 
-        self.transform = None
+        # self.transform = None
         self.state = EnvStates.IDLE
         self.previous_state = self.state
         
@@ -244,19 +244,19 @@ class Test(Node):
 
         observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}]\n")
 
-        x_action_pos = self.current_relative_pose.transform.translation.x
-        y_action_pos = self.current_relative_pose.transform.translation.y
-        z_action_pos = self.current_relative_pose.transform.translation.z
+        x_action_pos = self.current_relative_pose.translation.x
+        y_action_pos = self.current_relative_pose.translation.y
+        z_action_pos = self.current_relative_pose.translation.z
 
-        x_action_ori = self.current_relative_pose.transform.rotation.x
-        y_action_ori = self.current_relative_pose.transform.rotation.y
-        z_action_ori = self.current_relative_pose.transform.rotation.z
-        w_action_ori = self.current_relative_pose.transform.rotation.w
+        x_action_ori = self.current_relative_pose.rotation.x
+        y_action_ori = self.current_relative_pose.rotation.y
+        z_action_ori = self.current_relative_pose.rotation.z
+        w_action_ori = self.current_relative_pose.rotation.w
 
         # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}, {gripper_status}]\n")
         action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}]\n")
         if self.is_end_episode:
-            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}]\n")
+            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {1.0}]\n")
 
         # reward = (1 / (self.euclidean_distance + self.angle_distance)) * 0.01
 
@@ -288,12 +288,18 @@ class Test(Node):
         if base_gripper_tf is None:
             return
         
-        self.current_relative_pose = gripper_target_tf
+        # self.current_relative_pose = gripper_target_tf
 
         gripper_target = rnp.numpify(gripper_target_tf.transform)
         base_gripper = rnp.numpify(base_gripper_tf.transform)
 
         target_transform =  base_gripper @ gripper_target
+
+        base_current_pose = rnp.numpify(self.obtained_object_pose.pose) 
+        desired_pose = np.linalg.inv(base_current_pose) @ target_transform
+        desired_pose_msg = rnp.msgify(Transform, desired_pose)
+        self.current_relative_pose = desired_pose_msg
+
         pose = rnp.msgify(Pose, target_transform)
 
         if not self.is_arm_init:
@@ -311,10 +317,10 @@ class Test(Node):
                 call_ros2_service('cartesian_motion_controller',
                                   'joint_trajectory_controller')
                 self.is_trajectory_controler_active = False
-                self.transform = self.get_transform('link_base', 'pick_target') # ?????????????????????
+                # self.transform = self.get_transform('link_base', 'pick_target') # ?????????????????????
 
-                if self.transform is None:
-                    return
+                # if self.transform is None:
+                #     return
                 self.get_logger().info('Start...')
 
                 self.state = EnvStates.MOVE
@@ -340,7 +346,7 @@ class Test(Node):
         elif self.state == EnvStates.GO_CLOSE:
             if time.time() - self.start_time > 2:
                 if round(gripper_target_tf.transform.translation.z, 4) <= -0.0255:
-                    if self.end_episode_cnt > 5:
+                    if self.end_episode_cnt > 100:
                         self.state = EnvStates.CLOSE_GRIPPER
                     self.end_episode_cnt += 1
                     self.is_end_episode = True
