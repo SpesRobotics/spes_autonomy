@@ -1,0 +1,3 @@
+<library path="serial_hardware_interface">
+    <class type="spesbot_hardware::SerialHardwareInterface" base_class_type="hardware_interface::SystemInterface"></class>
+</library>
