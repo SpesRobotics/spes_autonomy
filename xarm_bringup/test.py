@@ -48,8 +48,8 @@ def are_transforms_close(a, b=None, linear_tol=0.03, angular_tol=0.03):
     if np.any(np.abs(xyz) > linear_tol):
         return False
     rpy = t3d.euler.mat2euler(c[:3, :3])
-    # if np.any(np.abs(np.array(rpy)) > angular_tol):
-    #     return False
+    if np.any(np.abs(np.array(rpy)) > angular_tol):
+        return False
     return True
 
 
@@ -155,10 +155,6 @@ class Test(Node):
         
         self.is_end_episode = False
         self.end_episode_cnt = 0
-        self.start_pose = PoseStamped()
-        self.desired_target_pose = TransformStamped()
-
-        self.xyz_movement = np.zeros(3)
         
 
     def switch_motion_controller(self, activate_controllers, deactivate_controllers):
@@ -248,7 +244,7 @@ class Test(Node):
         quat = [w_ori, x_ori, y_ori, z_ori]
         euler_angles_o = t3d.euler.quat2euler(quat)
 
-        observation = (f"[{x_pos}, {y_pos}, {z_pos}]\n")
+        observation = (f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[2]}]\n")
 
         x_action_pos = self.current_relative_pose.translation.x
         y_action_pos = self.current_relative_pose.translation.y
@@ -262,10 +258,14 @@ class Test(Node):
         # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}, {gripper_status}]\n")
         quat = [w_action_ori, x_action_ori, y_action_ori, z_action_ori]
         euler_angles_a = t3d.euler.quat2euler(quat)
-        # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}]\n")
-        action = (f"[{self.xyz_movement[0]}, {self.xyz_movement[1]}, {self.xyz_movement[2]}]\n")
+
+        yaw = euler_angles_a[2]
+        # if abs(round(euler_angles_a[2])) < 0.0001:
+        #     yaw = 0.0
+    
+        action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {yaw}]\n")
         if self.is_end_episode:
-            action = (f"[{0.0}, {0.0}, {0.0}]\n")
+            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}]\n")
 
         # reward = (1 / (self.euclidean_distance + self.angle_distance)) * 0.01
 
@@ -283,16 +283,13 @@ class Test(Node):
 
         if not self.skip_saving:
                 self.save_current_frame()
-                # self.get_logger().info(f'-----{self.xyz_movement}')
 
-        self.xyz_movement = np.zeros(3)
+        
         self.current_pose.header.stamp = self.get_clock().now().to_msg()
         self.current_pose.header.frame_id = 'link_base'
 
         gripper_target_tf = self.get_transform('gripper_base_link', 'pick_target')
         base_gripper_tf = self.get_transform('link_base', 'gripper_base_link')
-
-        self.desired_target_pose = self.get_transform('link_base', 'pick_target')
         
         if gripper_target_tf is None:
             return
@@ -329,6 +326,10 @@ class Test(Node):
                 call_ros2_service('cartesian_motion_controller',
                                   'joint_trajectory_controller')
                 self.is_trajectory_controler_active = False
+                # self.transform = self.get_transform('link_base', 'pick_target') # ?????????????????????
+
+                # if self.transform is None:
+                #     return
                 self.get_logger().info('Start...')
 
                 self.state = EnvStates.MOVE
@@ -342,51 +343,21 @@ class Test(Node):
                     self.is_end_episode = False
                     self.end_episode_cnt = 0
 
-                    self.start_pose = self.obtained_object_pose
-
         elif self.state == EnvStates.MOVE:
             # self.euclidean_distance = np.sqrt(gripper2target.transform.translation.x**2 + gripper2target.transform.translation.y**2)
             # self.angle_distance = 2 * math.acos(gripper2target.transform.rotation.w)
-            # self.current_pose.pose = pose # old code
-            tolerance = 0.005
-            step_size = 0.002
-            delta_x = self.desired_target_pose.transform.translation.x - self.start_pose.pose.position.x
-            delta_y = self.desired_target_pose.transform.translation.y - self.start_pose.pose.position.y
-            delta_z = self.desired_target_pose.transform.translation.z - self.start_pose.pose.position.z
-
-            if abs(delta_y) > tolerance:
-                self.start_pose.pose.position.y += step_size if delta_y > 0 else -step_size
-                self.xyz_movement[1] = step_size
-                # self.get_logger().info(f'1111111 {delta_y}')
-
-            if abs(delta_x) > tolerance:
-                self.start_pose.pose.position.x += step_size if delta_x > 0 else -step_size
-                self.xyz_movement[0] = step_size
-                # self.get_logger().info(f'222222222 {delta_x}')
-
-            if abs(delta_z) > tolerance:
-                self.start_pose.pose.position.z += step_size if delta_z > 0 else -step_size
-                self.xyz_movement[2] = step_size
-                # self.get_logger().info(f'3333333333 {delta_z}')
-
-            self.start_pose.pose.orientation.x = 1.0
-            self.start_pose.pose.orientation.y = 0.0
-            self.start_pose.pose.orientation.z = 0.0
-            self.start_pose.pose.orientation.w = 0.0
-
-            self.current_pose.pose = self.start_pose.pose
-
+            self.current_pose.pose = pose
             if are_transforms_close(gripper_target):
-                if self.end_episode_cnt > 10:
-                    self.state = EnvStates.GO_CLOSE
-                    self.current_pose.pose.position.z = 0.09
-                    self.start_time  = time.time()
-                self.end_episode_cnt += 1
+                self.state = EnvStates.GO_CLOSE
+                # self.skip_saving = True
+                self.current_pose.pose.position.z = 0.09
+                self.start_time  = time.time()
         elif self.state == EnvStates.GO_CLOSE:
-            self.skip_saving = True
             if time.time() - self.start_time > 2:
                 if round(gripper_target_tf.transform.translation.z, 4) <= -0.0255:
-                    self.state = EnvStates.CLOSE_GRIPPER
+                    if self.end_episode_cnt > 10:
+                        self.state = EnvStates.CLOSE_GRIPPER
+                    self.end_episode_cnt += 1
                     self.is_end_episode = True
                 self.get_logger().info(f'{round(gripper_target_tf.transform.translation.z, 4)}')
 
