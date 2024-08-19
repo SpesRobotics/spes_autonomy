@@ -1,11 +1,9 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped, Twist, Pose, TransformStamped
-from std_msgs.msg import Float64MultiArray
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from controller_manager_msgs.srv import SwitchController
+from geometry_msgs.msg import PoseStamped, Pose
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import ros2_numpy as rnp
 import transforms3d as t3d
 import sys, select, termios, tty
@@ -19,6 +17,8 @@ import os
 import numpy as np
 from collections import deque
 import threading
+from enum import Enum
+import subprocess
 
 DATA_DIR = 'DATA_REAL'
 
@@ -30,6 +30,25 @@ def getKey():
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
     return key
 
+
+def call_ros2_service(activate_controllers, deactivate_controllers):
+    service_name = '/controller_manager/switch_controller'
+    service_type = 'controller_manager_msgs/srv/SwitchController'
+    strictness = '2'
+    activate_asap = 'true'
+
+    command = f'ros2 service call {service_name} {service_type} "{{activate_controllers: [\"{activate_controllers}\"], deactivate_controllers: [\"{deactivate_controllers}\"], strictness: {strictness}, activate_asap: {activate_asap}}}"'
+    try:
+        result = subprocess.run(command, shell=True,
+                                check=True, capture_output=True, text=True)
+        match = re.search(r'response:\n(.*)', result.stdout, re.DOTALL)
+        print(f"{activate_controllers}:", match.group(1).strip())
+    except subprocess.CalledProcessError as e:
+        print(f"Error calling ROS 2 service: {e}")
+
+class SavingMode(Enum):
+    SAVE_ALL = 0
+    SAVE_POINTS = 1
 
 class RealDataCollecting(Node):
     def __init__(self):
@@ -89,6 +108,27 @@ class RealDataCollecting(Node):
         self.start_saving = False
         self.is_teleoperation_stareted = False
         self.observation_queue = deque(maxlen=10)
+        self.enable_saving_points = False
+
+        self.mode = SavingMode.SAVE_ALL
+
+
+        self.joint_state = JointTrajectory()
+        self.joint_names = ['joint1', 'joint2',
+                            'joint3', 'joint4', 'joint5', 'joint6']
+
+        point = JointTrajectoryPoint()
+        point.positions = [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093]
+        point.time_from_start.sec = 3
+        point.time_from_start.nanosec = 0
+
+        self.joint_state.points = [point]
+        self.joint_state.joint_names = self.joint_names
+
+        self.publisher_joint_init = self.create_publisher(
+            JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 1)
+        
+        self.is_init_arm = False
 
     
     def start_keyboard_listener(self):
@@ -114,6 +154,11 @@ class RealDataCollecting(Node):
                 self.start_saving = True
                 self.new_episode = True
                 self.get_logger().info('New episode started by keyboard input.')
+            if key == 'k':
+                self.enable_saving_points = True
+                self.mode = SavingMode.SAVE_POINTS
+            if key == 'i':
+                self.is_init_arm = True
         except AttributeError:
             pass
 
@@ -188,19 +233,28 @@ class RealDataCollecting(Node):
         z_ori = self.obtained_object_pose.pose.orientation.z
         w_ori = self.obtained_object_pose.pose.orientation.w
 
-        observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}]\n")
+        quat = [w_ori, x_ori, y_ori, z_ori]
+        euler_angles_o = t3d.euler.quat2euler(quat)
+
+        # observation = (f"[{x_pos}, {y_pos}, {z_pos}, {x_ori}, {y_ori}, {z_ori}, {w_ori}]\n")
+        observation = (f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[2]}]\n")
 
         x_action_pos = self.target_pose_relative.position.x
         y_action_pos = self.target_pose_relative.position.y
         z_action_pos = self.target_pose_relative.position.z
+
         x_action_ori = self.target_pose_relative.orientation.x
         y_action_ori = self.target_pose_relative.orientation.y
         z_action_ori = self.target_pose_relative.orientation.z
         w_action_ori = self.target_pose_relative.orientation.w
 
-        action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}]\n")
+        quat = [w_action_ori, x_action_ori, y_action_ori, z_action_ori]
+        euler_angles_a = t3d.euler.quat2euler(quat)
+
+        # action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {x_action_ori}, {y_action_ori}, {z_action_ori}, {w_action_ori}]\n")
+        action = (f"[{x_action_pos}, {y_action_pos}, {z_action_pos}, {euler_angles_a[2]}]\n")
         if self.is_end_episode:
-            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {0.0}, {1.0}]\n")
+            action = (f"[{0.0}, {0.0}, {0.0}, {0.0}]\n")
 
         image_name = self.images_folder + '/' + str(self.images_counter) + '.jpg'
         cv2.imwrite(image_name, self.image)
@@ -211,12 +265,23 @@ class RealDataCollecting(Node):
 
 
     def save_data_frame(self):
+        if self.is_init_arm:
+            call_ros2_service('joint_trajectory_controller',
+                              'cartesian_motion_controller')
+            self.joint_state.header.stamp = self.get_clock().now().to_msg()
+            self.publisher_joint_init.publish(self.joint_state)
+            self.is_init_arm = False
+            
+            time.sleep(1.2)
+            call_ros2_service('cartesian_motion_controller', 'joint_trajectory_controller')
+            self.get_logger().info(f'Arm inited...')
+
         if not self.is_teleoperation_stareted:
             # self.get_logger().info(f'Wait msg from  the space mause...')
             return
         
         if self.is_end_episode:
-            if self.end_episode_cnt > 5:
+            if self.end_episode_cnt > 10:
                 self.is_end_episode = False
                 self.start_saving = False
             else:
@@ -227,6 +292,10 @@ class RealDataCollecting(Node):
         
         if not self.start_saving:
             return
+        
+        if self.mode == SavingMode.SAVE_POINTS and not self.enable_saving_points:
+            return
+        
 
         if self.new_episode:
             self.save_episode(DATA_DIR)
@@ -263,6 +332,7 @@ class RealDataCollecting(Node):
         self.target_pose_relative = relative_pose_msg
 
         self.save_current_frame()
+        self.enable_saving_points = False
 
         if self.exit:
             self.get_logger().info(f"Finished operation. Shutting down node...")
@@ -272,6 +342,14 @@ class RealDataCollecting(Node):
               
         
 def main(args=None):
+    msg = """
+    k - enable save point mode and save current point
+    n - new episode
+    s - save current episode
+    i - go to init pose
+"""
+    print(msg)
+    
     rclpy.init(args=args)
     real_data_collecting = RealDataCollecting()
     rclpy.spin(real_data_collecting)
