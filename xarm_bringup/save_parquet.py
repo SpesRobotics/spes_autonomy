@@ -42,25 +42,32 @@ def load_episodes(path):
     
     return episode_name
 
-def calculate_target_dst(single_dsts):
+
+def calculate_action(single_dsts):
     num_dsts = len(single_dsts)
     calculated_values = []
+    last_pose_str = single_dsts[num_dsts-1].replace("\n", "")[1:-1]
+    last_pose_str = last_pose_str.split(',')
 
-    prev_dst = np.zeros(len(single_dsts[0].split(',')))
-    for line in range(num_dsts -1,  -1, -1):
+    last_pose = []
+    for i in last_pose_str:
+        last_pose.append(float(i))
+
+
+    for line in range(0, num_dsts):
         dst = single_dsts[line].replace("\n", "")[1:-1]
         dst = dst.split(',')
         
         dst_np = []
         for i in dst:
             dst_np.append(float(i))
-        new_dst = prev_dst + dst_np
+
         
+        new_dst = np.array(last_pose) - np.array(dst_np)
+        print(new_dst, ' = ', last_pose, dst_np)
         new_dst_str = '[{}]'.format(', '.join(map(str, new_dst))) + '\n'
         calculated_values.append(new_dst_str)
-
-        prev_dst = new_dst
-    return calculated_values[::-1]
+    return calculated_values
 
 
 def save_data_frame(path, compute_target_distance):
@@ -103,17 +110,22 @@ def save_data_frame(path, compute_target_distance):
 
         images = load_images(image_folder)
 
-        file_content = open(file_path, 'r').readlines()
+        # file_content = open(file_path, 'r').readlines()
         # if compute_target_distance:
-        #    file_content = calculate_target_dst(file_content)
+        # file_content = calculate_target_dst(file_content)
+        # print(file_content)
+
 
         observation_file_content = open(observation_file_path, 'r').readlines()
+        file_content = calculate_action(observation_file_content)
 
-        current_line = file_content[0].replace("\n", "")
+        # current_line = file_content[0].replace("\n", "")
         file_length = len(file_content)
+        for l in file_content:
+            print(l)
 
-        cleaned_lines = [line.strip() for line in file_content]
-        line_counter = Counter(cleaned_lines)
+        # cleaned_lines = [line.strip() for line in file_content]
+        # line_counter = Counter(cleaned_lines)
         # repeated_lines_count = sum(1 for count in line_counter.values() if count > 1)
         
 
@@ -194,6 +206,11 @@ def main():
     save_data_frame(file_path, args.real)
     # load_episodes('/home/marija/spes_autonomy/xarm_bringup/DATA/actions')
 
-
+def test():
+    test_str = ['[10, 12, 11]\n', '[25, 24, 21]\n', '[2, 14, 12]\n', '[10, 11, 30]\n', '[10, 10, 30]\n']
+    # print(test_str)
+    # print('=====================')
+    calculate_action(test_str)
 if __name__ == '__main__':
+    # test()
     main()
