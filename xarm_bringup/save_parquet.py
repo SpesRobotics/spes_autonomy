@@ -6,8 +6,6 @@ import datasets
 from PIL import Image
 import io
 import re
-
-from collections import Counter
 import argparse
 
 REWARD_STEP = 0.0065
@@ -43,10 +41,11 @@ def load_episodes(path):
     return episode_name
 
 
-def calculate_action(single_dsts):
-    num_dsts = len(single_dsts)
-    calculated_values = []
-    last_pose_str = single_dsts[num_dsts-1].replace("\n", "")[1:-1]
+def calculate_action(episode_content):
+    num_frames = len(episode_content)
+    actions = []
+
+    last_pose_str = episode_content[num_frames-1].replace("\n", "")[1:-1]
     last_pose_str = last_pose_str.split(',')
 
     last_pose = []
@@ -54,23 +53,39 @@ def calculate_action(single_dsts):
         last_pose.append(float(i))
 
 
-    for line in range(0, num_dsts):
-        dst = single_dsts[line].replace("\n", "")[1:-1]
-        dst = dst.split(',')
+    for line in range(0, num_frames):
+        current_pose = episode_content[line].replace("\n", "")[1:-1]
+        current_pose = current_pose.split(',')
         
-        dst_np = []
-        for i in dst:
-            dst_np.append(float(i))
+        current_pose_np = []
+        for i in current_pose:
+            current_pose_np.append(float(i))
 
+        action= np.array(current_pose_np) - np.array(last_pose)
+
+        action_str = '[{}]'.format(', '.join(map(str, action))) + '\n'
+        actions.append(action_str)
+    return actions
+
+def delete_rotation(episode_content):
+    num_frames = len(episode_content)
+    actions = []
+
+    for line in range(0, num_frames):
+        current_pose = episode_content[line].replace("\n", "")[1:-1]
+        current_pose = current_pose.split(',')
         
-        new_dst = np.array(last_pose) - np.array(dst_np)
-        print(new_dst, ' = ', last_pose, dst_np)
-        new_dst_str = '[{}]'.format(', '.join(map(str, new_dst))) + '\n'
-        calculated_values.append(new_dst_str)
-    return calculated_values
+        current_pose_np = []
+        for i in current_pose:
+            current_pose_np.append(float(i))
 
+        action= current_pose_np[0:3]
 
-def save_data_frame(path, compute_target_distance):
+        action_str = '[{}]'.format(', '.join(map(str, action))) + '\n'
+        actions.append(action_str)
+    return actions
+
+def save_data_frame(path):
     output_dir = path + '/parquest_output'
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -110,19 +125,17 @@ def save_data_frame(path, compute_target_distance):
 
         images = load_images(image_folder)
 
-        # file_content = open(file_path, 'r').readlines()
-        # if compute_target_distance:
-        # file_content = calculate_target_dst(file_content)
-        # print(file_content)
-
+        file_content = open(file_path, 'r').readlines()
+        file_content = delete_rotation(file_content)
 
         observation_file_content = open(observation_file_path, 'r').readlines()
-        file_content = calculate_action(observation_file_content)
+        observation_file_content = delete_rotation(observation_file_content)
+        # file_content = calculate_action(observation_file_content)
 
         # current_line = file_content[0].replace("\n", "")
         file_length = len(file_content)
-        for l in file_content:
-            print(l)
+        # for l in file_content:
+        #     print(l)
 
         # cleaned_lines = [line.strip() for line in file_content]
         # line_counter = Counter(cleaned_lines)
@@ -203,14 +216,14 @@ def main():
     # hf = load_hf_dataset_from_parquet(file_path)
 
     # print(hf)
-    save_data_frame(file_path, args.real)
+    save_data_frame(file_path)
     # load_episodes('/home/marija/spes_autonomy/xarm_bringup/DATA/actions')
 
 def test():
-    test_str = ['[10, 12, 11]\n', '[25, 24, 21]\n', '[2, 14, 12]\n', '[10, 11, 30]\n', '[10, 10, 30]\n']
+    test_str = ['[10, 12, 11, 0, 0, 0]\n', '[25, 24, 21, 0, 0, 0]\n', '[2, 14, 12, 0, 0, 0]\n', '[10, 11, 30, 0, 0, 0]\n', '[10, 10, 30, 0, 0, 0]\n']
     # print(test_str)
     # print('=====================')
-    calculate_action(test_str)
+    print(delete_rotation(test_str))
 if __name__ == '__main__':
     # test()
     main()
