@@ -238,27 +238,25 @@ class ControlObjectPicking(Node):
         elif self.state == EnvStates.MOVE:
             self.target_pose.pose = pose
             if are_transforms_close(gripper_target):
-                self.state = EnvStates.GO_CLOSE
-                self.target_pose.pose.position.z = 0.09
-                self.start_time  = time.time()
+                # dummy action in the end
+                self.episode_state.data = 1
+                self.publisher_start_saving.publish(self.episode_state)
+                self.skip_saving = True
+                if self.end_episode_cnt > 10:
+                    self.state = EnvStates.GO_CLOSE
+                    self.target_pose.pose.position.z = 0.09
+                    self.start_time  = time.time()
+                    
+                    # end episode
+                    self.episode_state.data = 0
+                    self.publisher_start_saving.publish(self.episode_state)
+
+                self.end_episode_cnt += 1
 
         elif self.state == EnvStates.GO_CLOSE:
             if time.time() - self.start_time > 2:
                 if round(gripper_target_tf.transform.translation.z, 4) <= -0.0255:
-                    self.skip_saving = True
-
-                    # dummy action in the end
-                    self.episode_state.data = 1
-                    self.publisher_start_saving.publish(self.episode_state)
-                    self.get_logger().info(f'ssssssssssssssssssssssssss: ')
-
-                    if self.end_episode_cnt > 10:
-                        self.state = EnvStates.CLOSE_GRIPPER
-                        
-                        # end episode
-                        self.episode_state.data = 0
-                        self.publisher_start_saving.publish(self.episode_state)
-                    self.end_episode_cnt += 1
+                    self.state = EnvStates.CLOSE_GRIPPER
                     
                 self.get_logger().info(f'{round(gripper_target_tf.transform.translation.z, 4)}')
 
