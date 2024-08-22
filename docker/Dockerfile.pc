@@ -40,6 +40,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Option
     ros-humble-topic-based-ros2-control \
     ros-humble-ament-cmake-nose \
     ros-humble-tf-transformations \
+    ros-humble-image-transport-plugins \
+    ros-humble-foxglove-bridge \
     nano \
     alsa \
     libxshmfence1 \
