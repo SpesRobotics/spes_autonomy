@@ -140,7 +140,8 @@ namespace spes_move
       state_ = spes_msgs::msg::MoveState::STATE_ROTATING_AT_GOAL;
 
       // Multiturn. We allow multiturn only if the goal is in the base frame.
-      if (command_->mode == spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL && command_->header.frame_id == "base_link") {
+      if (command_->mode == spes_msgs::msg::MoveCommand::MODE_ROTATE_AT_GOAL && command_->header.frame_id == "base_link")
+      {
         if (command->target.theta > M_PI)
           multiturn_n_ = (command->target.theta + M_PI) / (2 * M_PI);
         else if (command->target.theta < -M_PI)
@@ -372,11 +373,14 @@ namespace spes_move
       pose2d.y += sim_position_change * sin(pose2d.theta);
 
       bool is_collision_ahead = false;
-      try {
+      try
+      {
         const double score = collision_checker_->scorePose(pose2d);
         if (score >= 254)
           is_collision_ahead = true;
-      } catch (const std::exception& e) {
+      }
+      catch (const std::exception &e)
+      {
         RCLCPP_ERROR_ONCE(get_logger(), "Collision checker failed: %s", e.what());
       }
 
@@ -485,13 +489,14 @@ namespace spes_move
     cmd_vel->linear.x = command_->linear_properties.kp * last_error_x_ - command_->linear_properties.kd * d_input;
 
     // TODO: Parameterize this + add kd
-    cmd_vel->angular.z = diff_y * cmd_vel->linear.x * 1.0;
+    cmd_vel->angular.z = diff_y * cmd_vel->linear.x * linear_angle_correction_kp_;
 
     if (!is_trajectory_finished)
       translation_ruckig_output_.pass_to_input(translation_ruckig_input_);
   }
 
-  void Move::init() {
+  void Move::init()
+  {
     cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     command_sub_ = create_subscription<spes_msgs::msg::MoveCommand>(
         "~/command", 1, std::bind(&Move::on_command_received, this, std::placeholders::_1));
@@ -557,6 +562,9 @@ namespace spes_move
 
     declare_parameter("linear.tolerance", rclcpp::ParameterValue(0.01));
     get_parameter("linear.tolerance", default_command_->linear_properties.tolerance);
+
+    declare_parameter("linear.angle_correction_kp", rclcpp::ParameterValue(1.0));
+    get_parameter("linear.angle_correction_kp", linear_angle_correction_kp_);
 
     // Angular
     declare_parameter("angular.kp", rclcpp::ParameterValue(5.0));

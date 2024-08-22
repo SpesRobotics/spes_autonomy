@@ -50,6 +50,7 @@ namespace spes_move
 
     int update_rate_;
     double stopping_distance_;
+    double linear_angle_correction_kp_;
 
     spes_msgs::msg::MoveState state_msg_;
 
