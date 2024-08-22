@@ -16,6 +16,22 @@ def get_ip_address_from_xacro(xacro_doc):
             print(robot_ip)
             return robot_ip
 
+def create_image_compression_nodes(topic_names):
+    nodes = []
+    for topic_name in topic_names:
+        node = Node(
+            package='image_transport',
+            executable='republish',
+            arguments=['raw', 'compressed'],
+            remappings=[
+                ('in', topic_name),
+                ('out/compressed', topic_name + '/compressed'),
+            ],
+            output='screen',
+        )
+        nodes.append(node)
+    return nodes
+
 def generate_launch_description():
     robot_description_path = os.path.join(get_package_share_directory('xarm_bringup'), 'urdf', 'lite6.urdf.xacro')
     robot_description = xacro.process_file(robot_description_path, mappings={}).toprettyxml(indent='  ')
@@ -125,6 +141,16 @@ def generate_launch_description():
         condition=UnlessCondition(use_sim)
     )
 
+    image_compression_nodes = create_image_compression_nodes(['/rgb'])
+
+    foxglove_bridge = Node(
+            package='foxglove_bridge',
+            executable='foxglove_bridge',
+            parameters=[{'address': '192.168.2.168'}],
+            output='screen',
+        )
+
+
     return LaunchDescription([
         joint_trajectory_controller,
         controller_manager,
@@ -136,5 +162,6 @@ def generate_launch_description():
         position_controller,
         sixd_speed_limiter, 
         realsence_camera,
-        gripper_service
-    ])
+        gripper_service,
+        foxglove_bridge
+    ]+image_compression_nodes)
