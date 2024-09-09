@@ -7,9 +7,9 @@
   <xacro:arg name="add_gripper" default="true" />
   <xacro:arg name="robot_ip" default="192.168.1.184" />
   <xacro:arg name="report_type" default="normal" />
-  <!-- <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotSystemHardware" /> -->
+  <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotSystemHardware" />
   <!-- <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotFakeSystemHardware" /> -->
-  <xacro:arg name="ros2_control_plugin" default="topic_based_ros2_control/TopicBasedSystem" />
+  <!-- <xacro:arg name="ros2_control_plugin" default="topic_based_ros2_control/TopicBasedSystem" /> -->
   <xacro:arg name="baud_checkset" default="true" />
   <xacro:arg name="default_gripper_baud" default="2000000" />
   <xacro:arg name="hard_interface" default="PositionJointInterface" />

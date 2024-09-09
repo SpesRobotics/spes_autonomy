@@ -58,9 +58,12 @@ class SpaceTeleop(Node):
             ]
         )
         rotation = t3d.euler.euler2mat(
-            state.roll * self.__angular_scale,
-            state.pitch * self.__angular_scale,
-            -state.yaw * self.__angular_scale,
+            # state.roll * self.__angular_scale,
+            # state.pitch * self.__angular_scale,
+            0,
+            0,
+            0,
+            # -state.yaw * self.__angular_scale,
         )
         step_tf = t3d.affines.compose(xyz, rotation, [1, 1, 1])
 

@@ -85,6 +85,24 @@ def delete_rotation(episode_content):
         actions.append(action_str)
     return actions
 
+def check_actions(episode_content, filename):
+    num_frames = len(episode_content)
+    actions = []
+
+    for line in range(0, num_frames):
+        current_pose = episode_content[line].replace("\n", "")[1:-1]
+        current_pose = current_pose.split(',')
+        
+        current_pose_np = []
+        for i in current_pose:
+            current_pose_np.append(float(i))
+
+        action= current_pose_np[3:]
+        for a in action:
+            if abs(a) > 0.002:
+                print(f'[ERROR] file {filename} conatains invalid value')
+                return
+
 def save_data_frame(path):
     output_dir = path + '/parquest_output'
     if not os.path.exists(output_dir):
@@ -126,10 +144,11 @@ def save_data_frame(path):
         images = load_images(image_folder)
 
         file_content = open(file_path, 'r').readlines()
-        file_content = delete_rotation(file_content)
-
+        check_actions(file_content, image_folder)
+        # file_content = delete_rotation(file_content)
+        
         observation_file_content = open(observation_file_path, 'r').readlines()
-        observation_file_content = delete_rotation(observation_file_content)
+        # observation_file_content = delete_rotation(observation_file_content)
         # file_content = calculate_action(observation_file_content)
 
         # current_line = file_content[0].replace("\n", "")
@@ -210,20 +229,13 @@ def main():
     file_path = "/home/marija/spes_autonomy/xarm_bringup/" + DATA_FILE
     image_path = "/home/marija/Desktop/imitation-learning/isaac_sim/colect_training_data/data/2024_06_21_16_01_13"
 
-    # load_images(image_path)
-
-    # file_path = '/home/marija/Desktop/imitation-learning/isaac_sim/colect_training_data/data/dataset/2024_06_12_15_31_33.parquet'
-    # hf = load_hf_dataset_from_parquet(file_path)
-
-    # print(hf)
     save_data_frame(file_path)
     # load_episodes('/home/marija/spes_autonomy/xarm_bringup/DATA/actions')
 
 def test():
     test_str = ['[10, 12, 11, 0, 0, 0]\n', '[25, 24, 21, 0, 0, 0]\n', '[2, 14, 12, 0, 0, 0]\n', '[10, 11, 30, 0, 0, 0]\n', '[10, 10, 30, 0, 0, 0]\n']
-    # print(test_str)
-    # print('=====================')
     print(delete_rotation(test_str))
+    
 if __name__ == '__main__':
     # test()
     main()
