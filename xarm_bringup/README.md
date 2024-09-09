@@ -20,4 +20,4 @@ Change ros2_control_plugin in `xarm_bringup/urdf/lite6.urdf.xacro` to `UFRobotSy
 ```sh
 ./xarm_bringup/scripts/episode_recorder
 ```
-Recorded data will be save in path `xarm_bringup/scripts/DATA`
+Recorded data will be save in path `xarm_bringup/scripts/DATA_REAL`
