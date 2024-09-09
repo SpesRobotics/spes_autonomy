@@ -62,5 +62,4 @@ The `xarm_bringup` package provides tools and scripts for simulating and control
 
 ## Notes
 
-- Ensure that you have the necessary dependencies installed and that your ROS 2 environment is properly configured.
-- For any issues or further assistance, please refer to the documentation or contact the maintainers.
+- Ensure that you have the necessary dependencies installed
