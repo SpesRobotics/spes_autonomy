@@ -41,32 +41,6 @@ def load_episodes(path):
     return episode_name
 
 
-def calculate_action(episode_content):
-    num_frames = len(episode_content)
-    actions = []
-
-    last_pose_str = episode_content[num_frames-1].replace("\n", "")[1:-1]
-    last_pose_str = last_pose_str.split(',')
-
-    last_pose = []
-    for i in last_pose_str:
-        last_pose.append(float(i))
-
-
-    for line in range(0, num_frames):
-        current_pose = episode_content[line].replace("\n", "")[1:-1]
-        current_pose = current_pose.split(',')
-        
-        current_pose_np = []
-        for i in current_pose:
-            current_pose_np.append(float(i))
-
-        action= np.array(current_pose_np) - np.array(last_pose)
-
-        action_str = '[{}]'.format(', '.join(map(str, action))) + '\n'
-        actions.append(action_str)
-    return actions
-
 def delete_rotation(episode_content):
     num_frames = len(episode_content)
     actions = []
@@ -145,21 +119,9 @@ def save_data_frame(path):
 
         file_content = open(file_path, 'r').readlines()
         check_actions(file_content, image_folder)
-        # file_content = delete_rotation(file_content)
         
         observation_file_content = open(observation_file_path, 'r').readlines()
-        # observation_file_content = delete_rotation(observation_file_content)
-        # file_content = calculate_action(observation_file_content)
-
-        # current_line = file_content[0].replace("\n", "")
         file_length = len(file_content)
-        # for l in file_content:
-        #     print(l)
-
-        # cleaned_lines = [line.strip() for line in file_content]
-        # line_counter = Counter(cleaned_lines)
-        # repeated_lines_count = sum(1 for count in line_counter.values() if count > 1)
-        
 
         frame_index = 0
         timestamp = 0.0
@@ -171,7 +133,7 @@ def save_data_frame(path):
         for line in range(1, file_length):
             next_line = file_content[line].replace("\n", "")
             observation_line = observation_file_content[line].replace("\n", "")
-            reward_line = 1000 #float(reward_file_content[line].replace("\n", ""))
+            reward_line = 1000
 
             current_image = images[image_index]
         
@@ -187,10 +149,6 @@ def save_data_frame(path):
             data['next.success'].append(next_success)
             data['index'].append(index)
 
-            # if current_line !=next_line:
-            #     reward += REWARD_STEP
-
-            # current_line = next_line
             index += 1
             frame_index += 1
             timestamp += 0.1
@@ -230,7 +188,6 @@ def main():
     image_path = "/home/marija/Desktop/imitation-learning/isaac_sim/colect_training_data/data/2024_06_21_16_01_13"
 
     save_data_frame(file_path)
-    # load_episodes('/home/marija/spes_autonomy/xarm_bringup/DATA/actions')
 
 def test():
     test_str = ['[10, 12, 11, 0, 0, 0]\n', '[25, 24, 21, 0, 0, 0]\n', '[2, 14, 12, 0, 0, 0]\n', '[10, 11, 30, 0, 0, 0]\n', '[10, 10, 30, 0, 0, 0]\n']
