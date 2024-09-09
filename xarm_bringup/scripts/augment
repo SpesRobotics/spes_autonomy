@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
 
+'''This script takes a batch of data from a dataset, changes the brightness and exposure, and saves the modified data and other folder.'''
+
+
 import torchvision.transforms as transforms
 import os
 from PIL import Image
