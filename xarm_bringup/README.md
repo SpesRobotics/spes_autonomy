@@ -17,7 +17,7 @@ If you want to run simulation set arg `sim` on true.
 ### Simulation Environment (SimEnv)
 2. **Run the Scripts**
 
-   - Generate episodes with the following command:
+   - Control simulated robot:
 
      ```sh
      ./xarm_bringup/scripts/episode_generator_picking
@@ -34,8 +34,7 @@ If you want to run simulation set arg `sim` on true.
 ### Real Environment (RealEnv)
 
 2. **Run the Scripts**
-
-   - Manage episodes with the following command:
+   - Control the arm init pose, manage start and episode end:
 
      ```sh
      ./xarm_bringup/scripts/episode_manager
@@ -47,6 +46,11 @@ If you want to run simulation set arg `sim` on true.
      ./xarm_bringup/scripts/episode_recorder
      ```
 
+    - Run space mouse
+     ```sh
+     ./xarm_bringup/scripts/space_teleop
+     ```
+
    - The recorded data will be saved in the `xarm_bringup/scripts/DATA_REAL` directory.
 
 
@@ -54,7 +58,7 @@ If you want to run simulation set arg `sim` on true.
 ```sh
      ./xarm_bringup/scripts/save_parquet --filename DATA_REAL
 ```
-File will be saved in path `DATA_REAL\parquest_output`
+File will be saved in path `DATA_REAL/parquest_output`
 
 ## Notes
 
