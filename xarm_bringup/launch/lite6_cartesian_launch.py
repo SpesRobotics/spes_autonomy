@@ -3,18 +3,12 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import xacro
+import launch
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition, UnlessCondition
 import xml.etree.ElementTree as ET
+from launch.actions import OpaqueFunction
 
-
-def get_ip_address_from_xacro(xacro_doc):
-    root = ET.fromstring(xacro_doc)
-    for param in root.findall(".//ros2_control/hardware/param"):
-        if param.attrib.get('name') == 'robot_ip':
-            robot_ip = param.text[1:]
-            print(robot_ip)
-            return robot_ip
 
 def create_image_compression_nodes(topic_names):
     nodes = []
@@ -32,16 +26,21 @@ def create_image_compression_nodes(topic_names):
         nodes.append(node)
     return nodes
 
-def generate_launch_description():
+
+
+def launch_setup(context):
     robot_description_path = os.path.join(get_package_share_directory('xarm_bringup'), 'urdf', 'lite6.urdf.xacro')
-    robot_description = xacro.process_file(robot_description_path, mappings={}).toprettyxml(indent='  ')
     
     controllers = os.path.join(get_package_share_directory(
         'xarm_bringup'), 'resource', 'controllers.yaml')
     
     use_rviz = LaunchConfiguration('rviz', default=True)
     use_sim = LaunchConfiguration('sim', default=True)
-    robot_ip = get_ip_address_from_xacro(robot_description)
+    robot_ip = LaunchConfiguration('robot_ip', default='192.168.1.184')
+
+    ros2_control_plugin = 'topic_based_ros2_control/TopicBasedSystem' if  use_sim.perform(context) else 'uf_robot_hardware/UFRobotSystemHardware'
+
+    robot_description = xacro.process_file(robot_description_path, mappings={'robot_ip': robot_ip.perform(context), 'ros2_control_plugin': ros2_control_plugin}).toprettyxml(indent='  ')
     
     controller_manager = Node(
         package='controller_manager',
@@ -150,8 +149,7 @@ def generate_launch_description():
             output='screen',
         )
 
-
-    return LaunchDescription([
+    return [
         joint_trajectory_controller,
         controller_manager,
         robot_state_publisher,
@@ -164,4 +162,10 @@ def generate_launch_description():
         realsence_camera,
         gripper_service,
         foxglove_bridge
-    ]+image_compression_nodes)
+    ]+image_compression_nodes
+
+
+def generate_launch_description():
+    return launch.LaunchDescription([
+        OpaqueFunction(function=launch_setup)
+    ])
