@@ -2,21 +2,19 @@
 
 ## Overview
 
-The `xarm_bringup` package provides tools and scripts for simulating and controlling the xArm robot in both simulated and real environments. Follow the instructions below to configure and run the appropriate scripts for each environment.
+The `xarm_bringup` package provides tools and scripts for simulating and controlling the xArm robot in both simulated and real environments. Follow the instructions below to run data collection and saving data in `parquet` format.
 
 ## Environment Setup
 
+
+1. **Run launch file**
+```sh
+  ros2 launch xarm_bringup lite6_cartesian_launch.py rviz:=false sim:=false
+
+```
+If you want to run simulation set arg `sim` on true.
+
 ### Simulation Environment (SimEnv)
-
-1. **Update the URDF Configuration**
-
-   - Open the `xarm_bringup/urdf/lite6.urdf.xacro` file.
-   - Locate the line defining `ros2_control_plugin` and change its value to `TopicBasedSystem`.
-
-     ```xml
-     <xacro:property name="ros2_control_plugin" value="TopicBasedSystem"/>
-     ```
-
 2. **Run the Scripts**
 
    - Generate episodes with the following command:
@@ -35,15 +33,6 @@ The `xarm_bringup` package provides tools and scripts for simulating and control
 
 ### Real Environment (RealEnv)
 
-1. **Update the URDF Configuration**
-
-   - Open the `xarm_bringup/urdf/lite6.urdf.xacro` file.
-   - Locate the line defining `ros2_control_plugin` and change its value to `UFRobotSystemHardware`.
-
-     ```xml
-     <xacro:property name="ros2_control_plugin" value="UFRobotSystemHardware"/>
-     ```
-
 2. **Run the Scripts**
 
    - Manage episodes with the following command:
@@ -59,6 +48,13 @@ The `xarm_bringup` package provides tools and scripts for simulating and control
      ```
 
    - The recorded data will be saved in the `xarm_bringup/scripts/DATA_REAL` directory.
+
+
+### Save data in parquet format
+```sh
+     ./xarm_bringup/scripts/save_parquet --filename DATA_REAL
+```
+File will be saved in path `DATA_REAL\parquest_output`
 
 ## Notes
 
