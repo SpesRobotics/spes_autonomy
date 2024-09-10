@@ -7,11 +7,11 @@ The `xarm_bringup` package provides tools and scripts for simulating and control
 ## Environment Setup
 
 ### Simulation Environment (SimEnv)
-. **Run launch file**
-```sh
-  ros2 launch xarm_bringup lite6_cartesian_launch.py rviz:=false
+1. **Run launch file**
+    ```sh
+      ros2 launch xarm_bringup lite6_cartesian_launch.py rviz:=false
 
-```
+    ```
 2. **Run the Scripts**
 
    - Control simulated robot:
@@ -31,10 +31,10 @@ The `xarm_bringup` package provides tools and scripts for simulating and control
 ### Real Environment (RealEnv)
 
 1. **Run launch file**
-```sh
-  ros2 launch xarm_bringup lite6_cartesian_launch.py rviz:=false sim:=false
+    ```sh
+      ros2 launch xarm_bringup lite6_cartesian_launch.py rviz:=false sim:=false
 
-```
+    ```
 
 2. **Run the Scripts**
    - Control the arm init pose, manage start and episode end:
