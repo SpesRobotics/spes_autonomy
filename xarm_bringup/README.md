@@ -77,7 +77,8 @@ File will be saved in path `DATA_REAL/parquest_output`
 
 - Run commands:
 
-Need to run twice time
+#Set mode need to call twice time
+
 ```sh
    ros2 service call /xarm/set_mode xarm_msgs/srv/SetInt16 "{data: 2}"
 ```
