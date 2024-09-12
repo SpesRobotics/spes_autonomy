@@ -189,8 +189,8 @@ def main():
 
     if args.filename:
         DATA_FILE = args.filename
-    file_path = "/home/marija/spes_autonomy/xarm_bringup/" + DATA_FILE
-    image_path = "/home/marija/Desktop/imitation-learning/isaac_sim/colect_training_data/data/2024_06_21_16_01_13"
+
+    file_path = os.path.abspath(os.getcwd()) + '/' + DATA_FILE
 
     save_data_frame(file_path)
 
@@ -202,5 +202,5 @@ def test():
 
 
 if __name__ == '__main__':
-    # test()
     main()
+    # test()
