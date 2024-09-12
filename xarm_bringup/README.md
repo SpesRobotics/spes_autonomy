@@ -66,3 +66,38 @@ File will be saved in path `DATA_REAL/parquest_output`
 ## Notes
 
 - Ensure that you have the necessary dependencies installed
+
+
+### Enable manual mode
+
+- Run launch file
+```sh
+    ros2 launch xarm_bringup lite6_cartesian_launch.py rviz:=false sim:=false
+```
+
+- Run commands:
+
+Need to run twice time
+```sh
+   ros2 service call /xarm/set_mode xarm_msgs/srv/SetInt16 "{data: 2}"
+```
+
+```sh
+   ros2 service call /xarm/set_mode xarm_msgs/srv/SetInt16 "{data: 2}"
+```
+
+```sh
+   ros2 service call /xarm/set_state xarm_msgs/srv/SetInt16 "{data: 0}"
+```
+
+**To return in normal mode run commands:**
+
+```sh
+   ros2 service call /xarm/set_mode xarm_msgs/srv/SetInt16 "{data: 0}"
+```
+
+```sh
+   ros2 service call /xarm/set_state xarm_msgs/srv/SetInt16 "{data: 0}"
+```
+- After this step need to run launch file again
+
