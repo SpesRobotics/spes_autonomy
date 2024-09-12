@@ -18,7 +18,6 @@ import re
 import numpy as np
 
 
-
 class EnvStates(Enum):
     IDLE = 0
     CLOSE_GRIPPER = 1
@@ -63,6 +62,7 @@ def call_ros2_service(activate_controllers, deactivate_controllers):
     except subprocess.CalledProcessError as e:
         print(f"Error calling ROS 2 service: {e}")
 
+
 def is_identity_transformation(matrix):
     identity_matrix = np.eye(4)
     return np.allclose(matrix, identity_matrix)
@@ -79,9 +79,9 @@ class ControlObjectPicking(Node):
 
         self.publisher_gripper_state = self.create_publisher(
             Float64MultiArray, '/position_controller/commands', 1)
-        
+
         self.publisher_respawn = self.create_publisher(Twist, '/respawn', 1)
-        
+
         self.publisher_joint_init = self.create_publisher(
             JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 1)
 
@@ -132,7 +132,7 @@ class ControlObjectPicking(Node):
         self.state = EnvStates.IDLE
         self.gripper_status = GripperStatus.OPEN
         self.previous_state = self.state
-        
+
         self.end_episode_cnt = 0
         self.previous_pose = PoseStamped()
         self.current_pose = PoseStamped()
@@ -140,7 +140,6 @@ class ControlObjectPicking(Node):
         self.relative_move = PoseStamped()
 
         self.episode_state = Int32()
-        
 
     def switch_motion_controller(self, activate_controllers, deactivate_controllers):
         request = SwitchController.Request()
@@ -150,7 +149,6 @@ class ControlObjectPicking(Node):
         request.activate_asap = True
 
         self.switch_service.call(request)
-
 
     def get_transform(self, target_frame, source_frame):
         try:
@@ -172,35 +170,34 @@ class ControlObjectPicking(Node):
             self.episode_state.data = 1
             self.publisher_start_saving.publish(self.episode_state)
 
-        
         self.target_pose.header.stamp = self.get_clock().now().to_msg()
         self.target_pose.header.frame_id = 'link_base'
 
-        gripper_target_tf = self.get_transform('gripper_base_link', 'pick_target')
+        gripper_target_tf = self.get_transform(
+            'gripper_base_link', 'pick_target')
         base_gripper_tf = self.get_transform('link_base', 'gripper_base_link')
-        
+
         if gripper_target_tf is None:
             return
-        
+
         if base_gripper_tf is None:
             return
 
         gripper_target = rnp.numpify(gripper_target_tf.transform)
         base_gripper = rnp.numpify(base_gripper_tf.transform)
 
-        target_transform =  base_gripper @ gripper_target
-        
+        target_transform = base_gripper @ gripper_target
 
-        previous_pose = rnp.numpify(self.previous_pose.pose) 
+        previous_pose = rnp.numpify(self.previous_pose.pose)
         current_pose = rnp.numpify(self.current_pose.pose)
 
         self.previous_pose = self.current_pose
 
         previous_current_pose = np.linalg.inv(current_pose) @ previous_pose
 
-        self.relative_move.pose = rnp.msgify(Pose, previous_current_pose)       
-      
-        # base_current_pose = rnp.numpify(self.obtained_object_pose.pose) 
+        self.relative_move.pose = rnp.msgify(Pose, previous_current_pose)
+
+        # base_current_pose = rnp.numpify(self.obtained_object_pose.pose)
         # desired_pose = np.linalg.inv(base_current_pose) @ target_transform
         # desired_pose_msg = rnp.msgify(Transform, desired_pose)
         # self.current_relative_pose = desired_pose_msg
@@ -215,7 +212,7 @@ class ControlObjectPicking(Node):
             self.is_arm_init = True
             self.get_logger().info(f'Arm inited...')
             self.start_time = time.time()
-        
+
         if self.state == EnvStates.IDLE:
 
             if time.time() - self.start_time > 3.0:
@@ -230,7 +227,7 @@ class ControlObjectPicking(Node):
                     self.new_episode = False
                     self.skip_saving = False
                     self.end_episode_cnt = 0
-                    
+
                     # create new episode file
                     self.episode_state.data = 2
                     self.publisher_start_saving.publish(self.episode_state)
@@ -245,8 +242,8 @@ class ControlObjectPicking(Node):
                 if self.end_episode_cnt > 10:
                     self.state = EnvStates.GO_CLOSE
                     self.target_pose.pose.position.z = 0.09
-                    self.start_time  = time.time()
-                    
+                    self.start_time = time.time()
+
                     # end episode
                     self.episode_state.data = 0
                     self.publisher_start_saving.publish(self.episode_state)
@@ -257,12 +254,13 @@ class ControlObjectPicking(Node):
             if time.time() - self.start_time > 2:
                 if round(gripper_target_tf.transform.translation.z, 4) <= -0.0255:
                     self.state = EnvStates.CLOSE_GRIPPER
-                    
-                self.get_logger().info(f'{round(gripper_target_tf.transform.translation.z, 4)}')
+
+                self.get_logger().info(
+                    f'{round(gripper_target_tf.transform.translation.z, 4)}')
 
         elif self.state == EnvStates.CLOSE_GRIPPER:
 
-            self.skip_saving  =True
+            self.skip_saving = True
             if not self.is_object_picked:
                 self.state = EnvStates.UP
                 self.gripper_status = GripperStatus.CLOSE
@@ -324,7 +322,7 @@ class ControlObjectPicking(Node):
                 msg_arr = Twist()
                 self.publisher_respawn.publish(msg_arr)
                 self.get_logger().info('Move object to the random position!')
-                
+
                 self.new_episode = True
 
         else:

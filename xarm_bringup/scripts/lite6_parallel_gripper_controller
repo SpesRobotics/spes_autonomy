@@ -6,6 +6,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from xarm_msgs.srv import Call
 from std_msgs.msg import Int32
 
+
 class GripperSwitcher(Node):
 
     def __init__(self):
@@ -28,7 +29,6 @@ class GripperSwitcher(Node):
     def switcher_callback(self, msg):
         # 0 - close, 1 - open, others - stop
         self.call_close_gripper_service(msg.data)
-            
 
     def call_close_gripper_service(self, service_type):
         self.get_logger().info(f'Calling {service_type} service...')
@@ -50,6 +50,7 @@ class GripperSwitcher(Node):
         except Exception as e:
             self.get_logger().error(f'Service call failed: {e}')
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = GripperSwitcher()
@@ -61,6 +62,7 @@ def main(args=None):
     finally:
         node.destroy_node()
         rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

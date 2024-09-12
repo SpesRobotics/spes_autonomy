@@ -34,7 +34,8 @@ class SpaceTeleop(Node):
         self.__trajectory = None
 
         pyspacemouse.open()
-        self.__publisher = self.create_publisher(PoseStamped, "/target_frame_raw", 1)
+        self.__publisher = self.create_publisher(
+            PoseStamped, "/target_frame_raw", 1)
         self.__current_pose_subscriber = self.create_subscription(
             PoseStamped, "/current_pose", self.current_callback, 1
         )

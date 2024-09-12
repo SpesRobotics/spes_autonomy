@@ -47,7 +47,8 @@ class SixDSpeedLimiter(Node):
         self.__current_pose_subscriber = self.create_subscription(
             PoseStamped, "/current_pose", self.current_callback, 1
         )
-        self.__control_timer = self.create_timer(1.0 / REGULATION_RATE, self.control_callback)
+        self.__control_timer = self.create_timer(
+            1.0 / REGULATION_RATE, self.control_callback)
 
     def target_callback(self, msg):
         self.__target = rnp.numpify(msg.pose)

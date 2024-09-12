@@ -28,20 +28,23 @@ def create_image_compression_nodes(topic_names):
 
 
 def launch_setup(context):
-    robot_description_path = os.path.join(get_package_share_directory('xarm_bringup'), 'urdf', 'lite6.urdf.xacro')
-    
+    robot_description_path = os.path.join(
+        get_package_share_directory('xarm_bringup'), 'urdf', 'lite6.urdf.xacro')
+
     controllers = os.path.join(get_package_share_directory(
         'xarm_bringup'), 'resource', 'controllers.yaml')
-    
+
     use_rviz = LaunchConfiguration('rviz', default=True)
     use_sim = LaunchConfiguration('sim', default=True)
     robot_ip = LaunchConfiguration('robot_ip', default='192.168.1.184')
 
-    ros2_control_plugin = 'uf_robot_hardware/UFRobotSystemHardware' if not use_sim.perform(context) else 'topic_based_ros2_control/TopicBasedSystem'
+    ros2_control_plugin = 'uf_robot_hardware/UFRobotSystemHardware' if not use_sim.perform(
+        context) else 'topic_based_ros2_control/TopicBasedSystem'
     print('[SYSTEM INFO]Started controler: ', ros2_control_plugin)
 
-    robot_description = xacro.process_file(robot_description_path, mappings={'robot_ip': robot_ip.perform(context), 'ros2_control_plugin': ros2_control_plugin}).toprettyxml(indent='  ')
-    
+    robot_description = xacro.process_file(robot_description_path, mappings={'robot_ip': robot_ip.perform(
+        context), 'ros2_control_plugin': ros2_control_plugin}).toprettyxml(indent='  ')
+
     controller_manager = Node(
         package='controller_manager',
         executable='ros2_control_node',
@@ -112,9 +115,9 @@ def launch_setup(context):
     )
 
     sixd_speed_limiter = Node(
-        package = 'xarm_bringup',
-        executable = 'sixd_speed_limiter',
-        output = 'screen'
+        package='xarm_bringup',
+        executable='sixd_speed_limiter',
+        output='screen'
     )
 
     realsence_camera = Node(
@@ -123,14 +126,14 @@ def launch_setup(context):
         remappings=[
             ('/camera/camera/color/image_raw', '/rgb')
         ],
-        output = 'screen',
+        output='screen',
         condition=UnlessCondition(use_sim)
     )
 
     gripper_service = Node(
         package='xarm_api',
         executable='xarm_driver_node',
-        output = 'screen',
+        output='screen',
         parameters=[
             {'robot_ip': robot_ip},
             {'services.open_lite6_gripper': True},
@@ -143,11 +146,11 @@ def launch_setup(context):
     image_compression_nodes = create_image_compression_nodes(['/rgb'])
 
     foxglove_bridge = Node(
-            package='foxglove_bridge',
-            executable='foxglove_bridge',
-            parameters=[{'address': '192.168.2.168'}],
-            output='screen',
-        )
+        package='foxglove_bridge',
+        executable='foxglove_bridge',
+        parameters=[{'address': '192.168.2.168'}],
+        output='screen',
+    )
 
     return [
         joint_trajectory_controller,
@@ -158,7 +161,7 @@ def launch_setup(context):
         joint_state_broadcaster_spawner,
         rviz,
         position_controller,
-        sixd_speed_limiter, 
+        sixd_speed_limiter,
         realsence_camera,
         gripper_service,
         foxglove_bridge

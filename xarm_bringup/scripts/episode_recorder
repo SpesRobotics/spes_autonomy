@@ -7,7 +7,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import transforms3d as t3d
 from std_msgs.msg import Int32
-from ros2_numpy_tf import  ros2numpy
+from ros2_numpy_tf import ros2numpy
 from datetime import datetime
 import transforms3d as t3d
 import numpy as np
@@ -16,6 +16,7 @@ import os
 
 
 DATA_DIR = 'DATA_REAL_test'
+
 
 def get_action_from_observations(observations):
     last_observation_msg = observations[-1]
@@ -68,14 +69,13 @@ class SaveTeleoperationData(Node):
         self.cv_bridge = CvBridge()
         self.image = None
         self.current_observation_pose = PoseStamped()
-    
+
         self.observation_file = None
         self.action_filename = None
         self.images_folder = None
         self.images_counter = 0
 
         self.observations = []
-        
 
     def image_callback(self, msg):
         try:
@@ -88,14 +88,14 @@ class SaveTeleoperationData(Node):
     def current_pose_callback(self, msg):
         self.current_observation_pose = msg
 
-
     def start_episode_saving_callback(self, msg):
-        
+
         if msg.data == 2:
             self.save_episode(DATA_DIR)
             self.images_counter = 0
             self.observations = []
-            self.get_logger().info(f'---------------------------------{msg.data}')
+            self.get_logger().info(
+                f'---------------------------------{msg.data}')
 
         if msg.data == 1:
             self.observations.append(self.current_observation_pose)
@@ -109,8 +109,6 @@ class SaveTeleoperationData(Node):
             print(len(actions))
             self.observations = []
 
-
-
     def save_episode(self, dir_path):
         date = datetime.now()
         episode_name = date.strftime("%Y_%m_%d_%H_%M_%S")
@@ -123,20 +121,19 @@ class SaveTeleoperationData(Node):
 
         if not os.path.exists(self.images_folder):
             os.mkdir(self.images_folder)
-        
+
         if not os.path.exists(observation_folder):
             os.mkdir(observation_folder)
-        
+
         if not os.path.exists(action_folder):
             os.mkdir(action_folder)
-        
+
         observation_file_neme = observation_folder + '/' + episode_name+'.txt'
         action_file_neme = action_folder + '/' + episode_name+'.txt'
 
-        self.observation_file = open( observation_file_neme, "a")
-        self.action_filename = open( action_file_neme, "a")
+        self.observation_file = open(observation_file_neme, "a")
+        self.action_filename = open(action_file_neme, "a")
         self.get_logger().info(f'Episode {episode_name} saving started...')
-
 
     def save_current_frame(self):
         if self.images_folder is None:
@@ -152,17 +149,20 @@ class SaveTeleoperationData(Node):
         y_ori = self.current_observation_pose.pose.orientation.y
         z_ori = self.current_observation_pose.pose.orientation.z
         w_ori = self.current_observation_pose.pose.orientation.w
-        
+
         quat = [w_ori, x_ori, y_ori, z_ori]
         euler_angles_o = t3d.euler.quat2euler(quat)
 
-        observation = (f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[0]}, {euler_angles_o[1]}, {euler_angles_o[2]}]\n")
+        observation = (
+            f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[0]}, {euler_angles_o[1]}, {euler_angles_o[2]}]\n")
 
-        image_name = self.images_folder + '/' + str(self.images_counter) + '.jpg'
+        image_name = self.images_folder + '/' + \
+            str(self.images_counter) + '.jpg'
         cv2.imwrite(image_name, self.image)
         self.observation_file.write(observation)
 
         self.images_counter += 1
+
 
 def main(args=None):
     rclpy.init(args=args)
