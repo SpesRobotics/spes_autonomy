@@ -27,7 +27,6 @@ def create_image_compression_nodes(topic_names):
     return nodes
 
 
-
 def launch_setup(context):
     robot_description_path = os.path.join(get_package_share_directory('xarm_bringup'), 'urdf', 'lite6.urdf.xacro')
     
@@ -38,7 +37,8 @@ def launch_setup(context):
     use_sim = LaunchConfiguration('sim', default=True)
     robot_ip = LaunchConfiguration('robot_ip', default='192.168.1.184')
 
-    ros2_control_plugin = 'topic_based_ros2_control/TopicBasedSystem' if  use_sim.perform(context) else 'uf_robot_hardware/UFRobotSystemHardware'
+    ros2_control_plugin = 'uf_robot_hardware/UFRobotSystemHardware' if not use_sim.perform(context) else 'topic_based_ros2_control/TopicBasedSystem'
+    print('[SYSTEM INFO]Started controler: ', ros2_control_plugin)
 
     robot_description = xacro.process_file(robot_description_path, mappings={'robot_ip': robot_ip.perform(context), 'ros2_control_plugin': ros2_control_plugin}).toprettyxml(indent='  ')
     
