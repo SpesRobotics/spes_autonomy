@@ -15,7 +15,7 @@ import cv2
 import os
 
 
-DATA_DIR = 'DATA_REAL'
+DATA_DIR = 'DATA_REAL_test'
 
 def get_action_from_observations(observations):
     last_observation_msg = observations[-1]
@@ -80,7 +80,7 @@ class SaveTeleoperationData(Node):
     def image_callback(self, msg):
         try:
             cv2_img = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-            cv2_img = cv2.resize(cv2_img, (96, 96))
+            cv2_img = cv2.resize(cv2_img, (224, 224))
             self.image = cv2_img
         except CvBridgeError as e:
             print(e)
@@ -102,9 +102,12 @@ class SaveTeleoperationData(Node):
             self.save_current_frame()
 
         if msg.data == 0:
+            if len(self.observations) == 0:
+                return
             actions = get_action_from_observations(self.observations)
             self.action_filename.writelines(actions)
             print(len(actions))
+            self.observations = []
 
 
 

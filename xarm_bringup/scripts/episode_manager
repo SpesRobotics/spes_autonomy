@@ -102,6 +102,7 @@ class RealDataCollecting(Node):
         
         self.is_init_arm = False
         self.is_wait = False
+        self.save_key_points = False
 
     
     def start_keyboard_listener(self):
@@ -134,6 +135,8 @@ class RealDataCollecting(Node):
                 self.mode = SavingMode.SAVE_POINTS
             if key == 'i':
                 self.is_init_arm = True
+            if key == 'b':
+                self.save_key_points = True
         except AttributeError:
             pass
 
@@ -200,7 +203,17 @@ class RealDataCollecting(Node):
             msg.data = 2
             self.publisher_start_saving.publish(msg)
             time.sleep(1.5)
-        
+
+        if self.save_key_points:
+            msg = Int32()
+            msg.data = 0
+            self.publisher_start_saving.publish(msg)
+            time.sleep(2.0)
+            self.get_logger().info(f"Run...")
+            self.save_key_points = False
+            return
+
+
         msg = Int32()
         msg.data = 1
         self.publisher_start_saving.publish(msg)
@@ -220,6 +233,7 @@ def main(args=None):
     n - new episode
     s - save current episode
     i - go to init pose
+    b - save key point
 """
     print(msg)
     
