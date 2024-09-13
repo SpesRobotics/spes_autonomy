@@ -1,0 +1,251 @@
+#! /usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import PoseStamped
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from std_msgs.msg import Int32
+import sys
+import select
+import termios
+import tty
+
+import tf2_ros
+import time
+import re
+from collections import deque
+import threading
+from enum import Enum
+import subprocess
+
+
+settings = termios.tcgetattr(sys.stdin)
+
+
+def getKey():
+    tty.setraw(sys.stdin.fileno())
+    select.select([sys.stdin], [], [], 0)
+    key = sys.stdin.read(1)
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+    return key
+
+
+def call_ros2_service(activate_controllers, deactivate_controllers):
+    service_name = '/controller_manager/switch_controller'
+    service_type = 'controller_manager_msgs/srv/SwitchController'
+    strictness = '2'
+    activate_asap = 'true'
+
+    command = f'ros2 service call {service_name} {service_type} "{{activate_controllers: [\"{activate_controllers}\"], deactivate_controllers: [\"{deactivate_controllers}\"], strictness: {strictness}, activate_asap: {activate_asap}}}"'
+    try:
+        result = subprocess.run(command, shell=True,
+                                check=True, capture_output=True, text=True)
+        match = re.search(r'response:\n(.*)', result.stdout, re.DOTALL)
+        print(f"{activate_controllers}:", match.group(1).strip())
+    except subprocess.CalledProcessError as e:
+        print(f"Error calling ROS 2 service: {e}")
+
+
+class SavingMode(Enum):
+    SAVE_ALL = 0
+    SAVE_POINTS = 1
+
+
+class RealDataCollecting(Node):
+    def __init__(self):
+        super().__init__('real_data_collecting')
+        self.timer = self.create_timer(0.1, self.colleting_data_loop)
+
+        self.publisher_start_saving = self.create_publisher(
+            Int32, '/start_episode_saving', 1)
+
+        self.target_pose_subscriber = self.create_subscription(
+            PoseStamped,
+            '/target_frame_raw',
+            self.target_pose_callback,
+            1)
+        self.target_pose_subscriber
+
+        self.tfBuffer = tf2_ros.Buffer()
+        self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
+
+        self.target_pose = PoseStamped()
+        self.absolute_pose = PoseStamped()
+        self.start_time = time.time()
+
+        self.next_episode_trigger = False
+        self.new_episode = True
+
+        self.is_end_episode = False
+        self.end_episode_cnt = 0
+
+        self.listener_thread = threading.Thread(
+            target=self.start_keyboard_listener, daemon=True)
+        self.listener_thread.start()
+        self.exit = False
+
+        self.start_saving = False
+        self.is_teleoperation_stareted = False
+        self.observation_queue = deque(maxlen=10)
+        self.enable_saving_points = False
+
+        self.mode = SavingMode.SAVE_ALL
+
+        self.joint_state = JointTrajectory()
+        self.joint_names = ['joint1', 'joint2',
+                            'joint3', 'joint4', 'joint5', 'joint6']
+
+        point = JointTrajectoryPoint()
+        point.positions = [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093]
+        point.time_from_start.sec = 3
+        point.time_from_start.nanosec = 0
+
+        self.joint_state.points = [point]
+        self.joint_state.joint_names = self.joint_names
+
+        self.publisher_joint_init = self.create_publisher(
+            JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 1)
+
+        self.is_init_arm = False
+        self.is_wait = False
+        self.save_key_points = False
+
+    def start_keyboard_listener(self):
+        while True:
+            key = getKey()
+            self.on_key_press(key)
+
+            if key == 'q':
+                self.exit = True
+                self.get_logger().info('Quit!')
+                break
+
+    def on_key_press(self, key):
+        try:
+            if key == 's':
+                self.is_end_episode = True
+                self.get_logger().info('Episode saving...')
+            if key == 'w':
+                self.is_wait = True
+                self.get_logger().info('Wait....')
+            if key == 'r':
+                self.is_wait = False
+                self.get_logger().info('Run....')
+            if key == 'n':
+                self.start_saving = True
+                self.new_episode = True
+                self.get_logger().info('New episode started by keyboard input.')
+            if key == 'k':
+                self.enable_saving_points = True
+                self.mode = SavingMode.SAVE_POINTS
+            if key == 'i':
+                self.is_init_arm = True
+            if key == 'b':
+                self.save_key_points = True
+        except AttributeError:
+            pass
+
+    def target_pose_callback(self, msg):
+        self.target_pose = msg
+        self.is_teleoperation_stareted = True
+
+    def get_transform(self, target_frame, source_frame):
+        try:
+            transform = self.tfBuffer.lookup_transform(
+                target_frame, source_frame, rclpy.time.Time())
+            return transform
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            self.get_logger().error(f"Failed to get transform: {e}")
+            return None
+
+    def colleting_data_loop(self):
+        if self.is_init_arm:
+            call_ros2_service('joint_trajectory_controller',
+                              'cartesian_motion_controller')
+            self.joint_state.header.stamp = self.get_clock().now().to_msg()
+            self.publisher_joint_init.publish(self.joint_state)
+            self.is_init_arm = False
+
+            time.sleep(2.5)
+            call_ros2_service('cartesian_motion_controller',
+                              'joint_trajectory_controller')
+            self.get_logger().info(f'Arm inited...')
+
+        if not self.is_teleoperation_stareted:
+            return
+
+        if self.is_end_episode:
+            if self.end_episode_cnt > 10:
+                self.is_end_episode = False
+                self.start_saving = False
+
+                msg = Int32()
+                msg.data = 0
+                self.publisher_start_saving.publish(msg)
+
+            self.end_episode_cnt += 1
+            self.get_logger().info(f'Episode saving...')
+            return
+
+        if not self.start_saving:
+            return
+
+        if self.is_wait:
+            return
+
+        if self.mode == SavingMode.SAVE_POINTS and not self.enable_saving_points:
+            return
+
+        if self.new_episode:
+            self.new_episode = False
+            self.images_counter = 0
+            self.is_end_episode = False
+            self.end_episode_cnt = 0
+            self.is_teleoperation_stareted = False
+
+            msg = Int32()
+            msg.data = 2
+            self.publisher_start_saving.publish(msg)
+            time.sleep(1.5)
+
+        if self.save_key_points:
+            msg = Int32()
+            msg.data = 0
+            self.publisher_start_saving.publish(msg)
+            time.sleep(2.0)
+            self.get_logger().info(f"Run...")
+            self.save_key_points = False
+            return
+
+        msg = Int32()
+        msg.data = 1
+        self.publisher_start_saving.publish(msg)
+
+        self.enable_saving_points = False
+
+        if self.exit:
+            self.get_logger().info(f"Finished operation. Shutting down node...")
+            rclpy.shutdown()
+            self.listener_thread.join()
+            exit(0)
+
+
+def main(args=None):
+    msg = """
+    k - enable save point mode and save current point
+    n - new episode
+    s - save current episode
+    i - go to init pose
+    b - save key point
+"""
+    print(msg)
+
+    rclpy.init(args=args)
+    real_data_collecting = RealDataCollecting()
+    rclpy.spin(real_data_collecting)
+    real_data_collecting.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

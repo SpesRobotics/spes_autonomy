@@ -1,0 +1,88 @@
+#! /usr/bin/env python3
+
+'''This script takes a batch of data from a dataset, changes the brightness and exposure, and saves the modified data and other folder.'''
+
+
+import torchvision.transforms as transforms
+import os
+from PIL import Image
+import shutil
+
+
+def load_images(input_directory, output_directory):
+    excluded_folders = []
+    processed_folders_count = 0
+
+    augmented_folders = []
+
+    for folder_name in os.listdir(input_directory):
+        if folder_name in ['actions', 'observations']:
+            continue
+        excluded_folders.append(folder_name)
+
+    for folder_name in excluded_folders:
+        folder_path = os.path.join(input_directory, folder_name)
+
+        processed_folders_count += 1
+        if processed_folders_count % 10 != 0:
+            continue
+
+        augmented_folders.append(folder_name)
+
+        output_folder_path = os.path.join(output_directory, folder_name + '_a')
+        if not os.path.exists(output_folder_path):
+            os.mkdir(output_folder_path)
+            print('Created directory at path: ', output_folder_path)
+
+        for image_filename in os.listdir(folder_path):
+            if image_filename.endswith(".jpg"):
+                image_path = os.path.join(
+                    input_directory, folder_name, image_filename)
+                image = Image.open(image_path)
+
+                image_transform = transforms.Compose([
+                    transforms.ColorJitter(
+                        brightness=0.2, contrast=0.1, saturation=0.0, hue=0.0)
+                ])
+
+                transformed_image = image_transform(image)
+
+                output_image_path = os.path.join(
+                    output_folder_path, image_filename)
+                transformed_image.save(output_image_path)
+
+    return augmented_folders
+
+
+def copy_action_and_observation(augmented_folders, data_directory, output_directory):
+    output_actions_dir = os.path.join(output_directory, 'actions')
+    if not os.path.exists(output_actions_dir):
+        os.mkdir(output_actions_dir)
+
+    output_observations_dir = os.path.join(output_directory, 'observations')
+    if not os.path.exists(output_observations_dir):
+        os.mkdir(output_observations_dir)
+
+    for folder_name in augmented_folders:
+        action_file_path = os.path.join(
+            data_directory, 'actions', folder_name + '.txt')
+        observation_file_path = os.path.join(
+            data_directory, 'observations', folder_name + '.txt')
+
+        shutil.copyfile(action_file_path, os.path.join(
+            output_actions_dir, folder_name + '_a.txt'))
+        shutil.copyfile(observation_file_path, os.path.join(
+            output_observations_dir, folder_name + '_a.txt'))
+
+
+def main():
+    input_directory = '/home/marija/spes_autonomy/xarm_bringup/DATA_REAL_1_0/'
+    output_directory = '/home/marija/spes_autonomy/xarm_bringup/DATA_AUGMENT_1_0/'
+
+    augmented_folders = load_images(input_directory, output_directory)
+    copy_action_and_observation(
+        augmented_folders, input_directory, output_directory)
+
+
+if __name__ == '__main__':
+    main()

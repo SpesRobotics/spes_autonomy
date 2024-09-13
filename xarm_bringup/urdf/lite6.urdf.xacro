@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="lite6">
+  <xacro:arg name="prefix" default="" />
+  <xacro:arg name="hw_ns" default="xarm" />
+  <xacro:arg name="limited" default="false" />
+  <xacro:arg name="velocity_control" default="false" />
+  <xacro:arg name="add_gripper" default="true" />
+  <xacro:arg name="robot_ip" default="127.0.0.1" />
+  <xacro:arg name="report_type" default="normal" />
+  <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotSystemHardware" />
+  <!-- <xacro:arg name="ros2_control_plugin" default="uf_robot_hardware/UFRobotFakeSystemHardware" /> -->
+  <!-- <xacro:arg name="ros2_control_plugin" default="topic_based_ros2_control/TopicBasedSystem" /> -->
+  <xacro:arg name="baud_checkset" default="true" />
+  <xacro:arg name="default_gripper_baud" default="2000000" />
+  <xacro:arg name="hard_interface" default="PositionJointInterface" />
+  <xacro:arg name="inertial_params_filename" default="" />
+  <xacro:arg name="kinematics_params_filename"
+    default="$(find xarm_description)/config/kinematics/default/lite6_default_kinematics.yaml" />
+  <xacro:arg name="is_ros2" default="true" />
+
+  <xacro:include filename="$(find xarm_description)/urdf/common/common.material.xacro" />
+  <xacro:common_material prefix="$(arg prefix)" />
+
+  <xacro:property name="use_xacro_load_yaml" value="true" scope="global" />
+  <xacro:property name="mesh_path" value="package://xarm_description/meshes" scope="global" />
+  <xacro:property name="mesh_suffix" value="stl" scope="global" />
+  <xacro:include filename="$(find xarm_description)/urdf/common/common.link.xacro" />
+
+  <xacro:if value="$(arg is_ros2)">
+    <xacro:include filename="$(find xarm_bringup)/urdf/lite6.ros2_control.xacro" />
+  </xacro:if>
+  <xacro:include filename="$(find xarm_bringup)/urdf/lite6_gripper.xacro" />
+  <xacro:include filename="$(find xarm_description)/urdf/lite6/lite6.urdf.xacro" />
+  <xacro:include filename="$(find xarm_description)/urdf/lite6/lite6.transmission.xacro" />
+
+  <link name="base_link" />
+  <joint name="base_link_fix_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="link_base" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <xacro:if value="$(arg limited)">
+    <xacro:if value="$(arg is_ros2)">
+      <xacro:lite6_ros2_control prefix="$(arg prefix)"
+        velocity_control="$(arg velocity_control)"
+        ros2_control_plugin="$(arg ros2_control_plugin)"
+        hw_ns="$(arg hw_ns)" add_gripper="$(arg add_gripper)"
+        robot_ip="$(arg robot_ip)" report_type="$(arg report_type)"
+        baud_checkset="$(arg baud_checkset)" default_gripper_baud="$(arg default_gripper_baud)"
+        joint1_lower_limit="${-pi*0.99}" joint1_upper_limit="${pi*0.99}"
+        joint2_lower_limit="${-2.61799}" joint2_upper_limit="${2.61799}"
+        joint3_lower_limit="${-0.061087}" joint3_upper_limit="${pi*0.99}"
+        joint4_lower_limit="${-pi*0.99}" joint4_upper_limit="${pi*0.99}"
+        joint5_lower_limit="${-2.1642}" joint5_upper_limit="${2.1642}"
+        joint6_lower_limit="${-pi*0.99}" joint6_upper_limit="${pi*0.99}" />
+    </xacro:if>
+    <xacro:lite6_urdf prefix="$(arg prefix)"
+      joint1_lower_limit="${-pi*0.99}" joint1_upper_limit="${pi*0.99}"
+      joint2_lower_limit="${-2.61799}" joint2_upper_limit="${2.61799}"
+      joint3_lower_limit="${-0.061087}" joint3_upper_limit="${pi*0.99}"
+      joint4_lower_limit="${-pi*0.99}" joint4_upper_limit="${pi*0.99}"
+      joint5_lower_limit="${-2.1642}" joint5_upper_limit="${2.1642}"
+      joint6_lower_limit="${-pi*0.99}" joint6_upper_limit="${pi*0.99}"
+      inertial_params_filename="$(arg inertial_params_filename)"
+      kinematics_params_filename="$(arg kinematics_params_filename)"
+    />
+  </xacro:if>
+  <xacro:unless value="$(arg limited)">
+    <xacro:if value="$(arg is_ros2)">
+      <xacro:lite6_ros2_control prefix="$(arg prefix)" velocity_control="$(arg velocity_control)"
+        ros2_control_plugin="$(arg ros2_control_plugin)"
+        hw_ns="$(arg hw_ns)" add_gripper="$(arg add_gripper)"
+        robot_ip="$(arg robot_ip)" report_type="$(arg report_type)"
+        baud_checkset="$(arg baud_checkset)" default_gripper_baud="$(arg default_gripper_baud)" />
+    </xacro:if>
+    <xacro:lite6_urdf prefix="$(arg prefix)"
+      inertial_params_filename="$(arg inertial_params_filename)"
+      kinematics_params_filename="$(arg kinematics_params_filename)"
+    />
+  </xacro:unless>
+
+  <xacro:lite6_transmission prefix="$(arg prefix)" hard_interface="$(arg hard_interface)" />
+
+  <xacro:if value="$(arg add_gripper)">
+    <xacro:lite6_gripper />
+    <joint name="gripper_joint" type="fixed">
+      <parent link="link6" />
+      <child link="gripper_base_link" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+  </xacro:if>
+</robot>

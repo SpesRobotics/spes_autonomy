@@ -1,0 +1,176 @@
+#! /usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import PoseStamped
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+import transforms3d as t3d
+from std_msgs.msg import Int32
+from ros2_numpy_tf import ros2numpy
+from datetime import datetime
+import transforms3d as t3d
+import numpy as np
+import cv2
+import os
+
+
+DATA_DIR = 'DATA_REAL_test'
+
+
+def get_action_from_observations(observations):
+    last_observation_msg = observations[-1]
+    last_observation = ros2numpy(last_observation_msg)
+
+    actions = []
+
+    for observation_msg in observations:
+        observation = ros2numpy(observation_msg)
+
+        action = np.linalg.inv(observation) @ last_observation
+
+        translation = action[:3, 3]
+
+        rotation = t3d.euler.mat2euler(action)
+
+        pose = np.concatenate((translation, rotation))
+
+        action_str = '[{}]'.format(', '.join(map(str, pose))) + '\n'
+        actions.append(action_str)
+
+    return actions
+
+
+class SaveTeleoperationData(Node):
+    def __init__(self):
+        super().__init__('dave_teleoperation_data')
+
+        self.image_subscriber = self.create_subscription(
+            Image,
+            '/rgb',
+            self.image_callback,
+            1)
+        self.image_subscriber
+
+        self.current_pose_subscriber = self.create_subscription(
+            PoseStamped,
+            '/current_pose',
+            self.current_pose_callback,
+            1)
+        self.current_pose_subscriber
+
+        self.start_episode_saving_subscriber = self.create_subscription(
+            Int32,
+            '/start_episode_saving',
+            self.start_episode_saving_callback,
+            3)
+        self.start_episode_saving_subscriber
+
+        self.cv_bridge = CvBridge()
+        self.image = None
+        self.current_observation_pose = PoseStamped()
+
+        self.observation_file = None
+        self.action_filename = None
+        self.images_folder = None
+        self.images_counter = 0
+
+        self.observations = []
+
+    def image_callback(self, msg):
+        try:
+            cv2_img = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
+            cv2_img = cv2.resize(cv2_img, (224, 224))
+            self.image = cv2_img
+        except CvBridgeError as e:
+            print(e)
+
+    def current_pose_callback(self, msg):
+        self.current_observation_pose = msg
+
+    def start_episode_saving_callback(self, msg):
+
+        if msg.data == 2:
+            self.save_episode(DATA_DIR)
+            self.images_counter = 0
+            self.observations = []
+            self.get_logger().info(
+                f'---------------------------------{msg.data}')
+
+        if msg.data == 1:
+            self.observations.append(self.current_observation_pose)
+            self.save_current_frame()
+
+        if msg.data == 0:
+            if len(self.observations) == 0:
+                return
+            actions = get_action_from_observations(self.observations)
+            self.action_filename.writelines(actions)
+            print(len(actions))
+            self.observations = []
+
+    def save_episode(self, dir_path):
+        date = datetime.now()
+        episode_name = date.strftime("%Y_%m_%d_%H_%M_%S")
+        self.images_folder = dir_path + '/' + episode_name
+        observation_folder = dir_path + '/observations'
+        action_folder = dir_path + '/actions'
+
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
+
+        if not os.path.exists(self.images_folder):
+            os.mkdir(self.images_folder)
+
+        if not os.path.exists(observation_folder):
+            os.mkdir(observation_folder)
+
+        if not os.path.exists(action_folder):
+            os.mkdir(action_folder)
+
+        observation_file_neme = observation_folder + '/' + episode_name+'.txt'
+        action_file_neme = action_folder + '/' + episode_name+'.txt'
+
+        self.observation_file = open(observation_file_neme, "a")
+        self.action_filename = open(action_file_neme, "a")
+        self.get_logger().info(f'Episode {episode_name} saving started...')
+
+    def save_current_frame(self):
+        if self.images_folder is None:
+            return
+        if self.image is None or self.current_observation_pose is None:
+            return
+
+        x_pos = self.current_observation_pose.pose.position.x
+        y_pos = self.current_observation_pose.pose.position.y
+        z_pos = self.current_observation_pose.pose.position.z
+
+        x_ori = self.current_observation_pose.pose.orientation.x
+        y_ori = self.current_observation_pose.pose.orientation.y
+        z_ori = self.current_observation_pose.pose.orientation.z
+        w_ori = self.current_observation_pose.pose.orientation.w
+
+        quat = [w_ori, x_ori, y_ori, z_ori]
+        euler_angles_o = t3d.euler.quat2euler(quat)
+
+        observation = (
+            f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[0]}, {euler_angles_o[1]}, {euler_angles_o[2]}]\n")
+
+        image_name = self.images_folder + '/' + \
+            str(self.images_counter) + '.jpg'
+        cv2.imwrite(image_name, self.image)
+        self.observation_file.write(observation)
+
+        self.images_counter += 1
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    test = SaveTeleoperationData()
+    rclpy.spin(test)
+    test.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

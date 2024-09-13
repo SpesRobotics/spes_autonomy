@@ -1,1 +1,3 @@
 *.pyc
+xarm_bringup/DATA*
+xarm_bringup/scripts/DATA*

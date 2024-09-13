@@ -1,0 +1,106 @@
+#! /usr/bin/env python3
+
+import numpy as np
+import rclpy
+import transforms3d
+from rclpy.node import Node
+from geometry_msgs.msg import PoseStamped, Pose
+import math
+import ros2_numpy as rnp
+import time
+
+
+def norm_angle(angle):
+    while angle > np.pi:
+        angle -= 2 * np.pi
+    while angle < -np.pi:
+        angle += 2 * np.pi
+    return angle
+
+
+def clip(value, limit):
+    if value > limit:
+        return limit
+    if value < -limit:
+        return -limit
+    return value
+
+
+LIMIT_LINEAR = 0.002
+LIMIT_ANGULAR = math.radians(1.5)
+REGULATION_RATE = 20
+
+
+class SixDSpeedLimiter(Node):
+    def __init__(self):
+        super().__init__("sixd_speed_limiter")
+        self.__target = None
+        self.__trajectory = None
+        self.__last_target_time = 0
+
+        self.__target_pose_subscriber = self.create_subscription(
+            PoseStamped, "/target_frame_raw", self.target_callback, 1
+        )
+        self.__target_pose_limited_publisher = self.create_publisher(
+            PoseStamped, "/target_frame", 1
+        )
+        self.__current_pose_subscriber = self.create_subscription(
+            PoseStamped, "/current_pose", self.current_callback, 1
+        )
+        self.__control_timer = self.create_timer(
+            1.0 / REGULATION_RATE, self.control_callback)
+
+    def target_callback(self, msg):
+        self.__target = rnp.numpify(msg.pose)
+        self.__last_target_time = time.time()
+
+    def current_callback(self, msg):
+        if self.__target is None:
+            return
+        if self.__trajectory is not None:
+            return
+        self.__trajectory = rnp.numpify(msg.pose)
+        self.get_logger().info("Trajectory initialized")
+
+    def control_callback(self):
+        if time.time() - self.__last_target_time > 0.5:
+            self.__trajectory = None
+            self.__target = None
+
+        if self.__trajectory is None or self.__target is None:
+            return
+
+        error = np.linalg.inv(self.__trajectory) @ self.__target
+        step = np.eye(4)
+
+        # Rotation
+        rpy = list(transforms3d.euler.mat2euler(error[:3, :3]))
+        rpy[0] = clip(norm_angle(rpy[0]), LIMIT_ANGULAR)
+        rpy[1] = clip(norm_angle(rpy[1]), LIMIT_ANGULAR)
+        rpy[2] = clip(norm_angle(rpy[2]), LIMIT_ANGULAR)
+        step[:3, :3] = transforms3d.euler.euler2mat(*rpy)
+
+        # Position
+        linear_distance = np.linalg.norm(error[:3, 3])
+        if linear_distance > 0.5e-3:
+            xyz_direction = (error[:3, 3]) / linear_distance
+            step[:3, 3] = xyz_direction * clip(linear_distance, LIMIT_LINEAR)
+
+        # Update
+        self.__trajectory = self.__trajectory @ step
+        msg = PoseStamped()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "link_base"
+        msg.pose = rnp.msgify(Pose, self.__trajectory)
+        self.__target_pose_limited_publisher.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = SixDSpeedLimiter()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

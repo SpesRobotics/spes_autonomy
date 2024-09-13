@@ -1,0 +1,68 @@
+#! /usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup
+from xarm_msgs.srv import Call
+from std_msgs.msg import Int32
+
+
+class GripperSwitcher(Node):
+
+    def __init__(self):
+        super().__init__('switcher_node')
+
+        self.switcher_subscriber = self.create_subscription(
+            Int32,
+            '/gripper_switcher',
+            self.switcher_callback,
+            1
+        )
+        self.close_cli = self.create_client(Call, '/xarm/close_lite6_gripper')
+        self.open_cli = self.create_client(Call, '/xarm/open_lite6_gripper')
+        self.stop_cli = self.create_client(Call, '/xarm/stop_lite6_gripper')
+        self.callback_group = ReentrantCallbackGroup()
+
+        while not self.close_cli.wait_for_service(timeout_sec=1.0) or not self.open_cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('One or both services not available, waiting again...')
+
+    def switcher_callback(self, msg):
+        # 0 - close, 1 - open, others - stop
+        self.call_close_gripper_service(msg.data)
+
+    def call_close_gripper_service(self, service_type):
+        self.get_logger().info(f'Calling {service_type} service...')
+        req = Call.Request()
+
+        if service_type == 0:
+            future = self.close_cli.call_async(req)
+        elif service_type == 1:
+            future = self.open_cli.call_async(req)
+        else:
+            future = self.stop_cli.call_async(req)
+
+        future.add_done_callback(self.service_response_callback)
+
+    def service_response_callback(self, future):
+        try:
+            response = future.result()
+            self.get_logger().info(f'Service call succeeded: {response}')
+        except Exception as e:
+            self.get_logger().error(f'Service call failed: {e}')
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = GripperSwitcher()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

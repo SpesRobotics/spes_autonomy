@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<robot name="arm_gripper" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:macro name="lite6_gripper">
+        <link name="gripper_base_link">
+            <visual>
+                <geometry>
+                    <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_base.stl" />
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <!-- <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_base.stl" /> -->
+                    <cylinder radius="0.035" length="0.05"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="0 0 0.03" />
+            </collision>
+            <inertial>
+                <mass value="0.3" />
+                <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.01" />
+            </inertial>
+        </link>
+
+        <link name="left_finger">
+            <visual>
+                <geometry>
+                    <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" />
+                </geometry>
+                <origin rpy="0 0 3.14159" xyz="0 0 0" />
+            </visual>
+            <collision>
+                <geometry>
+                    <!-- <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" /> -->
+                    <box size="0.02 0.004 0.021" />
+                </geometry>
+                <origin rpy="0 0 0" xyz="0 -0.022 0.073" />
+            </collision>
+            <inertial>
+                <mass value="0.05" />
+                <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.0005" />
+            </inertial>
+        </link>
+
+        <joint name="gripper_left_joint" type="prismatic">
+            <parent link="gripper_base_link" />
+            <child link="left_finger" />
+            <axis xyz="0 -1 0" />
+            <limit lower="-0.01" upper="0" effort="10" velocity="0.1" />
+        </joint>
+
+        <link name="right_finger">
+            <visual>
+                <geometry>
+                    <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" />
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <!-- <mesh filename="package://xarm_bringup/urdf/meshes/lite6/gripper_finger.stl" /> -->
+                    <box size="0.02 0.004 0.021" />
+                </geometry>
+                <origin rpy="0 0 0" xyz="0 0.022 0.073" />
+            </collision>
+            <inertial>
+                <mass value="0.05" />
+                <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.0005" />
+            </inertial>
+        </link>
+
+        <joint name="gripper_right_joint" type="prismatic">
+            <parent link="gripper_base_link" />
+            <child link="right_finger" />
+            <axis xyz="0 1 0" />
+            <limit lower="-0.01" upper="0" effort="10" velocity="0.1" />
+            <mimic joint="gripper_left_joint" multiplier="1" offset="0" />
+        </joint>
+    </xacro:macro>
+</robot>

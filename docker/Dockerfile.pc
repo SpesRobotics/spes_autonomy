@@ -11,7 +11,8 @@ RUN useradd -d /${DOCKERUSER} -m \
             -c "${DOCKERUSERCOMMENT}" ${DOCKERUSER} && \
     echo "${DOCKERUSER} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     usermod -a -G video ${DOCKERUSER} && \
-    usermod -a -G dialout ${DOCKERUSER}
+    usermod -a -G dialout ${DOCKERUSER} && \
+    usermod -a -G plugdev ${DOCKERUSER}
 
 # HOTFIX: RViz black screen
 RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository -y ppa:kisak/kisak-mesa && \
@@ -38,6 +39,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Option
     ros-humble-apriltag-ros \
     ros-humble-topic-based-ros2-control \
     ros-humble-ament-cmake-nose \
+    ros-humble-tf-transformations \
+    ros-humble-image-transport-plugins \
+    ros-humble-foxglove-bridge \
     nano \
     alsa \
     libxshmfence1 \
@@ -48,7 +52,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends -o Dpkg::Option
     gdb \
     wget \
     fuse \
-    libfuse2
+    libfuse2 \
+    libhidapi-dev
 
 # Webots
 RUN curl -L -o /tmp/webots.deb \
@@ -61,29 +66,33 @@ COPY ./docker/Webots-R2023b.conf /${DOCKERUSER}/.config/Cyberbotics/Webots-R2023
 COPY ./spes.repos /spes.repos
 RUN mkdir -p /${DOCKERUSER}/ros2_libs_ws/src/ && \
     cd /${DOCKERUSER}/ros2_libs_ws && \
-    vcs import src < /spes.repos && \
+    vcs import --recursive src < /spes.repos && \
     . /opt/ros/humble/setup.sh && \
     colcon build --symlink-install --packages-up-to \
         cartesian_motion_controller \
         cartesian_controller_handles \
         odrive_hardware_interface \
-        behaviortree_ros2
+        behaviortree_ros2 \
+        topic_based_ros2_control \
+        xarm_controller \
+        xarm_description \
+        ros2_numpy
 
 COPY ./docker/cyclonedds.xml /etc/cyclonedds.xml
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/etc/cyclonedds.xml
 ENV DOCKERUSER=${DOCKERUSER}
 
-COPY ./docker/bashrc /tmp/bashrc
-RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
-
-RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.4.0-x86_64.AppImage -O /usr/bin/groot2 && \
+RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.6.0-x86_64.AppImage -O /usr/bin/groot2 && \
     chmod +x /usr/bin/groot2
 
 USER ${DOCKERUSER}
 
 RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip3 install --no-warn-script-location --user ultralytics lapx transforms3d dt_apriltags
-RUN pip3 install pymap3d
-    
+RUN pip3 install pymap3d pyspacemouse
+
+COPY ./docker/bashrc /tmp/bashrc
+RUN cat /tmp/bashrc >> /${DOCKERUSER}/.bashrc
+
 WORKDIR /${DOCKERUSER}/ros2_ws

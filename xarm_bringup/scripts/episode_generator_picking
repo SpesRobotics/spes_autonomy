@@ -1,0 +1,345 @@
+#! /usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import PoseStamped, Twist, Pose, TransformStamped
+from std_msgs.msg import Float64MultiArray
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from controller_manager_msgs.srv import SwitchController
+import ros2_numpy as rnp
+import transforms3d as t3d
+from std_msgs.msg import Int32
+
+import tf2_ros
+import time
+from enum import Enum
+import subprocess
+import re
+import numpy as np
+
+
+class EnvStates(Enum):
+    IDLE = 0
+    CLOSE_GRIPPER = 1
+    OPEN_GRIPPER = 2
+    RESET = 3
+    UP = 4
+    DOWN = 5
+    MOVE = 6
+    GO_CLOSE = 7
+
+
+class GripperStatus(Enum):
+    OPEN = 0
+    CLOSE = 1
+
+
+def are_transforms_close(a, b=None, linear_tol=0.03, angular_tol=0.03):
+    if b is None:
+        b = np.eye(4)
+    c = np.linalg.inv(a) @ b
+    xyz = c[:3, 3]
+    if np.any(np.abs(xyz) > linear_tol):
+        return False
+    rpy = t3d.euler.mat2euler(c[:3, :3])
+    if np.any(np.abs(np.array(rpy)) > angular_tol):
+        return False
+    return True
+
+
+def call_ros2_service(activate_controllers, deactivate_controllers):
+    service_name = '/controller_manager/switch_controller'
+    service_type = 'controller_manager_msgs/srv/SwitchController'
+    strictness = '2'
+    activate_asap = 'true'
+
+    command = f'ros2 service call {service_name} {service_type} "{{activate_controllers: [\"{activate_controllers}\"], deactivate_controllers: [\"{deactivate_controllers}\"], strictness: {strictness}, activate_asap: {activate_asap}}}"'
+    try:
+        result = subprocess.run(command, shell=True,
+                                check=True, capture_output=True, text=True)
+        match = re.search(r'response:\n(.*)', result.stdout, re.DOTALL)
+        print(f"{activate_controllers}:", match.group(1).strip())
+    except subprocess.CalledProcessError as e:
+        print(f"Error calling ROS 2 service: {e}")
+
+
+def is_identity_transformation(matrix):
+    identity_matrix = np.eye(4)
+    return np.allclose(matrix, identity_matrix)
+
+
+class ControlObjectPicking(Node):
+    def __init__(self):
+        super().__init__('control_object_picking_subscriber')
+
+        self.timer = self.create_timer(0.1, self.publish_pose)
+
+        self.publisher_speed_limiter = self.create_publisher(
+            PoseStamped, '/target_frame_raw', 1)
+
+        self.publisher_gripper_state = self.create_publisher(
+            Float64MultiArray, '/position_controller/commands', 1)
+
+        self.publisher_respawn = self.create_publisher(Twist, '/respawn', 1)
+
+        self.publisher_joint_init = self.create_publisher(
+            JointTrajectory, '/joint_trajectory_controller/joint_trajectory', 1)
+
+        self.publisher_start_saving = self.create_publisher(
+            Int32, '/start_episode_saving', 1)
+
+        self.current_pose_subscriber = self.create_subscription(
+            PoseStamped,
+            '/current_pose',
+            self.current_pose_callback,
+            1)
+        self.current_pose_subscriber
+
+        self.switch_service = self.create_client(
+            SwitchController, '/controller_manager/switch_controller')
+        while not self.switch_service.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Switch service not available, waiting again...')
+
+        self.tfBuffer = tf2_ros.Buffer()
+        self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
+        self.target_pose = PoseStamped()
+        self.current_relative_pose = TransformStamped()
+
+        self.joint_state = JointTrajectory()
+        self.joint_names = ['joint1', 'joint2',
+                            'joint3', 'joint4', 'joint5', 'joint6']
+
+        point = JointTrajectoryPoint()
+        point.positions = [0.00148, 0.06095, 1.164, -0.00033, 1.122, -0.00093]
+        point.time_from_start.sec = 3
+        point.time_from_start.nanosec = 0
+
+        self.joint_state.points = [point]
+        self.joint_state.joint_names = self.joint_names
+
+        # move screwdriver to random position
+        msg_arr = Twist()
+        self.publisher_respawn.publish(msg_arr)
+
+        self.start_time = time.time()
+        self.is_object_picked = False
+        self.next_episode_trigger = False
+        self.is_arm_init = False
+        self.is_trajectory_controler_active = False
+        self.new_episode = True
+        self.skip_saving = True
+
+        self.state = EnvStates.IDLE
+        self.gripper_status = GripperStatus.OPEN
+        self.previous_state = self.state
+
+        self.end_episode_cnt = 0
+        self.previous_pose = PoseStamped()
+        self.current_pose = PoseStamped()
+
+        self.relative_move = PoseStamped()
+
+        self.episode_state = Int32()
+
+    def switch_motion_controller(self, activate_controllers, deactivate_controllers):
+        request = SwitchController.Request()
+        request.activate_controllers = [activate_controllers]
+        request.deactivate_controllers = [deactivate_controllers]
+        request.strictness = 2
+        request.activate_asap = True
+
+        self.switch_service.call(request)
+
+    def get_transform(self, target_frame, source_frame):
+        try:
+            transform = self.tfBuffer.lookup_transform(
+                target_frame, source_frame, rclpy.time.Time())
+            return transform
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            self.get_logger().error(f"Failed to get transform: {e}")
+            return None
+
+    def current_pose_callback(self, msg):
+        self.current_pose = msg
+
+    def publish_pose(self):
+        if self.previous_state != self.state:
+            self.previous_state = self.state
+
+        if not self.skip_saving:
+            self.episode_state.data = 1
+            self.publisher_start_saving.publish(self.episode_state)
+
+        self.target_pose.header.stamp = self.get_clock().now().to_msg()
+        self.target_pose.header.frame_id = 'link_base'
+
+        gripper_target_tf = self.get_transform(
+            'gripper_base_link', 'pick_target')
+        base_gripper_tf = self.get_transform('link_base', 'gripper_base_link')
+
+        if gripper_target_tf is None:
+            return
+
+        if base_gripper_tf is None:
+            return
+
+        gripper_target = rnp.numpify(gripper_target_tf.transform)
+        base_gripper = rnp.numpify(base_gripper_tf.transform)
+
+        target_transform = base_gripper @ gripper_target
+
+        previous_pose = rnp.numpify(self.previous_pose.pose)
+        current_pose = rnp.numpify(self.current_pose.pose)
+
+        self.previous_pose = self.current_pose
+
+        previous_current_pose = np.linalg.inv(current_pose) @ previous_pose
+
+        self.relative_move.pose = rnp.msgify(Pose, previous_current_pose)
+
+        # base_current_pose = rnp.numpify(self.obtained_object_pose.pose)
+        # desired_pose = np.linalg.inv(base_current_pose) @ target_transform
+        # desired_pose_msg = rnp.msgify(Transform, desired_pose)
+        # self.current_relative_pose = desired_pose_msg
+
+        pose = rnp.msgify(Pose, target_transform)
+
+        if not self.is_arm_init:
+            call_ros2_service('joint_trajectory_controller',
+                              'cartesian_motion_controller')
+            self.joint_state.header.stamp = self.get_clock().now().to_msg()
+            self.publisher_joint_init.publish(self.joint_state)
+            self.is_arm_init = True
+            self.get_logger().info(f'Arm inited...')
+            self.start_time = time.time()
+
+        if self.state == EnvStates.IDLE:
+
+            if time.time() - self.start_time > 3.0:
+                call_ros2_service('cartesian_motion_controller',
+                                  'joint_trajectory_controller')
+                self.is_trajectory_controler_active = False
+                self.get_logger().info('Start...')
+
+                self.state = EnvStates.MOVE
+
+                if self.new_episode:
+                    self.new_episode = False
+                    self.skip_saving = False
+                    self.end_episode_cnt = 0
+
+                    # create new episode file
+                    self.episode_state.data = 2
+                    self.publisher_start_saving.publish(self.episode_state)
+
+        elif self.state == EnvStates.MOVE:
+            self.target_pose.pose = pose
+            if are_transforms_close(gripper_target):
+                # dummy action in the end
+                self.episode_state.data = 1
+                self.publisher_start_saving.publish(self.episode_state)
+                self.skip_saving = True
+                if self.end_episode_cnt > 10:
+                    self.state = EnvStates.GO_CLOSE
+                    self.target_pose.pose.position.z = 0.09
+                    self.start_time = time.time()
+
+                    # end episode
+                    self.episode_state.data = 0
+                    self.publisher_start_saving.publish(self.episode_state)
+
+                self.end_episode_cnt += 1
+
+        elif self.state == EnvStates.GO_CLOSE:
+            if time.time() - self.start_time > 2:
+                if round(gripper_target_tf.transform.translation.z, 4) <= -0.0255:
+                    self.state = EnvStates.CLOSE_GRIPPER
+
+                self.get_logger().info(
+                    f'{round(gripper_target_tf.transform.translation.z, 4)}')
+
+        elif self.state == EnvStates.CLOSE_GRIPPER:
+
+            self.skip_saving = True
+            if not self.is_object_picked:
+                self.state = EnvStates.UP
+                self.gripper_status = GripperStatus.CLOSE
+
+                self.start_time = time.time()
+                self.is_object_picked = True
+
+                msg = Float64MultiArray()
+                msg.data = [-0.01]
+                self.publisher_gripper_state.publish(msg)
+                self.get_logger().info(
+                    f'Close gripper! {round(gripper_target_tf.transform.translation.z, 2)}')
+
+        elif self.state == EnvStates.UP:
+            if time.time() - self.start_time > 0.1:
+                self.target_pose.pose.position.z = 0.35
+                self.state = EnvStates.DOWN
+                self.start_time = time.time()
+
+                self.get_logger().info('Move upward...')
+
+        elif self.state == EnvStates.DOWN:
+            if time.time() - self.start_time > 3.0:
+                self.skip_saving = True
+                self.target_pose.pose.position.z = 0.09
+                self.state = EnvStates.OPEN_GRIPPER
+                self.gripper_status = GripperStatus.OPEN
+                self.start_time = time.time()
+
+                self.get_logger().info('Move downward...')
+
+        elif self.state == EnvStates.OPEN_GRIPPER:
+            if time.time() - self.start_time > 3.5 and self.is_object_picked:
+                self.state = EnvStates.RESET
+                self.is_object_picked = False
+
+                self.start_time = time.time()
+                self.next_episode_trigger = True
+
+                msg = Float64MultiArray()
+                msg.data = [0.0]
+                self.publisher_gripper_state.publish(msg)
+                self.get_logger().info('Open gripper!')
+
+        elif self.state == EnvStates.RESET:
+            if not self.is_trajectory_controler_active:
+                call_ros2_service('joint_trajectory_controller',
+                                  'cartesian_motion_controller')
+                self.is_trajectory_controler_active = True
+                self.joint_state.header.stamp = self.get_clock().now().to_msg()
+                self.publisher_joint_init.publish(self.joint_state)
+                self.get_logger().info(f'Arm inited...')
+
+            if time.time() - self.start_time > 10.0 and self.next_episode_trigger:
+                self.state = EnvStates.IDLE
+                self.start_time = time.time()
+                self.next_episode_trigger = False
+
+                msg_arr = Twist()
+                self.publisher_respawn.publish(msg_arr)
+                self.get_logger().info('Move object to the random position!')
+
+                self.new_episode = True
+
+        else:
+            self.state = EnvStates.IDLE
+            self.start_time = time.time()
+
+        if self.state is not EnvStates.RESET:
+            self.publisher_speed_limiter.publish(self.target_pose)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    test = ControlObjectPicking()
+    rclpy.spin(test)
+    test.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()
