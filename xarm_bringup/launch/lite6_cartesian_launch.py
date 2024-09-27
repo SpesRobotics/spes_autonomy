@@ -7,7 +7,7 @@ import launch
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition, UnlessCondition
 import xml.etree.ElementTree as ET
-from launch.actions import OpaqueFunction
+from launch.actions import OpaqueFunction, DeclareLaunchArgument
 
 
 def create_image_compression_nodes(topic_names):
@@ -26,6 +26,7 @@ def create_image_compression_nodes(topic_names):
         nodes.append(node)
     return nodes
 
+configurable_parameters = [{'name': 'serial_no', 'default': "'021222071076'", 'description': 'choose device by serial number'},]
 
 def launch_setup(context):
     robot_description_path = os.path.join(
@@ -38,12 +39,10 @@ def launch_setup(context):
     use_sim = LaunchConfiguration('sim', default=True)
     robot_ip = LaunchConfiguration('robot_ip', default='192.168.1.184')
 
-    ros2_control_plugin = 'uf_robot_hardware/UFRobotSystemHardware' if not use_sim.perform(
-        context) else 'topic_based_ros2_control/TopicBasedSystem'
-    print('[SYSTEM INFO]Started controler: ', ros2_control_plugin)
+    ros2_control_plugin = 'uf_robot_hardware/UFRobotSystemHardware' if use_sim.perform(context) == 'false' else 'topic_based_ros2_control/TopicBasedSystem'
+    print('[SYSTEM INFO] Started controler: ', ros2_control_plugin)
 
-    robot_description = xacro.process_file(robot_description_path, mappings={'robot_ip': robot_ip.perform(
-        context), 'ros2_control_plugin': ros2_control_plugin}).toprettyxml(indent='  ')
+    robot_description = xacro.process_file(robot_description_path, mappings={'robot_ip': robot_ip.perform(context), 'ros2_control_plugin': ros2_control_plugin}).toprettyxml(indent='  ')
 
     controller_manager = Node(
         package='controller_manager',
@@ -123,6 +122,7 @@ def launch_setup(context):
     realsence_camera = Node(
         package='realsense2_camera',
         executable='realsense2_camera_node',
+        parameters = [{'serial_no': "021222071076",}],
         remappings=[
             ('/camera/camera/color/image_raw', '/rgb')
         ],
@@ -139,6 +139,8 @@ def launch_setup(context):
             {'services.open_lite6_gripper': True},
             {'services.close_lite6_gripper': True},
             {'services.stop_lite6_gripper': True},
+            {'services.set_mode': True},
+            {'services.set_state': True},
         ],
         condition=UnlessCondition(use_sim)
     )
