@@ -15,10 +15,10 @@ import cv2
 import os
 
 
-DATA_DIR = 'DATA_REAL_test'
+DATA_DIR = 'DATA_REAL_mug_s_mouse_1'
 
 
-def get_action_from_observations(observations):
+def get_action_from_observations(observations, segment):
     last_observation_msg = observations[-1]
     last_observation = ros2numpy(last_observation_msg)
 
@@ -34,8 +34,10 @@ def get_action_from_observations(observations):
         rotation = t3d.euler.mat2euler(action)
 
         pose = np.concatenate((translation, rotation))
+        pose = np.append(pose, segment)        
 
         action_str = '[{}]'.format(', '.join(map(str, pose))) + '\n'
+
         actions.append(action_str)
 
     return actions
@@ -76,6 +78,7 @@ class SaveTeleoperationData(Node):
         self.images_counter = 0
 
         self.observations = []
+        self.segment = 0
 
     def image_callback(self, msg):
         try:
@@ -94,6 +97,7 @@ class SaveTeleoperationData(Node):
             self.save_episode(DATA_DIR)
             self.images_counter = 0
             self.observations = []
+            self.segment = 0
             self.get_logger().info(
                 f'---------------------------------{msg.data}')
 
@@ -104,10 +108,12 @@ class SaveTeleoperationData(Node):
         if msg.data == 0:
             if len(self.observations) == 0:
                 return
-            actions = get_action_from_observations(self.observations)
+            actions = get_action_from_observations(self.observations, self.segment)
             self.action_filename.writelines(actions)
             print(len(actions))
             self.observations = []
+            self.segment+=1
+            
 
     def save_episode(self, dir_path):
         date = datetime.now()
@@ -138,8 +144,8 @@ class SaveTeleoperationData(Node):
     def save_current_frame(self):
         if self.images_folder is None:
             return
-        if self.image is None or self.current_observation_pose is None:
-            return
+        # if self.image is None or self.current_observation_pose is None:
+        #     return
 
         x_pos = self.current_observation_pose.pose.position.x
         y_pos = self.current_observation_pose.pose.position.y
@@ -154,7 +160,7 @@ class SaveTeleoperationData(Node):
         euler_angles_o = t3d.euler.quat2euler(quat)
 
         observation = (
-            f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[0]}, {euler_angles_o[1]}, {euler_angles_o[2]}]\n")
+            f"[{x_pos}, {y_pos}, {z_pos}, {euler_angles_o[0]}, {euler_angles_o[1]}, {euler_angles_o[2]}, {self.segment}]\n")
 
         image_name = self.images_folder + '/' + \
             str(self.images_counter) + '.jpg'
