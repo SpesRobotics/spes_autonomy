@@ -3,8 +3,9 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, Pose
+from std_msgs.msg import Float32MultiArray
 import ros2_numpy as rnp
-import time
+import time, array
 import pyspacemouse
 import numpy as np
 import transforms3d as t3d
@@ -39,7 +40,12 @@ class SpaceTeleop(Node):
         self.__current_pose_subscriber = self.create_subscription(
             PoseStamped, "/current_pose", self.current_callback, 1
         )
+        self.__mouse_button_state_publisher = self.create_publisher(
+            Float32MultiArray, "/add_vawe_point", 1)
+        
         self.__timer = self.create_timer(1.0 / 200, self.timer_callback)
+
+        self.mouse_button_state = Float32MultiArray()
 
     def current_callback(self, msg):
         if time.time() - self.__last_target_time > 0.3:
@@ -51,6 +57,9 @@ class SpaceTeleop(Node):
 
     def timer_callback(self):
         state = pyspacemouse.read()
+        self.mouse_button_state.data = list(array.array('f', state.buttons))
+        self.__mouse_button_state_publisher.publish(self.mouse_button_state)
+
         xyz = np.array(
             [
                 state.y * self.__linear_scale,
@@ -59,12 +68,12 @@ class SpaceTeleop(Node):
             ]
         )
         rotation = t3d.euler.euler2mat(
-            # state.roll * self.__angular_scale,
-            # state.pitch * self.__angular_scale,
-            0,
-            0,
-            0,
-            # -state.yaw * self.__angular_scale,
+            state.roll * self.__angular_scale,
+            state.pitch * self.__angular_scale,
+            # 0,
+            # 0,
+            # 0,
+            -state.yaw * self.__angular_scale,
         )
         step_tf = t3d.affines.compose(xyz, rotation, [1, 1, 1])
 
@@ -83,6 +92,7 @@ class SpaceTeleop(Node):
         msg.pose = rnp.msgify(Pose, self.__trajectory)
 
         self.__publisher.publish(msg)
+
 
 
 def main(args=None):
